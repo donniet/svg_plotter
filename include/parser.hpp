@@ -30,9 +30,77 @@ struct Drawable {
     { 
         return Point{}; 
     }
-    virtual Point dir(double s) const
+};
+
+struct ConstantArcLengthAdapter :
+    public Drawable
+{
+    Drawable const & _d;
+    size_t _maximum_points;
+    double _length;
+    vector<double> _normalized_lengths;
+
+    void init()
     {
-        return Point{0,0};
+        // first sample maximum_points evenly
+        vector<Point> sample(_maximum_points);
+
+        for_each(execution::par_unseq, sample.begin(), sample.end(), [&](Point & p) {
+            size_t gid = &p - &sample[0];
+
+            double t = (double)gid / (double)(_maximum_points - 1);
+
+            p = _d.at(t);
+        });
+
+        // now measure the distance from one point to the next
+        vector<double> distance(_maximum_points);
+
+        for_each(execution::par_unseq, distance.begin() + 1, distance.end(), [&](double & l) {
+            size_t gid = &l - &distance[0];
+            size_t next = (gid + 1) % _maximum_points;
+
+            // multiply by maximum_points to turn this into a normalized number indepdendent of the number of points
+            distance[gid] = (sample[gid] - sample[next]).norm();
+        });
+
+        // add it all up to get the total length
+        _length = reduce(execution::par_unseq, distance.begin(), distance.end(), 0);
+
+        // divide the distances by the total length to normalize it to a [0,1] interval 
+        for_each(execution::par_unseq, distance.begin(), distance.end(), [&](double & d) {
+            d /= _length;
+        });
+
+        // sum it up to make it ascending
+        inclusive_scan(execution::par_unseq, distance.begin(), distance.end(), _normalized_lengths.begin());
+
+    }
+
+    ConstantArcLengthAdapter(Drawable const & d, size_t maximum_points = 1e5) : 
+        _d(d), _maximum_points(maximum_points)
+    { 
+        init();
+    }
+
+    virtual double length() const override
+    {
+        return _length;
+    }
+
+    virtual Point at(double t) const override
+    {
+        // find the lower_bound of t in the set
+        auto i = lower_bound(_normalized_lengths.begin(), _normalized_lengths.end(), t);
+        size_t i0 = &*i - &_normalized_lengths[0];
+
+        if(i0 >= _normalized_lengths.size())
+            return Point{};
+
+        double t0 = *i;
+        double s = (double)i0 / (double)_maximum_points;
+
+        return _d.at(s + (t - t0));
     }
 };
 
@@ -120,25 +188,6 @@ public:
     {  }
 };
 
-// struct ClosePath : 
-//     public PathSegment
-// {
-//     virtual char type() const override
-//     { return relative ? 'z' : 'Z'; }
-
-//     virtual double length(DrawingContext & ctx) const override
-//     {
-//         return (ctx.begin - ctx.current).norm();
-//     }
-
-//     virtual Point at(DrawingContext & ctx, double t) const override {
-//         return ctx.current + (ctx.begin - ctx.current) * t;
-//     }
-    
-//     ClosePath(bool rel) :
-//         PathSegment(rel, vector<double>(0))
-//     { }
-// };
 
 struct CubicBezier : 
     public LineTo
@@ -172,10 +221,6 @@ public:
     virtual Point at(double s) const override
     {
         return bezier_point(s, _from, _c1, _c2, _to);
-    }
-    virtual Point dir(double s) const override
-    {
-        return bezier_direction(s, _from, _c1, _c2, _to);
     }
 
     CubicBezier(Point from, Point c1, Point c2, Point to) :
@@ -218,10 +263,6 @@ public:
         return bezier_point(t, _from, _c1, _to);
     }
 
-    virtual Point dir(double t) const override 
-    {
-        return bezier_direction(t, _from, _c1, _to);
-    }
 
     QuadraticCurve(Point from, Point c1, Point to) :
         LineTo(from, to), _c1(c1)
@@ -251,26 +292,26 @@ protected:
         Point xp = (_from - _to) / 2.;
 
         Point xq{
-             cosA * xp.x() + sinA * xp.y(),
-            -sinA * xp.x() + cosA * xp.y()
+             cosA * xp.x + sinA * xp.y,
+            -sinA * xp.x + cosA * xp.y
         };
-        double rx = _radius.x();
-        double ry = _radius.y();
+        double rx = _radius.x;
+        double ry = _radius.y;
 
-        double s = sqrt((rx * rx * ry * ry - rx * rx * xq.y() * xq.y() - ry * ry * xq.x() * xq.x()) / (rx * rx * xq.y() * xq.y() + ry * ry * xq.x() * xq.x()));
+        double s = sqrt((rx * rx * ry * ry - rx * rx * xq.y * xq.y - ry * ry * xq.x * xq.x) / (rx * rx * xq.y * xq.y + ry * ry * xq.x * xq.x));
         if(_large_arc == _sweep)
             s *= -1;
         
-        Point c1 = s * Point{rx * xq.y() / ry, -ry * xq.x() / rx};
+        Point c1 = s * Point{rx * xq.y / ry, -ry * xq.x / rx};
         xp = (_to + _from) / 2.;
 
         _center = xp + Point{
-            cosA * c1.x() - sinA * c1.y(),
-            sinA * c1.x() + cosA * c1.y()
+            cosA * c1.x - sinA * c1.y,
+            sinA * c1.x + cosA * c1.y
         };
 
-        Point s1{(xq.x() - c1.x()) / rx, (xq.y() - c1.y()) / ry};
-        Point s2{(-xq.x() - c1.x()) / rx, (-xq.y() - c1.y()) / ry};
+        Point s1{(xq.x - c1.x) / rx, (xq.y - c1.y) / ry};
+        Point s2{(-xq.x - c1.x) / rx, (-xq.y - c1.y) / ry};
     
         _start_angle = Point{1,0}.angle(s1);
         _sweep_angle = s1.angle(s2);
@@ -282,12 +323,12 @@ public:
         // TODO: make this arclength compatible
         double a = _start_angle + t * _sweep_angle;
 
-        Point p{_radius.x() * cos(a), _radius.y() * sin(a)};
+        Point p{_radius.x * cos(a), _radius.y * sin(a)};
 
         double sinA = sin(_angle);
         double cosA = cos(_angle);
 
-        return _center + Point{cosA * p.x() - sinA * p.y(), sinA * p.x() + cosA * p.y()};
+        return _center + Point{cosA * p.x - sinA * p.y, sinA * p.x + cosA * p.y};
     }
 
     virtual double length() const override
@@ -343,7 +384,7 @@ public:
     {
         if(_lengths.size() == 0)
             return 0.;
-            
+
         return _lengths.back();
     }
 
@@ -404,8 +445,8 @@ private:
             break;
         case 'H':
             for(int i = 0; i < coords.size(); i++) {
-                Point to{coords[i], pen.y()};
-                if(rel) to.x() += pen.x();
+                Point to{coords[i], pen.y};
+                if(rel) to.x += pen.x;
 
                 seg = dynamic_cast<Drawable*>(new LineTo(pen, to));
                 _segments.emplace_back(seg);
@@ -417,8 +458,8 @@ private:
             break;
         case 'V':
             for(int i = 0; i < coords.size(); i++) {
-                Point to{pen.x(), coords[i]};
-                if(rel) to.y() += pen.y();
+                Point to{pen.x, coords[i]};
+                if(rel) to.y += pen.y;
 
                 seg = dynamic_cast<Drawable*>(new LineTo(pen, to));
                 _segments.emplace_back(seg);

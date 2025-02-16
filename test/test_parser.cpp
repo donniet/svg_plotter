@@ -39,6 +39,8 @@ int main(int ac, char * av[])
     p = SVGPath("A 10 10 0 0 0 20 0");
     cout << "arc (10,10) 0 0 0 (10,0): " << p.length() << endl;
     ASSERT_CLOSE(p.length(), 10 * 3.1415927, 1e-5);
+
+    
     
 
 
