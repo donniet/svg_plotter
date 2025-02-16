@@ -65,12 +65,14 @@ struct ConstantArcLengthAdapter :
         });
 
         // add it all up to get the total length
-        _length = reduce(execution::par_unseq, distance.begin(), distance.end(), 0);
+        _length = reduce(execution::par_unseq, distance.begin(), distance.end());
 
         // divide the distances by the total length to normalize it to a [0,1] interval 
         for_each(execution::par_unseq, distance.begin(), distance.end(), [&](double & d) {
             d /= _length;
         });
+
+        _normalized_lengths.resize(_maximum_points);
 
         // sum it up to make it ascending
         inclusive_scan(execution::par_unseq, distance.begin(), distance.end(), _normalized_lengths.begin());
@@ -284,6 +286,8 @@ protected:
     double _start_angle;
     double _sweep_angle;
 
+    double _length;
+
     void init() 
     {
         // https://svgwg.org/svg2-draft/implnote.html#ArcImplementationNotes
@@ -315,6 +319,8 @@ protected:
     
         _start_angle = Point{1,0}.angle(s1);
         _sweep_angle = s1.angle(s2);
+
+        _length = calculate_length();
     }
 public:
     virtual Point at(double t) const override
@@ -330,8 +336,18 @@ public:
 
         return _center + Point{cosA * p.x - sinA * p.y, sinA * p.x + cosA * p.y};
     }
+    virtual double length() const override {
+        return _length;
+    }
 
-    virtual double length() const override
+    Arc(Point from, Point radius, double angle, bool large_arc, bool sweep, Point to) :
+        LineTo(from, to), _radius(radius), _angle(angle), _large_arc(large_arc), _sweep(sweep)
+    { 
+        init();
+    }
+
+protected:
+    double calculate_length() const
     {
         static constexpr size_t subdivide = 1e5;
 
@@ -351,15 +367,9 @@ public:
             return (p - end_points[gid-1]).norm();
         });
 
-        double len = reduce(execution::par_unseq, segment_lengths.begin(), segment_lengths.end());
-        return len;
+        return reduce(execution::par_unseq, segment_lengths.begin(), segment_lengths.end());
     }
 
-    Arc(Point from, Point radius, double angle, bool large_arc, bool sweep, Point to) :
-        LineTo(from, to), _radius(radius), _angle(angle), _large_arc(large_arc), _sweep(sweep)
-    { 
-        init();
-    }
 };
 
 struct Drawer 

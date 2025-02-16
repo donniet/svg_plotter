@@ -12,8 +12,8 @@ int main(int ac, char * av[])
     Shape pill = plot(ConstantArcLengthAdapter(p));
 
     cout << "x\ty\n";
-    for(Point const & p : pill) {
-        cout << p.x << "\t" << p.y << "\n";
+    for(Event const & p : pill) {
+        cout << p.x << "\t" << p.y << "\t" << p.t << "\n";
     }
     cout << endl;
 }

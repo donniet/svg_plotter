@@ -15,14 +15,54 @@ struct Event :
     public Point 
 {
     double t;
+
+    Event(double x0, double y0, double t0) :
+        Point(x0, y0), t(t0)
+    { }
+    Event(Point p0, double t0) :
+        Point(p0), t(t0)
+    { }
+    Event() : 
+        Point(), t(0)
+    { }
+
+    Event operator-(Event const & e) const { 
+        return { (Point)*this - (Point)e, t - e.t };
+    }
+    Event operator+(Event const & e) const {
+        return { (Point)*this + (Point)e, t + e.t };
+    }
+    Event & operator+=(Event const & e) { 
+        (Point)*this += (Point)e;
+        t += e.t;
+        return *this;
+    }
+    Event & operator-=(Event const & e) {
+        (Point)*this -= (Point)e;
+        t -= e.t;
+        return *this;
+    }
+
+    Event operator*(double a) const {
+        return { (Point)*this * a, t * a };
+    }
+    Event operator/(double a) const {
+        return { (Point)*this / a, t / a };
+    }
+
+    double dot(Event e) const {
+        // Minikowski
+        return ((Point)*this).dot((Point)e) - t * e.t;
+    }
+
 };
 
 struct Shape
 {
-    vector<Point> _outline;
+    vector<Event> _outline;
 
-    vector<Point>::const_iterator begin() const { return _outline.begin(); }
-    vector<Point>::const_iterator end() const { return _outline.end(); }
+    vector<Event>::const_iterator begin() const { return _outline.begin(); }
+    vector<Event>::const_iterator end() const { return _outline.end(); }
 };
 
 struct Context 
@@ -48,15 +88,20 @@ Shape plot(Drawable const & drawing, Context ctx = Context())
 {
     using std::execution::par_unseq;
 
-    vector<Point> points(ctx.maximum_points);
+    vector<Event> points(ctx.maximum_points);
+
+    double len = drawing.length();
 
     // first stab: just plot the points
-    for_each(par_unseq, points.begin(), points.end(), [&](Point & p) {
-        size_t gid = &p - &points[0];
+    for_each(par_unseq, points.begin(), points.end(), [&](Event & e) {
+        size_t gid = &e - &points[0];
 
+        // t \in [0,1]
         double t = (double)gid / (double)(ctx.maximum_points - 1);
 
-        p = drawing.at(t);
+        Point p = drawing.at(t);
+
+        e = Event(p, t * len / ctx.draw_speed);
     });
 
     return Shape{._outline = points};

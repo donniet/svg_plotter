@@ -32,6 +32,12 @@ struct Point
         y += p.y;
         return *this;
     }
+    Point & operator-=(Point const & p) 
+    { 
+        x -= p.x;
+        y -= p.y;
+        return *this;
+    }
     Point operator*(double a) const { return {a * x, a * y }; }
     Point operator/(double a) const { return { x / a, y / a }; }
 
