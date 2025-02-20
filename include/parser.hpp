@@ -18,19 +18,54 @@ using namespace std;
 
 struct PathSegment;
 struct Drawable;
-struct DrawingContext;
 
-struct Drawable {
-    virtual double length() const 
-    { 
-        return 0.; 
-    }
+struct Lengthy {
+    virtual double length() const { return 0.; }
+};
+
+struct Drawable : 
+    public Lengthy 
+{
     // s is between 0 and 1
     virtual Point at(double s) const 
     { 
         return Point{}; 
     }
 };
+
+template<typename Iter>
+vector<Point> sample_range(Drawable const & d, Iter begin, Iter end)
+{
+    size_t n = distance(begin, end);
+    vector<Point> samples(n);
+
+    transform(execution::par_unseq, begin, end, samples.begin(), 
+    [&d](double const & t) -> Point 
+    {
+        return d.at(t);
+    });
+
+    return samples;
+}
+
+template<typename Iter>
+vector<Point> sample_interval(Drawable const & d, size_t sample_count = 10000)
+{
+    vector<Point> samples(sample_count);
+
+    for_each(execution::par_unseq, 
+             samples.begin(), samples.end(), 
+    [&](Point & p) 
+    {
+        size_t n = &p - &samples[0];
+
+        double t = (double)n / (double)(sample_count - 1);
+
+        p = d.at(t);
+    });
+
+    return samples;
+}
 
 struct ConstantArcLengthAdapter :
     public Drawable
@@ -58,6 +93,7 @@ struct ConstantArcLengthAdapter :
 
         for_each(execution::par_unseq, distance.begin() + 1, distance.end(), [&](double & l) {
             size_t gid = &l - &distance[0];
+            // HACK: assume a closed path
             size_t next = (gid + 1) % _maximum_points;
 
             // multiply by maximum_points to turn this into a normalized number indepdendent of the number of points
@@ -106,48 +142,6 @@ struct ConstantArcLengthAdapter :
     }
 };
 
-struct DrawingContext 
-{
-    Point begin;
-    Point current;
-    Point direction;
-
-    double eps;
-    size_t max_steps;
-    
-    double current_length;
-
-    // void adjust(Drawable segment)
-    // {
-    //     double length = segment.length(*this);
-    //     Point end = segment.at(*this, 1.0);
-    //     Point dir = segment.dir(*this, 1.0);
-
-    //     current = end;
-    //     direction = dir;
-    //     current_length += length;
-    // }
-
-    DrawingContext() :
-        begin{0,0}, current{0,0}, direction{0,0},
-        eps(1e-5), max_steps(numeric_limits<size_t>::max() >> 1), 
-        current_length(0)
-    { }
-
-    DrawingContext(DrawingContext const & ctx) :
-        begin(ctx.begin), current(ctx.current), direction(ctx.direction),
-        eps(ctx.eps), max_steps(numeric_limits<size_t>::max() >> 1), 
-        current_length(ctx.current_length)
-    { }
-
-    DrawingContext(DrawingContext && ctx) :
-        begin(ctx.begin), current(ctx.current), direction(ctx.direction),
-        eps(ctx.eps), max_steps(numeric_limits<size_t>::max() >> 1), 
-        current_length(ctx.current_length)
-    { }
-
-
-};
 
 
 struct MoveTo :
@@ -211,14 +205,7 @@ public:
             p = at(s);
         });
 
-        transform(execution::par_unseq, end_points.begin() + 1, end_points.end(), segment_lengths.begin(), [&](Point & p) -> double {
-            size_t gid = &p - &end_points[0];
-
-            return (p - end_points[gid-1]).norm();
-        });
-
-        double len = reduce(execution::par_unseq, segment_lengths.begin(), segment_lengths.end());
-        return len;
+        return ::path_length(end_points.begin(), end_points.end(), false);
     }
     virtual Point at(double s) const override
     {
@@ -240,7 +227,6 @@ public:
     {
         static constexpr size_t subdivide = 1e5;
 
-        vector<double> segment_lengths(subdivide);
         vector<Point> end_points(subdivide + 1);
 
         end_points[0] = _from;
@@ -250,14 +236,7 @@ public:
             p = at(s);
         });
 
-        transform(execution::par_unseq, end_points.begin() + 1, end_points.end(), segment_lengths.begin(), [&](Point & p) -> double {
-            size_t gid = &p - &end_points[0];
-
-            return (p - end_points[gid-1]).norm();
-        });
-
-        double len = reduce(execution::par_unseq, segment_lengths.begin(), segment_lengths.end());
-        return len;
+        return ::path_length(end_points.begin(), end_points.end(), false);
     }
 
     virtual Point at(double t) const override 
@@ -349,9 +328,8 @@ public:
 protected:
     double calculate_length() const
     {
+        // HACK: get this constant outta here
         static constexpr size_t subdivide = 1e5;
-
-        vector<double> segment_lengths(subdivide);
         vector<Point> end_points(subdivide + 1);
 
         end_points[0] = _from;
@@ -361,20 +339,9 @@ protected:
             p = at(s);
         });
 
-        transform(execution::par_unseq, end_points.begin() + 1, end_points.end(), segment_lengths.begin(), [&](Point & p) -> double {
-            size_t gid = &p - &end_points[0];
-
-            return (p - end_points[gid-1]).norm();
-        });
-
-        return reduce(execution::par_unseq, segment_lengths.begin(), segment_lengths.end());
+        return ::path_length(end_points.begin(), end_points.end(), false);
     }
 
-};
-
-struct Drawer 
-{
-    virtual void draw(Drawable & drawable, DrawingContext & ctx) = 0;
 };
 
 

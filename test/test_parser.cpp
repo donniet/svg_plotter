@@ -53,7 +53,7 @@ int main(int ac, char * av[])
     cout << "s\tx\ty\n";
     for(double s = 0; s <= 1.0; s += 0.1) {
         Point q = p.at(s);
-        cout << s << "\t" << q.x() << "\t" << q.y() << "\n";
+        cout << s << "\t" << q.x << "\t" << q.y << "\n";
     }
     cout << endl;
 
