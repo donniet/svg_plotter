@@ -14,7 +14,7 @@ using namespace std;
 
 using std::execution::par_unseq;
 
-struct Parabola :
+struct Function :
     public Drawable
 {
     virtual Point at(double t) const override 
@@ -26,13 +26,15 @@ struct Parabola :
 
 int main(int ac, char * av[])
 {
-    Parabola par;
+    Function par;
 
     pair<double,double> interval{0, 3};
+    double range = interval.second - interval.first;
+    double eps = 1e-4 * range;
 
     auto d0 = distrib(par, 100, interval);
 
-    cout << "Parabola:\n"
+    cout << "Function:\n"
          << "mean:  " << d0.first  << "\n"
          << "stdev: " << d0.second << "\n";
 
@@ -47,10 +49,10 @@ int main(int ac, char * av[])
     
     // the standard deviation of lengths sampled should be close to zero
     // if our equal arc length adapter is working properly
-    ASSERT_CLOSE((parc.at(interval.first) - par.at(interval.first)).norm(), 0, 1e-4);
-    ASSERT_CLOSE((parc.at(interval.second) - par.at(interval.second)).norm(), 0, 1e-4);
-    ASSERT_CLOSE(d0.first, d1.first, 1e-4);
-    ASSERT_CLOSE(d1.second, 0, 1e-4);
+    ASSERT_CLOSE((parc.at(interval.first) - par.at(interval.first)).norm(), 0, eps);
+    ASSERT_CLOSE((parc.at(interval.second) - par.at(interval.second)).norm(), 0, eps);
+    ASSERT_CLOSE(d0.first, d1.first, eps);
+    ASSERT_CLOSE(d1.second, 0, eps);
 
     
     OutputCSV csv(parc, {
