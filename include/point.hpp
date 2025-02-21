@@ -56,9 +56,35 @@ struct Point
 
         return s * acos(dot(v) / norm() / v.norm());
     }
+
+    bool operator==(Point const & p) const 
+    {
+        return x == p.x && y == p.y;
+    }
+    bool operator!=(Point const & p) const 
+    {
+        return !operator==(p);
+    }
 };
 
-struct Vector : public Point { };
+namespace std {
+    string to_string(Point const & p)
+    {
+        return format("({},{})", p.x, p.y);
+    }
+}
+
+struct Vector : 
+    public Point 
+{ 
+public:
+    Vector(double dx, double dy) : Point(dx, dy) { }
+    Vector(Point && p) : Point(p) { }
+    Vector(Point const & p) : Point(p) { }
+    Vector(Vector && v) : Point((Point)v) { }
+    Vector(Vector const & v) : Point((Point)v) { }
+    Vector() : Point() { }
+};
 
 struct Event :
     public Point 

@@ -38,6 +38,9 @@ struct BoundingBox
     BoundingBox(Point mi, Point ma) :
         p0(mi), p1(ma)
     { }
+    BoundingBox(double mix, double miy, double max, double may) :
+        p0(mix, miy), p1(max, may)
+    { }
     BoundingBox() { }
 };
 
