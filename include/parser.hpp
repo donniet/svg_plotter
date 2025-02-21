@@ -1,6 +1,11 @@
 #ifndef __PARSER_HPP__
 #define __PARSER_HPP__
 
+#include "drawable.hpp"
+#include "point.hpp"
+#include "bezier.hpp"
+#include "formatters.hpp"
+
 #include <string>
 #include <vector>
 #include <cmath>
@@ -10,137 +15,9 @@
 #include <algorithm>
 #include <execution>
 
-#include "point.hpp"
-#include "bezier.hpp"
-#include "formatters.hpp"
-
 using namespace std;
 
 struct PathSegment;
-struct Drawable;
-
-struct Lengthy {
-    virtual double length() const { return 0.; }
-};
-
-struct Drawable : 
-    public Lengthy 
-{
-    // s is between 0 and 1
-    virtual Point at(double s) const 
-    { 
-        return Point{}; 
-    }
-};
-
-template<typename Iter>
-vector<Point> sample_range(Drawable const & d, Iter begin, Iter end)
-{
-    size_t n = distance(begin, end);
-    vector<Point> samples(n);
-
-    transform(execution::par_unseq, begin, end, samples.begin(), 
-    [&d](double const & t) -> Point 
-    {
-        return d.at(t);
-    });
-
-    return samples;
-}
-
-template<typename Iter>
-vector<Point> sample_interval(Drawable const & d, size_t sample_count = 10000)
-{
-    vector<Point> samples(sample_count);
-
-    for_each(execution::par_unseq, 
-             samples.begin(), samples.end(), 
-    [&](Point & p) 
-    {
-        size_t n = &p - &samples[0];
-
-        double t = (double)n / (double)(sample_count - 1);
-
-        p = d.at(t);
-    });
-
-    return samples;
-}
-
-struct ConstantArcLengthAdapter :
-    public Drawable
-{
-    Drawable const & _d;
-    size_t _maximum_points;
-    double _length;
-    vector<double> _normalized_lengths;
-
-    void init()
-    {
-        // first sample maximum_points evenly
-        vector<Point> sample(_maximum_points);
-
-        for_each(execution::par_unseq, sample.begin(), sample.end(), [&](Point & p) {
-            size_t gid = &p - &sample[0];
-
-            double t = (double)gid / (double)(_maximum_points - 1);
-
-            p = _d.at(t);
-        });
-
-        // now measure the distance from one point to the next
-        vector<double> distance(_maximum_points);
-
-        for_each(execution::par_unseq, distance.begin() + 1, distance.end(), [&](double & l) {
-            size_t gid = &l - &distance[0];
-            // HACK: assume a closed path
-            size_t next = (gid + 1) % _maximum_points;
-
-            // multiply by maximum_points to turn this into a normalized number indepdendent of the number of points
-            distance[gid] = (sample[gid] - sample[next]).norm();
-        });
-
-        // add it all up to get the total length
-        _length = reduce(execution::par_unseq, distance.begin(), distance.end());
-
-        // divide the distances by the total length to normalize it to a [0,1] interval 
-        for_each(execution::par_unseq, distance.begin(), distance.end(), [&](double & d) {
-            d /= _length;
-        });
-
-        _normalized_lengths.resize(_maximum_points);
-
-        // sum it up to make it ascending
-        inclusive_scan(execution::par_unseq, distance.begin(), distance.end(), _normalized_lengths.begin());
-
-    }
-
-    ConstantArcLengthAdapter(Drawable const & d, size_t maximum_points = 1e5) : 
-        _d(d), _maximum_points(maximum_points)
-    { 
-        init();
-    }
-
-    virtual double length() const override
-    {
-        return _length;
-    }
-
-    virtual Point at(double t) const override
-    {
-        // find the lower_bound of t in the set
-        auto i = lower_bound(_normalized_lengths.begin(), _normalized_lengths.end(), t);
-        size_t i0 = &*i - &_normalized_lengths[0];
-
-        if(i0 >= _normalized_lengths.size())
-            return Point{};
-
-        double t0 = *i;
-        double s = (double)i0 / (double)_maximum_points;
-
-        return _d.at(s + (t - t0));
-    }
-};
 
 
 

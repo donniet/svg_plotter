@@ -1,6 +1,8 @@
 
 #include "plotter.hpp"
 #include "parser.hpp"
+#include "fills.hpp"
+#include "bounding_box.hpp"
 
 #include <iostream>
 #include "testing.hpp"

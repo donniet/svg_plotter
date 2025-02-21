@@ -10,3 +10,6 @@ add_test(ray_intersect, test_ray_intersect)
 
 add_executable(test_plotter test_plotter.cpp)
 add_test(plotter test_plotter)
+
+add_executable(test_adapters test_adapters.cpp)
+add_test(adapters test_adapters)

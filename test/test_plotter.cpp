@@ -1,6 +1,7 @@
 #include "plotter.hpp"
 #include "parser.hpp"
 #include "testing.hpp"
+#include "adapters.hpp"
 
 #include <iostream>
 #include <numbers>
