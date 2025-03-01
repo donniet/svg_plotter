@@ -12,7 +12,7 @@ using std::ostream;
 struct OutputCSV :
     public Outputer
 {
-    Drawable const & drawable;
+    Drawable const * drawable;
 
     struct Options 
     {
@@ -22,8 +22,11 @@ struct OutputCSV :
 
     void print(ostream & os) const override;
 
-    OutputCSV(Drawable const & d, Options o) :
-        drawable(d), options(o)
+    OutputCSV(Drawable const & d, Options o = {
+        .sample_count = 100,
+        .parameter_range = {0,1}
+    }) :
+        drawable(&d), options(o)
     { }
 };
 
@@ -36,7 +39,7 @@ void OutputCSV::print(ostream & os) const
         double t = (double)i / (double)(options.sample_count - 1);
         t = options.parameter_range.first + (options.parameter_range.second - options.parameter_range.first) * t;
 
-        Point p = drawable.at(t);
+        Point p = drawable->at(t);
 
         os << p.x << "\t" << p.y << "\t" << t << "\n";
     }

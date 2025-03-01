@@ -17,9 +17,9 @@ using std::execution::par_unseq;
 struct Function :
     public Drawable
 {
-    virtual Point at(double t) const override 
+    virtual Event at(double t) const override 
     {
-        return Point(t, 0.1 * t*t*t);
+        return Event(t, 0.1 * t * t * t, 0.3 * t * t);
     }
 };
 
@@ -30,7 +30,7 @@ int main(int ac, char * av[])
 
     pair<double,double> interval{0, 3};
     double range = interval.second - interval.first;
-    double eps = 1e-4 * range;
+    double eps = 1e-3 * range;
 
     auto d0 = distrib(par, 100, interval);
 

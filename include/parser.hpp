@@ -14,12 +14,14 @@
 #include <functional>
 #include <algorithm>
 #include <execution>
+#include <numbers>
+#include <functional>
 
 using namespace std;
 
+using std::numbers::pi;
+
 struct PathSegment;
-
-
 
 struct MoveTo :
     public Drawable
@@ -29,9 +31,12 @@ protected:
 public:
     // length is 0, no need to override
 
-    virtual Point at(double t) const override 
+    virtual Event at(double t) const override 
     {
-        return _to;
+        Vector dp = _to - _from;
+        dp = dp.normalized();
+
+        return Event(_to, dp, 0.); // 0 means a move_to
     }
 
     MoveTo(Point from, Point to) :
@@ -44,95 +49,89 @@ struct LineTo :
 {
 protected:
     Point _from, _to;
+    double _length;
 public:
-    virtual double length() const override
+    virtual double length(double t0, double t1) const override
     {
-        return (_to - _from).norm();
+        return (at(t1) - at(t0)).norm();
     }
     
-    virtual Point at(double t) const override 
+    // HACK: these are assuming the vector ahead of the point
+    //       but the move_to logic asssumes the derivative is
+    //       at the start point
+    virtual Event at(double t) const override 
     {
-        double len = length();
-        return _from + t * (_to - _from);
+
+        Point p = _from + t * (_to - _from);
+        Vector v = _to - _from;
+
+        return Event(p, v);
     }
 
     LineTo(Point from, Point to) :
-        _from(from), _to(to)
+        _from(from), _to(to), _length((_to - _from).norm())
     {  }
 };
 
 
 struct CubicBezier : 
-    public LineTo
+    public DrawableFromFunction
 {
 protected:
-    Point _c1, _c2;
+    Point _from, _c1, _c2, _to;
+
+    using DrawableFromFunction::reset;
+private:
 public:
-    virtual double length() const override
-    {
-        static constexpr size_t subdivide = 1e5;
-
-        vector<double> segment_lengths(subdivide);
-        vector<Point> end_points(subdivide + 1);
-
-        end_points[0] = _from;
-        for_each(execution::par_unseq, end_points.begin() + 1, end_points.end(), [&](Point & p) {
-            size_t gid = &p - &end_points[0];
-            double s = (double)gid / (double)subdivide;
-            p = at(s);
-        });
-
-        return ::path_length(end_points.begin(), end_points.end(), false);
-    }
-    virtual Point at(double s) const override
-    {
-        return bezier_point(s, _from, _c1, _c2, _to);
-    }
-
     CubicBezier(Point from, Point c1, Point c2, Point to) :
-        LineTo(from, to), _c1(c1), _c2(c2)
-    { }
+        DrawableFromFunction(),
+        _from(from), _c1(c1), _c2(c2), _to(to)
+    { 
+        reset([&](double t) 
+        {
+            return (*this)(t);
+        });
+    }
+
+    Point operator()(double t) const
+    {
+        return bezier_point(t, _from, _c1, _c2, _to);
+    }
 };
 
-struct QuadraticCurve :
-    public LineTo
+struct QuadraticCurve : 
+    public DrawableFromFunction
 {
 protected:
-    Point _c1;
+    Point _from, _c1, _to;
+
+    using DrawableFromFunction::reset;
+private:
 public:
-    virtual double length() const override
-    {
-        static constexpr size_t subdivide = 1e5;
-
-        vector<Point> end_points(subdivide + 1);
-
-        end_points[0] = _from;
-        for_each(execution::par_unseq, end_points.begin() + 1, end_points.end(), [&](Point & p) {
-            size_t gid = &p - &end_points[0];
-            double s = (double)gid / (double)subdivide;
-            p = at(s);
+    QuadraticCurve(Point from, Point c1, Point to) :
+        DrawableFromFunction(),
+        _from(from), _c1(c1), _to(to)
+    { 
+        reset([&](double t)
+        {
+            return (*this)(t);
         });
-
-        return ::path_length(end_points.begin(), end_points.end(), false);
     }
 
-    virtual Point at(double t) const override 
+    Point operator()(double t) const
     {
         return bezier_point(t, _from, _c1, _to);
     }
-
-
-    QuadraticCurve(Point from, Point c1, Point to) :
-        LineTo(from, to), _c1(c1)
-    { }
 };
 
 
 
 struct Arc :
-    public LineTo
+    public DrawableFromFunction
 {
 protected:
+    Point _from, _to;
+
     Point _radius;
     double _angle;
     bool _large_arc;
@@ -141,8 +140,6 @@ protected:
     Point _center;
     double _start_angle;
     double _sweep_angle;
-
-    double _length;
 
     void init() 
     {
@@ -175,94 +172,124 @@ protected:
     
         _start_angle = Point{1,0}.angle(s1);
         _sweep_angle = s1.angle(s2);
-
-        _length = calculate_length();
     }
+
+    using DrawableFromFunction::reset;
 public:
-    virtual Point at(double t) const override
+    Point operator()(double t) const
     {
         // use the angle here
         // TODO: make this arclength compatible
         double a = _start_angle + t * _sweep_angle;
 
-        Point p{_radius.x * cos(a), _radius.y * sin(a)};
+        Point p{ _radius.x * cos(a), _radius.y * sin(a) };
 
         double sinA = sin(_angle);
         double cosA = cos(_angle);
 
         return _center + Point{cosA * p.x - sinA * p.y, sinA * p.x + cosA * p.y};
     }
-    virtual double length() const override {
-        return _length;
-    }
 
     Arc(Point from, Point radius, double angle, bool large_arc, bool sweep, Point to) :
-        LineTo(from, to), _radius(radius), _angle(angle), _large_arc(large_arc), _sweep(sweep)
+        DrawableFromFunction(),
+        _from(from), _to(to), _radius(radius), _angle(angle), _large_arc(large_arc), _sweep(sweep)
     { 
         init();
-    }
 
-protected:
-    double calculate_length() const
-    {
-        // HACK: get this constant outta here
-        static constexpr size_t subdivide = 1e5;
-        vector<Point> end_points(subdivide + 1);
-
-        end_points[0] = _from;
-        for_each(execution::par_unseq, end_points.begin() + 1, end_points.end(), [&](Point & p) {
-            size_t gid = &p - &end_points[0];
-            double s = (double)gid / (double)subdivide;
-            p = at(s);
+        reset([&](double t)
+        {
+            return (*this)(t);
         });
-
-        return ::path_length(end_points.begin(), end_points.end(), false);
     }
-
 };
 
 
 
 class SVGPath :
-    public LineTo
+    public Drawable
 {
 public:
 
     SVGPath(const string& pathData, Point const & origin = Point{0,0}) :
-        LineTo(origin, origin)
+        _from(origin), _to(origin)
     {
         parsePath(pathData);
     }
 
-    virtual double length() const override 
+    virtual double length(double t0, double t1) const override
     {
-        if(_lengths.size() == 0)
-            return 0.;
-
-        return _lengths.back();
+        double l0 = length_to(t0);
+        double l1 = length_to(t1);
+        
+        return l1 - l0;
     }
 
-    virtual Point at(double t) const override 
+    virtual Event at(double t) const override 
     {
-        double len = length();
-        double s = len * t;
-
-        auto low = lower_bound(_lengths.begin(), _lengths.end(), s);
-
-        if(low == _lengths.end())
+        if(_length_index.size() == 0)
             return _to;
 
-        size_t low_index = &*low - &_lengths[0];
+        size_t gid;
+        double u;
 
-        if(low_index > 0)
-            s -= _lengths[low_index-1];
-
-        auto & seg = _segments[low_index];
-        return seg->at(s / seg->length());
+        tie(gid, u) = segment_by_parameter(t);
+        
+        return _segments[gid]->at(u);
     }
 
 private:
-    void append_segments(string::value_type key, vector<double> const & coords, Point const & begin, Point & pen, Point & dir)
+    // assumes _segments.size() > 0
+    pair<size_t, double> segment_by_parameter(double t) const 
+    {
+        // if t is less than 0 return the first element with no remainder
+        if(t <= 0)
+            return { 0, 0 };
+        
+        // if t is greater or equal to 1 return the last segment with parameter 1 (endpoint)
+        if(t >= 1)
+            return { _segments.size() - 1, 1 };
+
+
+        double len = _length_index.back();
+        double s = len * t;
+
+        size_t low_index = upper_bound(&_length_index[0], &_length_index[0] + _length_index.size(), s) -
+                           &_length_index[0];
+
+        // if this isn't the first one, subtract the length of the previous segments
+        // if it is the first one these previous lengths are simply 0
+        if(low_index > 0)
+            s -= _length_index[low_index-1];
+
+        // return a pointer to the segment and a remaining parameter normalized by the length of this segment
+        return { low_index, s / _lengths[low_index] };
+    }
+
+    double length_to(double t) const 
+    {
+        if(_length_index.size() == 0)
+            return 0;
+
+        if(t <= 0)
+            return 0;
+
+        if(t >= 1)
+            return _length_index.back();
+
+        size_t gid;
+        double u;
+
+        tie(gid, u) = segment_by_parameter(t);
+
+        double ret = _segments[0]->length(0, u);
+
+        if(gid > 0)
+            ret += _length_index[gid - 1];
+
+        return ret;
+    }
+
+    void append_segments(string::value_type key, vector<double> const & coords, Point & pen, Vector & dir)
     {
         auto upper_key = toupper(key);
         Drawable * seg;
@@ -282,7 +309,7 @@ private:
 
                 pen = to;
             }
-            dir = Point{0,0};
+            dir = Vector{0,0};
             break;
         case 'L':
             for(int i = 0; i < coords.size(); i += 2) {
@@ -291,11 +318,11 @@ private:
 
                 seg = dynamic_cast<Drawable*>(new LineTo(pen, to));
                 _segments.emplace_back(seg);
-                _lengths.push_back(seg->length());
+                _lengths.push_back(seg->length(0, 1));
 
                 pen = to;
             }
-            dir = Point{0,0};
+            dir = Vector{0,0};
             break;
         case 'H':
             for(int i = 0; i < coords.size(); i++) {
@@ -304,11 +331,11 @@ private:
 
                 seg = dynamic_cast<Drawable*>(new LineTo(pen, to));
                 _segments.emplace_back(seg);
-                _lengths.push_back(seg->length());
+                _lengths.push_back(seg->length(0, 1));
 
                 pen = to;
             }
-            dir = Point{0,0};
+            dir = Vector{0,0};
             break;
         case 'V':
             for(int i = 0; i < coords.size(); i++) {
@@ -317,11 +344,11 @@ private:
 
                 seg = dynamic_cast<Drawable*>(new LineTo(pen, to));
                 _segments.emplace_back(seg);
-                _lengths.push_back(seg->length());
+                _lengths.push_back(seg->length(0, 1));
 
                 pen = to;
             }
-            dir = Point{0,0};
+            dir = Vector{0,0};
             break;
         case 'A':
             for(int i = 0; i < coords.size(); i += 7) {
@@ -333,11 +360,11 @@ private:
 
                 seg = dynamic_cast<Drawable*>(new Arc(pen, radius, angle, large_arc, clockwise, to));
                 _segments.emplace_back(seg);
-                _lengths.push_back(seg->length());
+                _lengths.push_back(seg->length(0, 1));
 
                 pen = to;
             }
-            dir = Point{0,0};
+            dir = Vector{0,0};
             break;
         case 'C':
             for(int i = 0; i < coords.size(); i += 6) {
@@ -353,7 +380,7 @@ private:
 
                 seg = dynamic_cast<Drawable*>(new CubicBezier(pen, p1, p2, p3));
                 _segments.emplace_back(seg);
-                _lengths.push_back(seg->length());
+                _lengths.push_back(seg->length(0, 1));
 
                 pen = p3;
                 dir = p3 - p2;
@@ -371,7 +398,7 @@ private:
 
                 seg = dynamic_cast<Drawable*>(new CubicBezier(pen, pen + dir, p1, p2));
                 _segments.emplace_back(seg);
-                _lengths.push_back(seg->length());
+                _lengths.push_back(seg->length(0, 1));
 
                 pen = p2;
                 dir = p2 - p1;
@@ -389,7 +416,7 @@ private:
 
                 seg = dynamic_cast<Drawable*>(new QuadraticCurve(pen, p1, p2));
                 _segments.emplace_back(seg);
-                _lengths.push_back(seg->length());
+                _lengths.push_back(seg->length(0, 1));
 
                 pen = p2;
                 dir = p2 - p1;
@@ -405,7 +432,7 @@ private:
 
                 seg = dynamic_cast<Drawable*>(new QuadraticCurve(pen, pen + dir, p1));
                 _segments.emplace_back(seg);
-                _lengths.push_back(seg->length());
+                _lengths.push_back(seg->length(0, 1));
 
                 pen = p1;
                 dir = p1 - pen - dir;
@@ -414,12 +441,19 @@ private:
         case 'Z':
             seg = dynamic_cast<Drawable*>(new LineTo(pen, _from));
             _segments.emplace_back(seg);
-            _lengths.push_back(seg->length());
+            _lengths.push_back(seg->length(0, 1));
 
             pen = _from;
-            dir = Point{0,0};
+            dir = Vector{0,0};
             break;
         }
+
+        double current_length = 0;
+        if(_length_index.size() > 0)
+            current_length = _length_index.back();
+
+        _length_index.push_back(current_length + _lengths.back());
+
     }
     void parsePath(const string& pathData) {
         // Regular expression for parsing path segments.  Handles various coordinate formats
@@ -446,19 +480,18 @@ private:
                 ++coordIt;
             }
 
-            append_segments(type, coords, _origin, pen, dir);
+            append_segments(type, coords, pen, dir);
             _to = pen;
 
             ++it;
         }
-
-        inclusive_scan(execution::par_unseq, _lengths.begin(), _lengths.end(), _lengths.begin());
     }
 
 
     vector<unique_ptr<Drawable>> _segments;
     vector<double> _lengths;
-    Point _origin;
+    vector<double> _length_index;
+    Point _from, _to;
 };
 
 

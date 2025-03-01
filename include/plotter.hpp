@@ -9,11 +9,129 @@
 
 #include "parser.hpp"
 #include "point.hpp"
+#include "cover.hpp"
 #include "shape.hpp"
 #include "stroke.hpp"
 
 using std::vector;
 using std::for_each;
+
+
+/* Plotter class
+
+    Requires the Drawable to accept values [-epsilon, 1]
+    for estimation of derivative at the endpoint
+
+*/
+class Plotter 
+{
+public:
+    double draw_speed; // length/time
+    size_t sample_count;
+    double epsilon; 
+    pair<double,double> parameter_interval;
+ 
+    Plotter() :
+        draw_speed(1), sample_count(100), 
+        epsilon(1e-5), parameter_interval(0,1)
+    { }
+
+    Stroke plot(Drawable const & drawing) 
+    {
+        using std::execution::par_unseq;
+
+        vector<Event> points(sample_count);
+
+        double len = drawing.length(0, 1);
+
+        // first stab: just plot the points
+        for_each(par_unseq, 
+                 points.begin(), points.end(), 
+        [&](Event & e) 
+        {
+            size_t gid = &e - &points[0];
+
+            // t \in [0,1]
+            double t = (double)gid / (double)(sample_count - 1);
+            t = parameter_interval.first + t * (parameter_interval.second - parameter_interval.first);
+
+            Point p = drawing.at(t);
+            Point p0 = drawing.at(t - epsilon);
+            
+            // |dp/dt| should equal draw_speed
+            Vector ds(p.x - p0.x, p.y - p0.y);
+            ds = ds.normalized();
+
+            e = Event(p, ds * draw_speed);
+        });
+
+        return Stroke(move(points));
+    }
+
+    Stroke fill(Cover const & cover,                    // a 2D area to be filled
+                Drawable const & pattern)               // a drawable which we will sample over the interval [0,1] to fill
+    {
+        using std::execution::par_unseq;
+
+        vector<Event> events(sample_count);
+        vector<int> is_inside(sample_count);
+        vector<int> scanned(sample_count);
+        
+        for_each(/* par_unseq, */
+                    events.begin(), events.end(),
+        [&](Event & p) 
+        {
+            size_t gid = &p - &events[0];
+            double t = (double)gid / (double)(sample_count - 1);
+
+            bool moved = false;
+            if(gid > 0) 
+            {
+                auto l = pattern.last_move_between((double)(gid - 1) / (double)(sample_count - 1), t);
+                if(get<0>(l)) 
+                    t = get<1>(l);
+            }
+
+            p = pattern.at(t);
+            is_inside[gid] = cover.is_inside(p) ? 1 : 0;
+        });
+
+        inclusive_scan(par_unseq, 
+                    is_inside.begin(), is_inside.end(), 
+                    scanned.begin());
+                        
+        int last = 0;
+        bool b = true;
+        size_t count = 0;
+        size_t total = scanned.back();
+
+        vector<Event> inside(total);
+
+        // pack the events
+        for_each(/* par_unseq, */
+                events.begin(), events.end(),
+        [&](Event & e) 
+        {
+            size_t gid = distance(&events[0], &e);
+
+            // is this event inside our cover?
+            if(!is_inside[gid])
+                return; // nope
+
+            // use our scanned vector to calculate the index 
+            // of this inside event in the final vector
+            Event * pe = &inside[scanned[gid]-1];
+            *pe = e;
+            
+            // are we the first event
+            if(gid == 0 || !is_inside[gid-1])
+                make_move_to(*pe); // turn this into a move_to
+
+        });
+        
+        return Stroke(move(inside)); // turn this into a stroke and return it
+    }
+};
 
 template<typename Iter>
 struct PairwiseCircularAdapter
@@ -127,36 +245,6 @@ struct PairwiseCircularAdapter
 };
 
 
-struct Context 
-{
-    double draw_speed; // length/time
-    size_t maximum_points;
-};
-
-Shape plot(Drawable const & drawing, Context ctx = { .draw_speed = 1., .maximum_points = 100 }) 
-{
-    using std::execution::par_unseq;
-
-    vector<Event> points(ctx.maximum_points);
-
-    double len = drawing.length();
-
-    // first stab: just plot the points
-    for_each(par_unseq, points.begin(), points.end(), [&](Event & e) {
-        size_t gid = &e - &points[0];
-
-        // t \in [0,1]
-        double t = (double)gid / (double)(ctx.maximum_points - 1);
-
-        Point p = drawing.at(t);
-
-        e = Event(p, t * len / ctx.draw_speed);
-
-    });
-
-    return Shape(move(points));
-}
-
 template<typename T>
 class Grid
 {
@@ -253,67 +341,6 @@ public:
 
 
 
-class StrokeFiller 
-{
-private:
-public:
-    StrokeFiller() {}
-
-public:
-    vector<Stroke> fill(Shape const & shape, Drawable const & pattern, size_t point_count = 10000)
-    {
-        using std::execution::par_unseq;
-
-        vector<Point> points(point_count);
-        vector<int> is_inside(point_count);
-        vector<int> scanned(point_count);
-        
-        for_each(/* par_unseq, */
-                 points.begin(), points.end(),
-        [&](Point & p) {
-            size_t gid = &p - &points[0];
-            double t = (double)gid / (double)(point_count - 1);
-
-            p = pattern.at(t);
-            is_inside[gid] = shape.is_inside(p) ? 1 : 0;
-        });
-
-        inclusive_scan(par_unseq, 
-                       is_inside.begin(), is_inside.end(), 
-                       scanned.begin());
-                       
-        vector<Stroke> ret;
-        //TODO: make this parallel
-        int last = 0;
-        bool b = true;
-        size_t count = 0;
-        size_t total = scanned.back();
-
-        for(size_t i = 0; i < point_count; i++)
-        {
-            if(scanned[i] == last) {
-                b = true;
-                continue;
-            }
-
-            ++count;
-            double t = (double)count / (double)(total - 1);
-            Event e(points[i], t);
-
-            if(b) 
-            {
-                ret.push_back(Stroke());
-                b = false;
-            }
-            else
-                ret.back() += e;
-
-            last = scanned[i];
-        }
-
-        return ret;
-    }
-};
 
 
 

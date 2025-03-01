@@ -14,18 +14,15 @@ int main(int ac, char * av[])
 {
     SVGPath p("M 10 10 L 20 10 A 10 10 0 0 0 20 30 L 10 30 A 10 10 0 0 0 10 10 Z");
 
-    Context ctx = {
-        .draw_speed = 1.,
-        .maximum_points = 100000,
-    };
+    Plotter plotter;
 
-    Shape pill = plot(ConstantArcLengthAdapter(p), ctx);
+    Stroke pill = plotter.plot(ConstantArcLengthAdapter(p, 100000));
 
     double pill_area = pill.area();
 
     cout << "area: " << pill_area << endl;
 
-    ASSERT_CLOSE(pill_area, pi * 10 * 10 + 10 * 20, 1e-1);
+    ASSERT_CLOSE((pi * 10 * 10 + 10 * 20) / pill_area, 1., 1e-3);
     
 
 

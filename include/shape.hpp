@@ -2,7 +2,9 @@
 #define __SHAPE_HPP__
 
 #include "bounding_box.hpp"
+#include "path.hpp"
 #include "point.hpp"
+#include "cover.hpp"
 
 #include <vector>
 #include <utility>
@@ -11,46 +13,12 @@ using std::vector;
 using std::swap;
 
 
-bool segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin)
-{
-    p0 -= ray_origin;
-    p1 -= ray_origin;
 
-    // ensure p0 has a lower y value than p1
-    if(p0.y > p1.y) 
-        swap(p0, p1);
 
-    // is our ray in the right y-range?
-    if(p0.y > 0 || p1.y < 0)
-        return false;
-    
-    // are they parallel?
-    if(p0.y == p1.y) {
-        if(p0.x > 0 && p1.x > 0)
-            return true;
-        
-        if(p0.x > 0)
-            return true;
 
-        if(p1.x > 0)
-            return true;
-            
-        return false;
-    }
+/*
 
-    // calculate x-intercept
-    double t = -p0.y / (p1.y - p0.y);
-
-    if(t < 0. || t > 1.)
-        return false;
-
-    // is this to the right of our point?
-    if(p0.x + t * (p1.x - p0.x) < 0)
-        return false;
-
-    return true;
-}
-
+//  deprecated in favor of Cover
 
 struct Shape
 {
@@ -65,6 +33,23 @@ struct Shape
     double perimeter() const
     {
         return ::path_length(_outline.begin(), _outline.end(), true);
+    }
+
+    Path outline() const
+    {
+        using std::execution::par_unseq;
+
+        vector<Point> p(_outline.size() + 1);
+
+        transform(par_unseq, 
+                  _outline.begin(), _outline.end(), 
+                  p.begin(), 
+        [](Event const & e) -> Point {
+            return static_cast<Point>(e);
+        });
+        p[_outline.size()] = p[0];
+
+        return(Path(move(p)));
     }
 
     using const_iterator = vector<Event>::const_iterator;
@@ -109,9 +94,13 @@ struct Shape
         
         Event last = _outline.back();
         int count = 0;
+        bool intersect;
+        double _;
         for(Event const & e : _outline)
         {
-            if(segment_intersects_horizontal_ray(last, e, p))
+            tie(intersect, _) = segment_intersects_horizontal_ray(last, e, p);
+
+            if(intersect)
                 count++;
 
             last = e;
@@ -122,7 +111,7 @@ struct Shape
         // PairwiseCircularAdapter<const_iterator> edges(begin(), end());
         // vector<unsigned char> intersections(edges.size());
 
-        // transform(/*par_unseq, */
+        // transform(par_unseq,
         //          edges.begin(), edges.end(), 
         //          intersections.begin(),
         // [&](pair<Point const &, Point const &> edge) -> unsigned char {
@@ -141,6 +130,8 @@ struct Shape
         // return odd == 1;
     }
 };
+
+*/
 
 
 

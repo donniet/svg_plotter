@@ -26,17 +26,18 @@ struct ConstantArcLengthAdapter :
     size_t _maximum_points;
     pair<double,double> _interval;
     vector<double> _length_index;
-    bool closed;
 
     void init()
     {
         // first sample maximum_points evenly
-        vector<Point> sample(_maximum_points + 1);
+        vector<Point> sample(_maximum_points);
 
-        for_each(par_unseq, sample.begin(), sample.end(), [&](Point & p) {
-            size_t gid = &p - &sample[0];
+        for_each(par_unseq, 
+                 sample.begin(), sample.end(), 
+        [&](Point & p) {
+            size_t gid = distance(&sample[0], &p);
 
-            double t = (double)gid / (double)_maximum_points;
+            double t = (double)gid / ((double)_maximum_points - 1);
             t = _interval.first + t * (_interval.second - _interval.first);
 
             p = _d.at(t);
@@ -45,61 +46,85 @@ struct ConstantArcLengthAdapter :
         // now measure the distance from one point to the next
         _length_index.resize(_maximum_points);
 
-        for_each(par_unseq, _length_index.begin(), _length_index.end(), [&](double & l) {
-            size_t gid = &l - &_length_index[0];
-            size_t next = gid + 1;
+        for_each(par_unseq, 
+                 _length_index.begin(), _length_index.end(), 
+        [&](double & l) {
+            size_t gid = distance(&_length_index[0], &l);
+            
+            if(gid == 0) 
+            {
+                l = 0;
+                return;
+            }
 
             // multiply by maximum_points to turn this into a normalized number indepdendent of the number of points
-            _length_index[gid] = (sample[gid] - sample[next]).norm();
+            l = (sample[gid] - sample[gid-1]).norm();
         });
 
-        if(closed)
-            _length_index.push_back((sample.front() - sample.back()).norm());
-
         // sum it up to make it ascending
-        inclusive_scan(par_unseq, _length_index.begin(), _length_index.end(), _length_index.begin());
+        inclusive_scan(par_unseq, 
+                       _length_index.begin(), _length_index.end(), 
+                       _length_index.begin());
 
     }
 
     ConstantArcLengthAdapter(Drawable const & d, size_t maximum_points = 1e5, pair<double,double> interval = {0,1}) : 
-        _d(d), _maximum_points(maximum_points), _interval(interval), closed(false)
+        _d(d), _maximum_points(maximum_points), _interval(interval)
     { 
         init();
     }
 
-    virtual double length() const override
+    virtual double length(double t0, double t1) const override
     {
-        return _length_index.back();
+        if(t0 < t1)
+        {
+            t0 = max(_interval.first, t0);
+            t1 = min(_interval.second, t1);
+        }
+        else
+        {
+            t1 = max(_interval.first, t1);
+            t0 = min(_interval.second, t0);
+        }
+        // ds/dt is a constant
+        double u = (t1 - t0) / (_interval.second - _interval.first);
+
+        return u * _length_index.back();
     }
 
-    virtual Point at(double t) const override
+    virtual Event at(double t) const override
     {
-        // first convert t such that it ranges from 0 to 1.
+        if(t <= _interval.first)
+            return _d.at(_interval.first);
+        
+        if(t >= _interval.second)
+            return _d.at(_interval.second);
+
+        // first convert t such that it ranges from (0 to 1) exclusive.
         double s = (t - _interval.first) / (_interval.second - _interval.first);
 
         // now determine how much of the length should have rolled out by now
-        s *= length();
+        s *= _length_index.back();
 
         // find the lower_bound of t in the length index
-        auto i = upper_bound(_length_index.begin(), _length_index.end(), s);
+        auto i = lower_bound(_length_index.begin(), _length_index.end(), s);
+        size_t gid = distance(_length_index.begin(), i);
 
-        // get the index to the lower_bound and calculate the interpolation factor ds
-        size_t i0 = _maximum_points;
-        double ds = s;
+        // gid must be > 0 since _length_index[0] === 0
+        // calculate the remaining arclength after sample[gid]
+        s -= _length_index[gid-1];
 
-        if(i != _length_index.end())
-        {
-            i0 = distance(&_length_index[0], &*i);
-            ds -= *i;
-        }
-        else
-            ds -= length();
+        // get the parameter u of the measured segment *i
+        double u0 = (double)gid / ((double)_maximum_points - 1);
+        u0 = _interval.first + u0 * (_interval.second - _interval.first);
 
-        // the + 1 here is due to the length_index[i] measuring the length from i to i+1
-        double u = (double)(i0 + 1) / (double)_maximum_points;
-        u = _interval.first + u * (_interval.second - _interval.first);
+        // get the event corresponding to gid
+        Event e = _d.at(u0);
 
-        return _d.at(u + ds);
+        // use the derivative here to estimate the proper parameter
+        double ds_dt = e.dp_dt().norm();
+
+        return _d.at(u0 + s / ds_dt);
     }
 };
 

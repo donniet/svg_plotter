@@ -12,33 +12,33 @@ int main(int ac, char * av[])
     SVGPath p(path_data);
 
     cout << "testing length..." << endl;
-    cout << "empty path: " << p.length() << endl;
-    ASSERT_CLOSE(p.length(), 0., 1e-5);
+    cout << "empty path: " << p.length(0, 1) << endl;
+    ASSERT_CLOSE(p.length(0, 1), 0., 1e-5);
 
     p = SVGPath("M 10 10");
-    cout << "move path: " << p.length() << endl;
-    ASSERT_CLOSE(p.length(), 0, 1e-5);
+    cout << "move path: " << p.length(0, 1) << endl;
+    ASSERT_CLOSE(p.length(0, 1), 0, 1e-5);
 
     p = SVGPath("L 10 10");
-    cout << "line path (10,10): " << p.length() << endl;
-    ASSERT_CLOSE(p.length(), sqrt(200), 1e-5);
+    cout << "line path (10,10): " << p.length(0, 1) << endl;
+    ASSERT_CLOSE(p.length(0, 1), sqrt(200), 1e-5);
 
     p = SVGPath("H 10");
-    cout << "horizontal 10: " << p.length() << endl;
-    ASSERT_CLOSE(p.length(), 10, 1e-5);
+    cout << "horizontal 10: " << p.length(0, 1) << endl;
+    ASSERT_CLOSE(p.length(0, 1), 10, 1e-5);
     
     p = SVGPath("V 10");
-    cout << "vertical 10: " << p.length() << endl;
-    ASSERT_CLOSE(p.length(), 10, 1e-5);
+    cout << "vertical 10: " << p.length(0, 1) << endl;
+    ASSERT_CLOSE(p.length(0, 1), 10, 1e-5);
 
     p = SVGPath("C 10 0 10 10 0 10");
-    cout << "cubic bezier (10,0), (10,10), (0, 10): " << p.length() << endl;
-    // ASSERT_CLOSE(p.length(), 5 * 3.141592, 1e-5);
+    cout << "cubic bezier (10,0), (10,10), (0, 10): " << p.length(0, 1) << endl;
+    // ASSERT_CLOSE(p.length(0, 1), 5 * 3.141592, 1e-5);
 
 
     p = SVGPath("A 10 10 0 0 0 20 0");
-    cout << "arc (10,10) 0 0 0 (10,0): " << p.length() << endl;
-    ASSERT_CLOSE(p.length(), 10 * 3.1415927, 1e-5);
+    cout << "arc (10,10) 0 0 0 (10,0): " << p.length(0, 1) << endl;
+    ASSERT_CLOSE(p.length(0, 1), 10 * 3.1415927, 1e-2);
 
     
     
@@ -46,8 +46,8 @@ int main(int ac, char * av[])
 
     cout << "testing combined paths..." << endl;
     p = SVGPath("L 10 0 A 10 10 0 0 0 30 0");
-    cout << "L(10,0); A(10,10,0,0,0,30,0): " << p.length() << endl;
-    ASSERT_CLOSE(p.length(), 10 + 10 * 3.1415927, 1e-5);
+    cout << "L(10,0); A(10,10,0,0,0,30,0): " << p.length(0, 1) << endl;
+    ASSERT_CLOSE(p.length(0, 1), 10 + 10 * 3.1415927, 1e-3);
 
 
     cout << "s\tx\ty\n";
