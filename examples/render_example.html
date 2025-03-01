@@ -1,6 +1,6 @@
 <html>
     <head>
-        <script src="fill_spiral.js"></script>
+        <script src="fill_lines.js"></script>
         <script type="text/javascript">
 
 function draw_pattern(pattern, ctx)
@@ -8,13 +8,22 @@ function draw_pattern(pattern, ctx)
     let total_time = 500;
     let start;
 
+    let speed = 50; // px/sec
+    let zoom = 100;
+
     function draw_segments(stroke, t)
     {    
-        if(!("last_index" in stroke))
+        if(!("last_index" in stroke)) {
             stroke.last_index = 0;
+            stroke.total_time = 0;
+        }
 
-        for(; stroke.last_index < stroke.length && stroke[stroke.last_index]["t"] < t; stroke.last_index++) 
+        for(; stroke.last_index < stroke.length && stroke.total_time < t; stroke.last_index++) 
         {
+            let dt = stroke[stroke.last_index]["t"];
+
+            stroke.total_time += dt / speed;
+
             let p0;
             if(stroke.last_index == 0)
                 p0 = stroke[stroke.length - 1];
@@ -23,8 +32,13 @@ function draw_pattern(pattern, ctx)
 
             let p1 = stroke[stroke.last_index];
 
-            ctx.moveTo(p0.x, p0.y);
-            ctx.lineTo(p1.x, p1.y);
+            if(dt == 0) {
+                ctx.moveTo(p1.x * zoom, p1.y * zoom);
+                continue;
+            }
+
+            ctx.moveTo(p0.x * zoom, p0.y * zoom);
+            ctx.lineTo(p1.x * zoom, p1.y * zoom);
         }
     }
 
@@ -36,19 +50,15 @@ function draw_pattern(pattern, ctx)
         const t = elapsed / total_time;
 
 
+        // ctx.beginPath();
+        // draw_segments(pattern["boundary"], t);
+        // ctx.stroke();
+
+
         ctx.beginPath();
-        draw_segments(pattern["boundary"], t);
+        draw_segments(pattern["fill"], t);
         ctx.stroke();
-
-
-        for(let i = 0; i < pattern["fill"].length; i++)
-        {
-            let s = pattern["fill"][i];
-
-            ctx.beginPath();
-            draw_segments(s["stroke"], t);
-            ctx.stroke();
-        }
+    
 
         if(elapsed < total_time)
             requestAnimationFrame(animate);

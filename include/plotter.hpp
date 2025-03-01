@@ -84,15 +84,12 @@ public:
             size_t gid = &p - &events[0];
             double t = (double)gid / (double)(sample_count - 1);
 
-            bool moved = false;
-            if(gid > 0) 
+            p = pattern.at(t);
+            if(gid > 0 && pattern.last_move_between((double)(gid - 1) / (double)(sample_count - 1), t).first)
             {
-                auto l = pattern.last_move_between((double)(gid - 1) / (double)(sample_count - 1), t);
-                if(get<0>(l)) 
-                    t = get<1>(l);
+                p.dt = 0;
             }
 
-            p = pattern.at(t);
             is_inside[gid] = cover.is_inside(p) ? 1 : 0;
         });
 
