@@ -21,6 +21,7 @@ int main(int ac, char * av[])
 
 
     BoundingBox bbox(0, 0, 10, 10);
+    bbox.margin() = -1e-2;
     // Spiral pattern(BoundingBox(Point(20,10), Point(40,30)), Point(30,20), 5. / 2 / pi);
     Lines pattern(bbox, 1., Vector(1,0));
     auto strokes = plotter.fill(bbox, pattern);

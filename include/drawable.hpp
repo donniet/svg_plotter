@@ -48,7 +48,7 @@ public:
             double tp = (t0 + t1) / 2.;
 
             if(abs(tp - t0) <= numeric_limits<double>::epsilon())
-                return { true, t1 };
+                return { true, tp };
             
             if(length(tp, t1) < (at(t1) - at(tp)).norm())
             {
