@@ -3,6 +3,7 @@
 #include "stroke_mesh.hpp"
 #include "output/stl.hpp"
 #include "output/obj.hpp"
+#include "output/json_mesh.hpp"
 
 #include <iostream>
 #include <format>
@@ -21,7 +22,7 @@ int main(int ac, char * av[])
 
     auto mesh = stroker(stroke);
 
-    std::cout << OBJOutput(mesh.first);
+    std::cout << JSONMeshOutput(mesh.first);
 
     return 0;
 }

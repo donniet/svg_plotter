@@ -67,7 +67,7 @@ public:
             });
         };
 
-        auto build_footer = [&vertices, &uv, r, s](Point const & c, Vector ds)
+        auto build_footer = [&vertices, &uv, &r, &s](Point const & c, Vector ds)
         {
             ds = ds.normalized();
             Vector rad(-ds.y, ds.x);

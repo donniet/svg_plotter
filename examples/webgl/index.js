@@ -110,6 +110,76 @@ const test_stroke = [
   { "x":10, "y":9, "t": 0},
   ];
 
+const mesh_data = {
+  "draw_mode": "triangle_strip",
+  "vertex_count": 8,
+  "buffer": [
+          -0.25, -0.25, -0.25, -0.25,
+          -0.25, 0.25, -0.25, 0.25,
+          0, -0.25, 0, -0.25,
+          0, 0.25, 0, 0.25,
+          1, -0.25, 1, -0.25,
+          1, 0.25, 1, 0.25,
+          1.25, -0.25, 1.25, -0.25,
+          1.25, 0.25, 1.25, 0.25,
+  ]
+};
+
+function Mesh(gl, mesh_data)
+{
+  this.gl = gl;
+  this.mesh_data = mesh_data;
+  this.vao = gl.createVertexArray();
+  gl.bindVertexArray(this.vao);
+
+  this.buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.buf);
+
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(
+    mesh_data.buffer
+  ), gl.STATIC_DRAW);
+}
+Mesh.prototype.enable_position = function(position_location)
+{
+  this.gl.vertexAttribPointer(
+    position_location,
+    2,
+    this.gl.FLOAT,
+    false,
+    4 * 4, // stride of 4 to get to the next position
+    0
+  );
+  this.gl.enableVertexAttribArray(position_location);
+}
+
+Mesh.prototype.enable_uv = function(uv_location)
+{
+  this.gl.vertexAttribPointer(
+    uv_location,
+    2,
+    this.gl.FLOAT,
+    false,
+    4 * 4,      // stride of 4 to get to the next position
+    2 * 4  // start offset by 2 to get the uv coordinates
+  );
+  this.gl.enableVertexAttribArray(uv_location);
+}
+Mesh.prototype.bind_vertex_array = function()
+{
+  this.gl.bindVertexArray(this.vao);
+}
+// TODO: use UV coords and add a length parameter here
+Mesh.prototype.draw = function(/* length */)
+{
+  this.bind_vertex_array();
+  this.gl.drawArrays(
+    this.gl.TRIANGLE_STRIP,
+    0,
+    this.mesh_data.vertex_count
+  );
+}
+
+
 async function fetch_uri(uri)
 {
   const req = new Request(uri);
@@ -129,124 +199,62 @@ async function collect_shaders(vertex_shader_path, fragment_shader_path)
   return [vs, fs];
 }
 
-function normalize_stroke(stroke, animation_bounds, scale = 1.)
+async function main_mesh()
 {
-  let s = stroke.map((p) => {
-    return { 
-      x: p.x * scale / animation_bounds.x, 
-      y: p.y * scale / animation_bounds.y, 
-      t: p.t,
-      is_move: p.t == 0
-    };
-  });
-
-  let ct = 0.;
-  for(let i = 0; i < s.length; i++)
-  {
-    ct += s[i].t;
-    s[i].t = ct;
+  const canvas = document.querySelector("#canvas");
+  const gl = canvas.getContext("webgl2");
+  if (!gl) {
+    return;
   }
-  for(let i = 0; i < s.length; i++)
-    s[i].t = s[i].t / ct;
-  
-  return s;
-}
 
-function scale_stroke(stroke, scale)
-{
-  return stroke.map((p) => {
-    return {
-      x: p.x * scale,
-      y: p.y * scale,
-      t: p.t
-    };
-  });
-}
+  let vs, fs;
 
-function render_stroke_position(ctx, stroke, brush_diameter, animation_bounds)
-{
-  let normalized = normalize_stroke(stroke, animation_bounds);
+  [vs, fs] = await collect_shaders('mesh-test.vert', 'mesh-test.frag');
 
-  let pen = {x: 0, y: 0, t: 0};
-  let time = 0.;
 
-  ctx.lineWidth = brush_diameter;
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
+  // setup GLSL program
+  const program = webglUtils.createProgramFromSources(gl, [vs, fs]);
 
-  ctx.globalCompositionOperation = "destination-out";
-  
-  for(let i = 1; i < stroke.length; i++)
-  {
-    let n = normalized[i];
-    let s = stroke[i];
+  let m = new Mesh(gl, mesh_data);
 
-    if(n.is_move)
-      continue;
+  let view = new Float32Array([
+    0.25, 0.0, 0.5,
+    0.0, 0.25, 0.5,
+    0.0, 0.0, 1.0
+  ]);
 
-    let n0 = normalized[i-1];
-    let s0 = stroke[i-1];
 
-    let ds = { x: s.x - s0.x, y: s.y - s0.y };
-    let l = Math.sqrt(ds.x * ds.x + ds.y * ds.y);
-    ds.x /= l;
-    ds.y /= l;
-    ds.x *= brush_diameter/2;
-    ds.y *= brush_diameter/2;
+  const view_location = gl.getUniformLocation(program, "view");
+  const position_location = gl.getAttribLocation(program, "a_position");
+  const uv_location = gl.getAttribLocation(program, "a_uv");
 
-    let grad = ctx.createLinearGradient(s0.x - ds.x, s0.y - ds.y, s.x + ds.x, s.y + ds.y);
-    grad.addColorStop(0, `rgba(${n0.x * 255}, ${n0.y * 255}, 0, ${n0.t})`);
-    grad.addColorStop(1, `rgba(${ n.x * 255}, ${ n.y * 255}, 0, ${ n.t})`);
-  
-    ctx.strokeStyle = grad;
-    // ctx.strokeStyle = `rgb(${n.x * 256}, ${n.y * 256}, 0)`;
-    ctx.beginPath();
-    ctx.moveTo(s0.x, s0.y);
-    ctx.lineTo(s.x, s.y);
-    ctx.stroke();
+  m.enable_position(position_location);
+  m.enable_uv(uv_location);
+
+  function render(time) {
+    time *= 0.001;  // convert to seconds
+
+    webglUtils.resizeCanvasToDisplaySize(gl.canvas);
+
+    // Tell WebGL how to convert from clip space to pixels
+    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+    // Tell it to use our program (pair of shaders)
+    gl.useProgram(program);
+
+    gl.uniformMatrix3fv(view_location, false, view);
+
+    m.draw();
+
+    requestAnimationFrame(render);
   }
-}
+  requestAnimationFrame(render);
 
-// returns two sampler objects, stroke_position and stroke_direction
-function render_stroke_samplers(stroke, brush_diameter, animation_bounds)
-{
-  return with_canvas(animation_bounds, 
-  (canvas) => {
-    const ctx = canvas.getContext("2d");
-
-    render_stroke_position(ctx, stroke, brush_diameter, animation_bounds);
-  });
-}
-
-function test_rendering()
-{
-  const canvas = document.createElement("canvas");
-  canvas.width = 100;
-  canvas.height = 100;
-
-  const ctx = canvas.getContext("2d");
-
-  let s = scale_stroke(test_stroke, 10);
-
-  render_stroke_position(ctx, s, 7, {x: 100, y: 100, t: 1000 /* ms */ });
-
-  canvas.toBlob((blob) => {
-    const newImg = document.createElement("img");
-    const url = URL.createObjectURL(blob);
-  
-    newImg.onload = () => {
-      // no longer need to read the blob so it's revoked
-      URL.revokeObjectURL(url);
-    };
-  
-    newImg.src = url;
-    document.body.appendChild(newImg);
-  });
 }
 
 async function main(vertex_shader_path, fragment_shader_path) {
-  test_rendering();
-  return;
+  // test_rendering();
+  // return;
 
   // Get A WebGL context
   /** @type {HTMLCanvasElement} */
@@ -357,4 +365,6 @@ async function main(vertex_shader_path, fragment_shader_path) {
   requestAnimationFrame(render);
 }
 
-main('brush-strokes.vert', 'brush-strokes.frag');
+// main('brush-strokes.vert', 'brush-strokes.frag');
+
+main_mesh();
