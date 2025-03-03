@@ -8,6 +8,7 @@
 
 using std::vector;
 using std::move;
+using std::distance;
 
 struct Stroke
 {
@@ -107,6 +108,20 @@ struct Stroke
     using const_iterator = vector<Event>::const_iterator;
     // using iterator = vector<Event>::iterator;
     using value_type = Event;
+
+    double arclength(const_iterator from, const_iterator to)
+    {
+        throw std::logic_error("unimplemented");
+        
+        double fin;
+        if(to == end())
+            fin = _length_index.back();
+        else 
+        {
+        //    size_t e = distance(_events.begin(), to);
+            
+        }
+    }
 
     const_iterator begin() const { return _events.begin(); }
     const_iterator end() const { return _events.end(); }

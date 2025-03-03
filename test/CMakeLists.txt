@@ -13,3 +13,6 @@ add_test(plotter test_plotter)
 
 add_executable(test_adapters test_adapters.cpp)
 add_test(adapters test_adapters)
+
+add_executable(test_mesh test_mesh.cpp)
+add_test(mesh test_mesh)

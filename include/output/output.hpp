@@ -11,6 +11,7 @@ using std::ostream;
 
 struct Outputer
 {
+    // perhaps remove the const?
     virtual void print(ostream & os) const = 0;
 };
 
