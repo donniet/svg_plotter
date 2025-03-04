@@ -113,67 +113,135 @@ const test_stroke = [
 const mesh_data = {
   "draw_mode": "triangle_strip",
   "vertex_count": 8,
-  "buffer": [
-          -0.25, -0.25, -0.25, -0.25,
-          -0.25, 0.25, -0.25, 0.25,
-          0, -0.25, 0, -0.25,
-          0, 0.25, 0, 0.25,
-          1, -0.25, 1, -0.25,
-          1, 0.25, 1, 0.25,
-          1.25, -0.25, 1.25, -0.25,
-          1.25, 0.25, 1.25, 0.25,
-  ]
+  "attributes": {
+    "a_position": {
+      "size": 2,
+      "stride": 7,
+      "offset": 0
+    },
+    "a_uv": {
+      "size": 2,
+      "stride": 7,
+      "offset": 2
+    },
+    "a_arclength": {
+      "size": 1,
+      "stride": 7,
+      "offset": 4,
+    },
+    "a_brush": {
+      "size": 2,
+      "stride": 7,
+      "offset": 5,
+    }
+  },
+  "buffer_data": [
+//   p.x    p.y   uv.x   uv.y    s    b.x  b.y
+    -0.25, -0.25, -0.5,  -0.5,   0.,  0.,  0.,
+    -0.25,  0.25, -0.5,   0.5,   0.,  0.,  0.,
+      0   , -0.25,  0  , -0.5,   0.,  0.,  0., 
+      0   ,  0.25,  0  ,  0.5,   0.,  0.,  0., 
+      1   ,  0.  ,  1  , -0.5,   1.,  1.,  0.25,
+      1   ,  0.5 ,  1  ,  0.5,   1.,  1.,  0.25,
+      1.25,  0.  ,  1.5, -0.5,   1.,  1.,  0.25,
+      1.25,  0.5 ,  1.5,  0.5,   1.,  1.,  0.25
+  ],
+  "stroke_range": [0, 1],
+  "brush_color": [1, 0, 0, 1],
 };
 
-function Mesh(gl, mesh_data)
+function parse_draw_mode(gl, draw_mode)
+{
+  return gl[draw_mode.toUpperCase()];
+}
+
+function Stroke(gl, mesh_data, mesh_program)
 {
   this.gl = gl;
   this.mesh_data = mesh_data;
+  this.mesh_program = mesh_program;
+  this.float_bytes = 4; // 32 bit floats
+
+  this.view_location = gl.getUniformLocation(this.mesh_program, "view");
+  this.stroke_range_location = gl.getUniformLocation(this.mesh_program, "stroke_range");
+  this.brush_color_location = gl.getUniformLocation(this.mesh_program, "brush_color");
+
+  this.draw_mode = parse_draw_mode(this.gl, this.mesh_data.draw_mode);
+
   this.vao = gl.createVertexArray();
   gl.bindVertexArray(this.vao);
 
-  this.buf = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, this.buf);
+  this.data = this.read_attribute_data();
+  this.attr = this.read_attributes();
 
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(
-    mesh_data.buffer
-  ), gl.STATIC_DRAW);
 }
-Mesh.prototype.enable_position = function(position_location)
+Stroke.prototype.read_attribute_data = function()
 {
-  this.gl.vertexAttribPointer(
-    position_location,
-    2,
-    this.gl.FLOAT,
-    false,
-    4 * 4, // stride of 4 to get to the next position
-    0
+  let buf = this.gl.createBuffer();
+  this.gl.bindBuffer(this.gl.ARRAY_BUFFER, buf);
+  let buffer_array = new Float32Array(
+    this.mesh_data.buffer_data
   );
-  this.gl.enableVertexAttribArray(position_location);
+  this.gl.bufferData(this.gl.ARRAY_BUFFER, buffer_array, this.gl.STATIC_DRAW);
+
+  return {
+    buffer: buf,
+    buffer_array: buffer_array,
+  };
+}
+Stroke.prototype.read_attributes = function(no_enable)
+{
+  let ret = [];
+  let attribute_names = Object.getOwnPropertyNames(this.mesh_data.attributes);
+  for(let i = 0; i < attribute_names.length; i++)
+  {
+    let k = attribute_names[i];
+    let a = this.mesh_data.attributes[k];
+
+    let loc = this.gl.getAttribLocation(this.mesh_program, k);
+    let stride = a.stride * this.float_bytes;
+    let offset = a.offset * this.float_bytes;
+    
+    let enabler = function() 
+    {
+      this.gl.vertexAttribPointer(loc, a.size, this.gl.FLOAT, false, stride, offset);
+      this.gl.enableVertexAttribArray(loc);
+    }.bind(this);
+
+    if(!no_enable)
+      enabler();
+
+    ret.push({
+      name: k,
+      size: a.size,
+      stride: stride,
+      offset: offset,
+      location: loc,
+      enable: enabler,
+    });
+  }
+  return ret;
 }
 
-Mesh.prototype.enable_uv = function(uv_location)
-{
-  this.gl.vertexAttribPointer(
-    uv_location,
-    2,
-    this.gl.FLOAT,
-    false,
-    4 * 4,      // stride of 4 to get to the next position
-    2 * 4  // start offset by 2 to get the uv coordinates
-  );
-  this.gl.enableVertexAttribArray(uv_location);
-}
-Mesh.prototype.bind_vertex_array = function()
-{
-  this.gl.bindVertexArray(this.vao);
-}
 // TODO: use UV coords and add a length parameter here
-Mesh.prototype.draw = function(/* length */)
+Stroke.prototype.draw = function(view, range)
 {
-  this.bind_vertex_array();
+
+  // Tell it to use our program (pair of shaders)
+  this.gl.useProgram(this.mesh_program);
+  this.gl.uniformMatrix3fv(this.view_location, false, view);
+  this.gl.uniform4f(this.brush_color_location, this.mesh_data.brush_color[0], 
+                                               this.mesh_data.brush_color[1],
+                                               this.mesh_data.brush_color[2],
+                                               this.mesh_data.brush_color[3]);
+  this.gl.uniform2f(this.stroke_range_location, range[0],
+                                                range[1]);
+  this.gl.uniform2f(this.resolution_location, this.gl.canvas.width, 
+                                              this.gl.canvas.height);
+
+  this.gl.bindVertexArray(this.vao);
   this.gl.drawArrays(
-    this.gl.TRIANGLE_STRIP,
+    this.draw_mode,
     0,
     this.mesh_data.vertex_count
   );
@@ -211,25 +279,16 @@ async function main_mesh()
 
   [vs, fs] = await collect_shaders('mesh-test.vert', 'mesh-test.frag');
 
-
   // setup GLSL program
   const program = webglUtils.createProgramFromSources(gl, [vs, fs]);
 
-  let m = new Mesh(gl, mesh_data);
+  let m = new Stroke(gl, mesh_data, program);
 
   let view = new Float32Array([
-    0.25, 0.0, 0.5,
-    0.0, 0.25, 0.5,
+    0.5, 0.0, -0.25,
+    0.0, 0.5, 0,
     0.0, 0.0, 1.0
   ]);
-
-
-  const view_location = gl.getUniformLocation(program, "view");
-  const position_location = gl.getAttribLocation(program, "a_position");
-  const uv_location = gl.getAttribLocation(program, "a_uv");
-
-  m.enable_position(position_location);
-  m.enable_uv(uv_location);
 
   function render(time) {
     time *= 0.001;  // convert to seconds
@@ -239,12 +298,8 @@ async function main_mesh()
     // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
-    // Tell it to use our program (pair of shaders)
-    gl.useProgram(program);
 
-    gl.uniformMatrix3fv(view_location, false, view);
-
-    m.draw();
+    m.draw(view, [0, Math.min(1., time / 3.)]);
 
     requestAnimationFrame(render);
   }
@@ -352,7 +407,8 @@ async function main(vertex_shader_path, fragment_shader_path) {
     gl.uniform2f(resolutionLocation, gl.canvas.width, gl.canvas.height);
     gl.uniform2f(mouseLocation, mouseX, mouseY);
     gl.uniform1f(timeLocation, time);
-    gl.uniform4f(colorLocation, sin(time), cos(time), -sin(2.3 * time), 1.);
+    // gl.uniform4f(colorLocation, sin(time), cos(time), -sin(2.3 * time), 1.);
+    gl.uniform4f(colorLocation, 0.2, 0.2, 0.2, 1.);
 
     gl.drawArrays(
       gl.TRIANGLES,

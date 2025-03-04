@@ -18,6 +18,16 @@ public:
         os << "{\n"
            << "\t\"draw_mode\": \"triangle_strip\",\n"
            << "\t\"vertex_count\": " << _strip.size() << ",\n"
+           << "\t\"position\": {\n" 
+           << "\t\t\"size\": 2,\n"
+           << "\t\t\"stride\": 4,\n"
+           << "\t\t\"offset\": 0\n"
+           << "\t},\n"
+           << "\t\"uv\": {\n"
+           << "\t\t\"size\": 2,\n"
+           << "\t\t\"stride\": 4,\n"
+           << "\t\t\"offset\": 2\n"
+           << "\t},\n"
            << "\t\"buffer_data\": [\n";
         for(size_t i = 0; i < _strip.size(); ++i)
         {

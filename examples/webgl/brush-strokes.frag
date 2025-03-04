@@ -336,7 +336,7 @@ vec3 colorBrushStrokeLine(vec2 uv,
     lineWidth *= mix(1., .9, smoothstep(tl.y,br.y,uvLine.y));
     
     // wobble it around, humanize
-    float res = min(iResolution.y,iResolution.x);
+    // float res = min(iResolution.y,iResolution.x);
     uvLine.x += (noise01(uvLine * 1.)-0.5) * 0.02;
     uvLine.x += cos(uvLine.y * 3.) * 0.009;// smooth lp wave
     uvLine.x += (noise01(uvLine * 5.)-0.5) * 0.005;// a sort of random waviness like individual strands are moving around
