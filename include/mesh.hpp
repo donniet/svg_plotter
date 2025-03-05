@@ -6,56 +6,41 @@
 #include <vector>
 #include <ranges>
 #include <utility>
+#include <tuple>
 
 using std::vector;
 using std::ranges::views::zip;
 using std::ranges::view;
 using std::ranges::zip_view;
-using std::pair;
+using std::pair, std::tuple;
 
 class TriangleStrip 
 {
 private:
     vector<Point> _vertices;
     vector<Point> _uv;
+    vector<double> _arclength;
+    vector<Point> _brush;
 public:
-    TriangleStrip() { }
+    TriangleStrip();
 
-    TriangleStrip(vector<Point> && vertices, vector<Point> && uv) :
-        _vertices(vertices), _uv(uv) 
-    { }
+    TriangleStrip(vector<Point> && vertices, 
+                  vector<Point> && uv,
+                  vector<double> && arclength,
+                  vector<Point> && brush);
 
-    using value_type = pair<Point,Point>;
-    using collection_type = decltype(zip(_vertices, _uv));
-    using iterator = decltype(zip(_vertices, _uv).begin());
+    using value_type = tuple<Point,Point,double,Point>;
+    using collection_type = decltype(zip(_vertices, _uv, _arclength, _brush));
+    using iterator = decltype(zip(_vertices, _uv, _arclength, _brush).begin());
     
-    size_t size() const
-    {
-        return _vertices.size();
-    }
+    size_t size() const;
+    iterator begin();
+    iterator end();
 
-    iterator begin()
-    {
-        return zip(_vertices, _uv).begin();
-    }
-    iterator end()
-    {
-        return zip(_vertices, _uv).end();
-    }
+    vector<Point> const & vertices() const;
+    vector<Point> const & uv() const;
 
-    vector<Point> const & vertices() const 
-    {
-        return _vertices;
-    }
-    vector<Point> const & uv() const
-    {
-        return _uv;
-    }
-
-    pair<Point,Point> operator[](size_t i) const
-    {
-        return { _vertices[i], _uv[i] };
-    }
+    value_type operator[](size_t i) const;
 };
 
 

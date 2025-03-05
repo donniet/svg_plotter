@@ -6,17 +6,22 @@
 
 #include <vector>
 #include <tuple>
+#include <cmath>
+#include <execution>
 
 using std::vector;
 using std::pair;
+using std::sqrt;
 
 template<typename Iter>
 vector<Point> sample_range(Drawable const & d, Iter begin, Iter end)
 {
+    using std::execution::par_unseq;
+
     size_t n = distance(begin, end);
     vector<Point> samples(n);
 
-    transform(execution::par_unseq, begin, end, samples.begin(), 
+    transform(par_unseq, begin, end, samples.begin(), 
     [&d](double const & t) -> Point 
     {
         return d.at(t);

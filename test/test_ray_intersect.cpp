@@ -1,6 +1,7 @@
 
 #include "point.hpp"
 #include "plotter.hpp"
+#include "utility.hpp"
 
 #include "testing.hpp"
 

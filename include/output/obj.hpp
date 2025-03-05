@@ -30,8 +30,8 @@ public:
 
         for(size_t i = 0; i < _strip.size(); ++i) 
         {
-            Point v = _strip[i].first;
-            Point u = _strip[i].second;
+            Point v = get<0>(_strip[i]);
+            Point u = get<1>(_strip[i]);
 
             os << "v  " << v.x << " " << v.y << " 0\n";
             os << "vt " << u.x << " " << u.y << "\n";

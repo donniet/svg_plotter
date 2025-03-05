@@ -37,7 +37,7 @@ public:
                 // odd  implies counter-clockwise == increasing
                 size_t k = (i % 2 == 0 ? i - j : i - (2 - j));
 
-                Point p = _strip[k].first;
+                Point p = get<0>(_strip[k]);
 
                 os << "\t\tvertex " << p.x << " " << p.y << " 0\n";
             }

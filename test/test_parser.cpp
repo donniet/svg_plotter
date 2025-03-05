@@ -4,6 +4,8 @@
 
 #include "testing.hpp"
 
+#include <cmath>
+
 using namespace std;
 
 int main(int ac, char * av[]) 

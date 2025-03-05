@@ -71,23 +71,26 @@ float noise01(vec2 p)
 
 vec4 brush_stroke_color(vec4 input_color)
 {
-    float d = length(pos - brush);
+    // float d = length(pos - brush);
 
-    float boundary = dtoa(d, 300.);
+    float d = length(uv - vec2(arclength / 50., 0));
+    
+
+    // float boundary = dtoa(d, 0.3);
     float tex = 0.
         + noise01(uv.yx * vec2(min(resolution.y, resolution.x) * 0.2, 1.))
         + noise01(uv.yx * vec2(79., 1.))
         + noise01(uv.yx * vec2(14., 1.))
         ;
 
-    tex *= 0.333 * boundary;
+    tex *= 0.333 * abs(uv.y);
     tex = max(0.008, tex);
 
     float alpha = pow(tex, max(0., d));
 
     const float alpha_boost = 1.09;
 
-    alpha = alpha_boost * max(0., alpha - pow(d, 0.5));
+    alpha = alpha_boost * max(0., alpha - pow(2. * d, 0.5));
     alpha = smoothf(alpha);
 
     

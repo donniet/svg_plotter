@@ -26,13 +26,16 @@ public:
         return (*this)(r.begin(), r.end());
     }
 
+
     // returns the next triangle fan in the stroke ranging from begin to end
     template<typename Iter>
     pair<TriangleStrip, Iter /* next or end */> 
     operator()(Iter const & begin, 
                Iter const & end)
     {
-        if(distance(begin, end) < 1)
+        size_t count = distance(begin, end);
+
+        if(count < 1)
             return { TriangleStrip(), end };
 
         double r = _brush_diameter / 2.;
@@ -40,13 +43,17 @@ public:
         // odd to even cut back across the quad
         vector<Point> vertices;
         vector<Point> uv;
+        vector<double> arclength;
+        vector<Point> brush;
 
         double s = 0;
 
         Event last;
         Vector dp;
 
-        auto build_header = [&vertices, &uv, r](Point const & c, Vector ds)
+        auto build_header = 
+            [&vertices, &uv, &arclength, &brush, &r, &s]
+            (Point const & c, Vector ds)
         {
             ds = ds.normalized();
             Vector rad(-ds.y, ds.x);
@@ -60,14 +67,22 @@ public:
             });
 
             uv.insert(uv.end(), {
-                Point(-r, -r), 
-                Point(-r,  r),
-                Point( 0, -r),
-                Point( 0,  r)
+                Point(-0.5, -0.5), 
+                Point(-0.5,  0.5),
+                Point( 0,   -0.5),
+                Point( 0,    0.5)
+            });
+            arclength.insert(arclength.end(), {
+                s, s, s, s
+            });
+            brush.insert(brush.end(), {
+                c, c, c, c
             });
         };
 
-        auto build_footer = [&vertices, &uv, &r, &s](Point const & c, Vector ds)
+        auto build_footer = 
+            [&vertices, &uv, &arclength, &brush, &r, &s]
+            (Point const & c, Vector ds)
         {
             ds = ds.normalized();
             Vector rad(-ds.y, ds.x);
@@ -78,9 +93,17 @@ public:
                 c + r * ds + r * rad
             });
 
+            double s0 = s / (2. * r);
+
             uv.insert(uv.end(), {
-                Point(s + r, -r), 
-                Point(s + r,  r)
+                Point(s0 + 0.5, -0.5), 
+                Point(s0 + 0.5,  0.5)
+            });
+            arclength.insert(arclength.end(), {
+                s, s
+            });
+            brush.insert(brush.end(), {
+                c, c
             });
         };
 
@@ -121,8 +144,14 @@ public:
                 (Point)*i + r * rad
             });
             uv.insert(uv.end(), {
-                Point(s, -r),
-                Point(s,  r)
+                Point(s / _brush_diameter, -0.5),
+                Point(s / _brush_diameter,  0.5)
+            });
+            arclength.insert(arclength.end(), {
+                s, s
+            });
+            brush.insert(brush.end(), {
+                (Point)*i, (Point)*i
             });
 
             last = *i;
@@ -133,7 +162,7 @@ public:
         build_footer((Point)last, dp);
 
         // and return 
-        return { TriangleStrip(move(vertices), move(uv)), i };
+        return { TriangleStrip(move(vertices), move(uv), move(arclength), move(brush)), i };
 
     }
 };

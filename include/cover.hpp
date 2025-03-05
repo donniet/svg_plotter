@@ -1,32 +1,55 @@
+// cover.hpp (Header file)
+
 #ifndef __COVER_HPP__
 #define __COVER_HPP__
 
-#include "path.hpp"
 #include "point.hpp"
+#include "forward_deps.hpp"
 
 #include <limits>
+#include <utility> // For std::pair
+#include <vector>
 
-using std::numeric_limits;
+class BoundingBox; // forward declaration
 
 class Cover
 {
 private:
     double _margin;
-public:
-    virtual double area() const { return 0.; }
-    virtual double perimeter() const { return 0.; }
-    virtual Path outline() const { return Path{}; }
-    virtual double & margin() { return _margin; }
-    virtual double margin() const { return _margin; }
-    virtual bool is_inside(Point const & p) const { return false; }
-    virtual pair<bool,double> intersect_ray(Point const & origin,
-                                            Vector const & direction) 
-    const
-    {
-        return {false, 0.};
-    }
 
-    Cover() : _margin(-numeric_limits<double>::epsilon()) { }
+public:
+    virtual double area() const;
+    virtual double perimeter() const;
+    virtual std::vector<Point> outline() const;
+    virtual double & margin();
+    virtual double margin() const;
+    virtual bool is_inside(Point const & p) const;
+    virtual std::pair<bool, double> intersect_ray(Point const & origin, Vector const & direction) const;
+
+    Cover();
+    virtual ~Cover() = default; // Add a virtual destructor
 };
 
-#endif
+
+class BoundingBox : 
+    public Cover
+{
+public:
+    Point p0, p1;
+
+public:
+    virtual double area() const override;
+    virtual double perimeter() const override;
+    Vector diagonal() const;
+    std::vector<Point> corners() const;
+    virtual std::vector<Point> outline() const override;
+    virtual bool is_inside(Point const & p) const override;
+    virtual std::pair<bool, double> intersect_ray(Point const & origin, Vector const & ray) const override;
+
+    BoundingBox(Point q0, Point q1);
+    BoundingBox(double x0, double y0, double x1, double y1);
+    BoundingBox();
+};
+
+
+#endif // __COVER_HPP__
