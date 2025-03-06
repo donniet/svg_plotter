@@ -33,7 +33,3 @@ target_link_libraries(bezier point)
 add_library(utility utility.cpp)
 target_link_libraries(utility point)
 
-add_library(svg_plotter svg_plotter.cpp)
-target_link_libraries(svg_plotter 
-    point cover drawable adapters mesh path fills 
-    parser stroke plotter bezier utility)

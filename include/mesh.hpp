@@ -21,6 +21,8 @@ private:
     vector<Point> _uv;
     vector<double> _arclength;
     vector<Point> _brush;
+
+    void adjust_vertices();
 public:
     TriangleStrip();
 
@@ -39,6 +41,8 @@ public:
 
     vector<Point> const & vertices() const;
     vector<Point> const & uv() const;
+
+    bool contains(Point const & p) const;
 
     value_type operator[](size_t i) const;
 };

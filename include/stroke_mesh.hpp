@@ -10,160 +10,134 @@
 using std::enable_if_t, std::is_same_v;
 using std::iterator_traits;
 
+
+#include <algorithm>
+#include <execution>
+#include <iterator>
+#include <utility>
+
+using std::for_each, std::transform, std::inclusive_scan;
+using std::execution::par_unseq;
+using std::distance;
+using std::pair;
+
+enum class LineJoin {
+    Bevel,
+    Miter,
+    Chamfer
+};
+
 class StrokeMesh
 {
 private:
     double _brush_diameter;
+    LineJoin _join;
 
 public:
-    StrokeMesh(double brush_diameter = 1.) :
-        _brush_diameter(brush_diameter)
+    StrokeMesh(double brush_diameter = 1., LineJoin join = LineJoin::Bevel) :
+        _brush_diameter(brush_diameter), _join(join)
     { }
 
-    template<typename Range>
-    auto operator()(Range const & r)
+
+    auto create(vector<Point> const & path, bool is_closed = false)
     {
-        return (*this)(r.begin(), r.end());
-    }
+        std::vector<Point> vertices;
+        std::vector<Vector> tangents;
+        std::vector<Vector> normals;
 
+        // Calculate tangents
+        for (size_t i = 0; i < path.size(); ++i) 
+        {
+            size_t prev, next;
 
-    // returns the next triangle fan in the stroke ranging from begin to end
-    template<typename Iter>
-    pair<TriangleStrip, Iter /* next or end */> 
-    operator()(Iter const & begin, 
-               Iter const & end)
-    {
-        size_t count = distance(begin, end);
+            if(is_closed)
+            {
+                prev = (i + path.size() - 1) % path.size();
+                next = (i + 1) % path.size();
+            }
+            else 
+            {
+                if(i == 0) 
+                    prev = 0;
+                else
+                    prev = i - 1;
 
-        if(count < 1)
-            return { TriangleStrip(), end };
+                if(i == path.size() - 1)
+                    next = i;
+                else 
+                    next = i + 1;
+            }
 
-        double r = _brush_diameter / 2.;
-        // edges that connect an even vertex to an odd one move in the radial direction
-        // odd to even cut back across the quad
-        vector<Point> vertices;
-        vector<Point> uv;
-        vector<double> arclength;
-        vector<Point> brush;
+            Vector v = path[next] - path[prev];
+            double l = v.norm();
+
+            tangents.push_back(v / l);
+            normals.push_back(normal(tangents.back()));
+        }
+    
 
         double s = 0;
+        double r = _brush_diameter * 0.5;
 
-        Event last;
-        Vector dp;
-
-        auto build_header = 
-            [&vertices, &uv, &arclength, &brush, &r, &s]
-            (Point const & c, Vector ds)
+        // Generate offset points and triangle strip vertices
+        for (size_t i = 0; i < path.size(); ++i) 
         {
-            ds = ds.normalized();
-            Vector rad(-ds.y, ds.x);
+            Point p1 = path[i] + r * normals[i];
+            Point p2 = path[i] - r * normals[i];
 
-            // build the quad that leads this strip and provides space for the brush strokes
-            vertices.insert(vertices.end(), {
-                c - r * ds - r * rad,
-                c - r * ds + r * rad,
-                c          - r * rad,
-                c          + r * rad
-            });
+            if (i > 0 && i < path.size() - 1) { // Handle line joins
+                Vector prevNormal = normals[i - 1];
+                Vector nextNormal = normals[i];
+                Vector prevTangent = tangents[i-1];
+                Vector nextTangent = tangents[i];
 
-            uv.insert(uv.end(), {
-                Point(-0.5, -0.5), 
-                Point(-0.5,  0.5),
-                Point( 0,   -0.5),
-                Point( 0,    0.5)
-            });
-            arclength.insert(arclength.end(), {
-                s, s, s, s
-            });
-            brush.insert(brush.end(), {
-                c, c, c, c
-            });
-        };
+                double cosAngle = dot(prevTangent, nextTangent);
 
-        auto build_footer = 
-            [&vertices, &uv, &arclength, &brush, &r, &s]
-            (Point const & c, Vector ds)
-        {
-            ds = ds.normalized();
-            Vector rad(-ds.y, ds.x);
+                if (cosAngle < 0.9999999)   // Avoid issues with near-straight lines
+                { 
+                    Point prevP1 = path[i] + r * prevNormal; 
+                    Point prevP2 = path[i] - r * prevNormal; 
 
-            // build the quad that leads this strip and provides space for the brush strokes
-            vertices.insert(vertices.end(), {
-                c + r * ds - r * rad,
-                c + r * ds + r * rad
-            });
+                    Point nextP1 = path[i] + r * nextNormal; 
+                    Point nextP2 = path[i] - r * nextNormal;
 
-            double s0 = s / (2. * r);
+                    auto intersectionP1 = Line{prevP1, tangents[i-1]}.intersect(Line{nextP1, tangents[i]});
+                    auto intersectionP2 = Line{prevP2, tangents[i-1]}.intersect(Line{nextP2, tangents[i]});
 
-            uv.insert(uv.end(), {
-                Point(s0 + 0.5, -0.5), 
-                Point(s0 + 0.5,  0.5)
-            });
-            arclength.insert(arclength.end(), {
-                s, s
-            });
-            brush.insert(brush.end(), {
-                c, c
-            });
-        };
+                    if (_join == LineJoin::Miter) 
+                    {
+                        if (intersectionP1.first && intersectionP2.first) 
+                        {
+                            p1 = prevP1 + intersectionP1.second * tangents[i-1];
+                            p2 = prevP2 + intersectionP2.second * tangents[i-1];
+                        }
+                    } 
+                    else if (_join == LineJoin::Chamfer) 
+                    {
+                        p1 = nextP1;
+                        p2 = nextP2;
+                    } 
+                    else if (_join == LineJoin::Bevel) 
+                    {
+                        double v = s / _brush_diameter;
 
-        auto i = begin;
-        // move through the events in the stroke and create a triangle fan with UV coordinates
-        for(; i != end; ++i)
-        {
-            // is this the first event?
-            if(i == begin)
-            {
-                build_header(*i, i->dp);
-                last = *i;
-                dp = i->dp.normalized();
-                continue;
+                        vertices.push_back(prevP1); 
+                        vertices.push_back(prevP2); 
+                        vertices.push_back(nextP1); 
+                        vertices.push_back(nextP2); 
+                        continue;
+                    }
+                }
             }
 
-            // if this is a move_to event we should close out our triangle strip
-            if(i->is_move_to())
-                break;
+            
+            double v = s / _brush_diameter;
 
-            Vector qp = *i - last;
-            double qs = qp.norm();
-
-            s += qs;
-            qp /= qs;
-
-            Vector rad(-qp.y, qp.x);
-
-            if(i->dp.norm() != 0)
-            {
-                auto np = i->dp.normalized();
-                rad = Vector(-np.y, np.x);
-            }
-
-            // TODO: calculate if either of these overlap the previous strip!
-            vertices.insert(vertices.end(), {
-                (Point)*i - r * rad,
-                (Point)*i + r * rad
-            });
-            uv.insert(uv.end(), {
-                Point(s / _brush_diameter, -0.5),
-                Point(s / _brush_diameter,  0.5)
-            });
-            arclength.insert(arclength.end(), {
-                s, s
-            });
-            brush.insert(brush.end(), {
-                (Point)*i, (Point)*i
-            });
-
-            last = *i;
-            dp = i->dp;
+            vertices.push_back(p1); 
+            vertices.push_back(p2); 
         }
 
-        // build the quad that ends the strip and provides space for the brush stroke
-        build_footer((Point)last, dp);
-
-        // and return 
-        return { TriangleStrip(move(vertices), move(uv), move(arclength), move(brush)), i };
-
+        return move(vertices);
     }
 };
 

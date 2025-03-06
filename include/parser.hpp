@@ -96,7 +96,7 @@ class SVGPath :
 {
 public:
 
-    SVGPath(const string& pathData, Point const & origin = Point{0,0});
+    SVGPath(const std::string& pathData, Point const & origin = Point{0,0});
 
     virtual double length(double t0, double t1) const override;
     virtual Event at(double t) const override;
@@ -111,8 +111,8 @@ private:
     void adjust_box(Point p);
     void adjust_box(BoundingBox const & b);
 
-    void append_segments(string::value_type key, std::vector<double> const & coords, Point & pen, Vector & dir);
-    void parsePath(const string& pathData);
+    void append_segments(std::string::value_type key, std::vector<double> const & coords, Point & pen, Vector & dir);
+    void parsePath(const std::string& pathData);
 
 
     std::vector<std::unique_ptr<Drawable>> _segments;

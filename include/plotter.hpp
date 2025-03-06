@@ -7,6 +7,7 @@
 #include "drawable.hpp"
 
 #include <utility>
+#include <vector>
 
 /* Plotter class
 
@@ -24,17 +25,16 @@ public:
  
     Plotter();
 
-    Stroke plot(Drawable const & drawing) ;
+    std::vector<Point> plot(Drawable const & drawing) ;
 
-    Stroke fill(Cover const & cover,                    // a 2D area to be filled
+    std::vector<Point> fill(Cover const & cover,                    // a 2D area to be filled
                 Drawable const & pattern);
 };
 
 
-
-
-
-
+std::vector<Point> simplify_plot(std::vector<Point> const &, 
+                                 bool is_closed = false, 
+                                 double eps = 1e-5);
 
 
 

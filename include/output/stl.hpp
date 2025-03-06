@@ -15,10 +15,10 @@ class STLOutput :
     public Outputer
 {
 private:
-    TriangleStrip const & _strip;
+    vector<Point> const & _strip;
     string _name;
 public:
-    STLOutput(TriangleStrip const & strip, string const & name = "triangle_strip") : 
+    STLOutput(vector<Point> const & strip, string const & name = "triangle_strip") : 
         _strip(strip), _name(name)
     { }
 
@@ -37,7 +37,7 @@ public:
                 // odd  implies counter-clockwise == increasing
                 size_t k = (i % 2 == 0 ? i - j : i - (2 - j));
 
-                Point p = get<0>(_strip[k]);
+                Point p = _strip[k];
 
                 os << "\t\tvertex " << p.x << " " << p.y << " 0\n";
             }
