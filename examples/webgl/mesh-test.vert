@@ -12,6 +12,7 @@ out float arclength;
 out vec2 brush;
 
 uniform mat3 view;
+uniform vec4 uv_range;
 uniform vec2 stroke_range;
 
 // all shaders have a main function
@@ -28,7 +29,9 @@ void main()
     p.x = dot(view[0].xy, a_position.xy) + view[0][2];
     p.y = dot(view[1].xy, a_position.xy) + view[1][2];
 
-    gl_Position = vec4(p.xy, 0, 1);
+    float z = 1.0 - a_uv[1] / uv_range[3];
+
+    gl_Position = vec4(p.xy, z, 1.);
     
     uv = a_uv;
 }

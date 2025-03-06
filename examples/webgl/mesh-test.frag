@@ -110,7 +110,7 @@ void main()
     // fragColor.w = 0.25 - d2;
     // fragColor.xyz = brush_color.xyz;
 
-    fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));
+    fragColor = brush_stroke_color(vec4(0., 0., 0., 0.));
 
     // fragColor.xyzw = (0.25 - d2) * brush_color.xyzw;
 

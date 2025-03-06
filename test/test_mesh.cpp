@@ -42,7 +42,8 @@ int main(int ac, char * av[])
     // std::cout << JSONMeshOutput(mesh);
 
     // std::cout << OBJOutput(mesh.first);
-    std::cout << STLOutput(mesh);
+    for(auto const & m : mesh)
+        std::cout << STLOutput(m);
 
     return 0;
 }

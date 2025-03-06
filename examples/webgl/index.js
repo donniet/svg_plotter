@@ -365,10 +365,12 @@ function Stroke(gl, mesh_data, mesh_program)
   this.mesh_data = mesh_data;
   this.mesh_program = mesh_program;
   this.float_bytes = 4; // 32 bit floats
+  this.uv_range = this.calculate_uv_range(this.mesh_data);
 
   this.view_location = gl.getUniformLocation(this.mesh_program, "view");
   this.stroke_range_location = gl.getUniformLocation(this.mesh_program, "stroke_range");
   this.brush_color_location = gl.getUniformLocation(this.mesh_program, "brush_color");
+  this.uv_range_location = gl.getUniformLocation(this.mesh_program, "uv_range");
 
   this.draw_mode = parse_draw_mode(this.gl, this.mesh_data.draw_mode);
 
@@ -379,6 +381,35 @@ function Stroke(gl, mesh_data, mesh_program)
   this.attr = this.read_attributes();
 
 }
+Stroke.prototype.calculate_uv_range = function(mesh_data)
+{
+  // do we hae an 'a_uv' attribute?
+  let a_uv = mesh_data.attributes.a_uv;
+
+  if(typeof a_uv != 'Array')
+      return [[-.5,0],[.5,1]];
+
+  let total = mesh_data.buffer_data.length;
+
+  let size, stride, offset;
+  [size, stride, offset] = a_uv;
+
+  let min_uv = [0,0];
+  let max_uv = [0,0];
+
+  for(let i = offset; i < total; i += stride)
+  {
+    let u = mesh_data.buffer_data[i];
+    let v = mesh_data.buffer_data[i+1];
+
+    if(u < min_uv[0]) min_uv[0] = u;
+    if(u > max_uv[0]) max_uv[0] = u;
+    if(v < min_uv[1]) min_uv[1] = v;
+    if(v > max_uv[1]) max_uv[1] = v;
+  }
+
+  return [min_uv, max_uv];
+};
 Stroke.prototype.read_attribute_data = function()
 {
   let buf = this.gl.createBuffer();
@@ -392,7 +423,7 @@ Stroke.prototype.read_attribute_data = function()
     buffer: buf,
     buffer_array: buffer_array,
   };
-}
+};
 Stroke.prototype.read_attributes = function(no_enable)
 {
   let ret = [];
@@ -425,7 +456,7 @@ Stroke.prototype.read_attributes = function(no_enable)
     });
   }
   return ret;
-}
+};
 
 // TODO: use UV coords and add a length parameter here
 Stroke.prototype.draw = function(view, range)
@@ -442,6 +473,10 @@ Stroke.prototype.draw = function(view, range)
                                                 range[1]);
   this.gl.uniform2f(this.resolution_location, this.gl.canvas.width, 
                                               this.gl.canvas.height);
+  this.gl.uniform4f(this.uv_range_location, this.uv_range[0][0], 
+                                            this.uv_range[0][1], 
+                                            this.uv_range[1][0], 
+                                            this.uv_range[1][1])
 
   this.gl.bindVertexArray(this.vao);
   this.gl.drawArrays(
@@ -449,7 +484,7 @@ Stroke.prototype.draw = function(view, range)
     0,
     this.mesh_data.vertex_count
   );
-}
+};
 
 
 async function fetch_uri(uri)
@@ -479,6 +514,9 @@ async function main_mesh()
     return;
   }
 
+  gl.depthFunc(gl.ALWAYS);
+  
+
   let vs, fs;
 
   [vs, fs] = await collect_shaders('mesh-test.vert', 'mesh-test.frag');
@@ -502,6 +540,11 @@ async function main_mesh()
 
     // Tell WebGL how to convert from clip space to pixels
     gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    gl.enable(gl.DEPTH_TEST); 
+    gl.disable(gl.CULL_FACE);
 
 
     m.draw(view, [0, Math.min(1., time / 3.)]);

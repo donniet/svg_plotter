@@ -8,6 +8,111 @@
 
 #include <iostream>
 
+using std::vector;
+using std::for_each;
+using std::distance;
+
+
+Triangles::Triangles(std::vector<Point> && points, size_t first) :
+    _points(move(points)),
+    _id(points.size())
+{ 
+    using std::execution::par_unseq;
+
+    // parallel iota
+    for_each(par_unseq,
+             _id.begin(), _id.end(),
+    [&](size_t & i)
+    {
+        i = distance(&_id[0], &i) + first;
+    });
+}
+
+Triangles::Triangles(std::vector<Point> && points, std::vector<size_t> && id) :
+    _points(move(points)),
+    _id(move(id))
+{ }
+
+Triangle Triangles::operator[](size_t i) const
+{
+    return Triangle(
+        _points[i / 3 + 0],
+        _points[i / 3 + 1],
+        _points[i / 3 + 2]
+    );
+}
+
+Strip::Strip(vector<Point> && points, size_t first) :
+    _points(move(points)), 
+    _id(points.size())
+{ 
+    using std::execution::par_unseq;
+
+    // parallel iota
+    for_each(par_unseq,
+             _id.begin(), _id.end(),
+    [&](size_t & i)
+    {
+        i = distance(&_id[0], &i) + first;
+    });
+}
+
+static inline constexpr size_t triangle_strip_offsets[2][3] = {
+    { 0, 1, 2 }, // even case
+    { 1, 0, 2 }  // odd case
+};
+
+Triangles Strip::to_triangles() const
+{
+    using std::execution::par_unseq;
+
+    if(_points.size() < 3)
+        return Triangles{};
+
+    vector<Point>   v(triangle_count() * 3);
+    vector<size_t> id(triangle_count() * 3);
+
+    for_each(par_unseq,
+             v.begin(), v.end(),
+    [&](Point & p)
+    {
+        size_t gid = distance(&v[0], &p);
+        size_t tri = gid / 3;
+        size_t j = gid % 3;
+
+        size_t point_index = tri + triangle_strip_offsets[tri % 2][j];
+
+        p = _points[point_index];
+        id[gid] = _id[point_index];
+    });
+
+    return Triangles(move(v), move(id));
+}
+
+Strip::operator std::vector<Point> const &() const
+{
+    return _points;
+}
+
+Triangle Strip::operator[](size_t i) const
+{
+    return Triangle(
+        _points[i + triangle_strip_offsets[i % 2][0]],
+        _points[i + triangle_strip_offsets[i % 2][1]],
+        _points[i + triangle_strip_offsets[i % 2][2]]
+    );
+}
+
+size_t Strip::triangle_count() const
+{
+    if(_points.size() < 3)
+        return 0;
+
+    return _points.size() - 2;
+}
+
+
+
 TriangleStrip::TriangleStrip() { }
 
 TriangleStrip::TriangleStrip(vector<Point> && vertices, 

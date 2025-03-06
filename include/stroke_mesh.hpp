@@ -34,17 +34,15 @@ private:
     LineJoin _join;
 
 public:
-    StrokeMesh(double brush_diameter = 1., LineJoin join = LineJoin::Bevel) :
+    StrokeMesh(double brush_diameter = 1., LineJoin join = LineJoin::Miter) :
         _brush_diameter(brush_diameter), _join(join)
     { }
 
-
-    auto create(vector<Point> const & path, bool is_closed = false)
+    void coordinate_space(vector<Point> const & path, 
+                          vector<Vector> & tangents, 
+                          vector<Vector> & normals,
+                          bool is_closed = false) const
     {
-        std::vector<Point> vertices;
-        std::vector<Vector> tangents;
-        std::vector<Vector> normals;
-
         // Calculate tangents
         for (size_t i = 0; i < path.size(); ++i) 
         {
@@ -74,7 +72,150 @@ public:
             tangents.push_back(v / l);
             normals.push_back(normal(tangents.back()));
         }
-    
+    }
+
+    std::vector<Strip>
+    create_no_overlap(std::vector<Point> const & path, bool is_closed = false) const
+    {
+        std::vector<Vector> tangents;
+        std::vector<Vector> normals;
+
+        coordinate_space(path, tangents, normals, is_closed);
+
+        std::vector<Point> vertices;
+        std::vector<size_t> ids;
+
+        double s = 0;
+        double r = _brush_diameter * 0.5;
+
+        for(size_t i = 0; i < path.size(); i++)
+        {
+            Point p1 = path[i] + r * normals[i];
+            Point p2 = path[i] - r * normals[i];
+
+            if(i == 0) // make a half-square to hold the back-side of the brush
+            {
+                // TODO: check which tangent we should use for closed paths
+                Point pA = p1 - tangents[i]; 
+                Point pB = p2 - tangents[i];
+
+                vertices.insert(vertices.end(), {
+                    pA, pB, p1, p2
+                });
+                ids.insert(ids.end(), {
+                    i, i, i, i
+                });
+                continue;
+            }
+
+            if(i == path.size() - 1)
+            {
+                Point pA = p1 + tangents[i];
+                Point pB = p2 + tangents[i];
+
+                vertices.insert(vertices.end(), {
+                    p1, p2, pA, pB
+                });
+                ids.insert(ids.end(), {
+                    i, i, i, i
+                });
+                continue;
+            }
+
+            Vector prevNormal = normals[i - 1];
+            Vector nextNormal = normals[i];
+            Vector prevTangent = tangents[i-1];
+            Vector nextTangent = tangents[i];
+
+            if(dot(prevTangent, nextTangent) < 0.9999999)
+            {
+                Point prevP1 = path[i] + r * prevNormal; 
+                Point prevP2 = path[i] - r * prevNormal; 
+
+                Point nextP1 = path[i] + r * nextNormal; 
+                Point nextP2 = path[i] - r * nextNormal;
+
+                auto intersectionP1 = Segment{prevP1, tangents[i-1]}.intersect(Segment{nextP1, tangents[i]});
+                auto intersectionP2 = Segment{prevP2, tangents[i-1]}.intersect(Segment{nextP2, tangents[i]});
+
+                if(_join == LineJoin::Bevel)
+                {
+                    vertices.insert(vertices.end(), {
+                        prevP1, prevP2, nextP1, nextP2
+                    });
+                    ids.insert(ids.end(), {
+                        i, i, i, i
+                    });
+                    
+                    continue;
+                }
+
+                if(_join == LineJoin::Miter && intersectionP1.first && intersectionP2.first)
+                {
+                    p1 = prevP1 + intersectionP1.second * tangents[i-1];
+                    p2 = prevP2 + intersectionP2.second * tangents[i-1];
+                }
+
+                if(_join == LineJoin::Chamfer)
+                {
+                    p1 = nextP1;
+                    p2 = nextP2;
+                }
+            }
+
+            vertices.insert(vertices.end(), {
+                p1, p2
+            });
+            ids.insert(ids.end(), {
+                i, i
+            });
+        }
+
+
+    }
+
+    bool strip_contains(vector<Point> const & strip, Point const & p) const
+    {
+        for(size_t i = 2; i < strip.size(); ++i)
+            if(Triangle{strip[i-2], strip[i-1], strip[i]}.contains(p))
+                return true;
+
+        return false;
+    }
+
+    std::vector<Strip> 
+    create(vector<Point> const & path, bool is_closed = false) const
+    {
+        std::vector<Vector> tangents;
+        std::vector<Vector> normals;
+
+        coordinate_space(path, tangents, normals, is_closed);
+        
+        std::vector<Strip> strips;
+        std::vector<Point> vertices;
+
+        auto start_fresh = [&vertices, &strips](bool even = true)
+        {
+            Point pA = vertices[vertices.size() - 2];
+            Point pB = vertices[vertices.size() - 1];
+
+            strips.emplace_back(move(vertices));
+            vertices.clear();
+
+            // if(!even) std::swap(pA, pB);
+
+            vertices.push_back(pA);
+            vertices.push_back(pB);
+            
+        };
+
+        auto insert_point = [&](Point const & p)
+        {
+            if(strip_contains(vertices, p))
+                start_fresh(true);
+
+            vertices.push_back(p); 
+        };
 
         double s = 0;
         double r = _brush_diameter * 0.5;
@@ -84,6 +225,16 @@ public:
         {
             Point p1 = path[i] + r * normals[i];
             Point p2 = path[i] - r * normals[i];
+
+            if(i == 0) // create a landing zone for the brush stroke
+            {
+                Point pA = p1 - r * tangents[i];
+                Point pB = p2 - r * tangents[i];
+
+                insert_point(pA);
+                insert_point(pB);
+            }
+
 
             if (i > 0 && i < path.size() - 1) { // Handle line joins
                 Vector prevNormal = normals[i - 1];
@@ -101,8 +252,8 @@ public:
                     Point nextP1 = path[i] + r * nextNormal; 
                     Point nextP2 = path[i] - r * nextNormal;
 
-                    auto intersectionP1 = Line{prevP1, tangents[i-1]}.intersect(Line{nextP1, tangents[i]});
-                    auto intersectionP2 = Line{prevP2, tangents[i-1]}.intersect(Line{nextP2, tangents[i]});
+                    auto intersectionP1 = Segment{prevP1, tangents[i-1]}.intersect(Segment{nextP1, tangents[i]});
+                    auto intersectionP2 = Segment{prevP2, tangents[i-1]}.intersect(Segment{nextP2, tangents[i]});
 
                     if (_join == LineJoin::Miter) 
                     {
@@ -121,10 +272,18 @@ public:
                     {
                         double v = s / _brush_diameter;
 
-                        vertices.push_back(prevP1); 
-                        vertices.push_back(prevP2); 
-                        vertices.push_back(nextP1); 
-                        vertices.push_back(nextP2); 
+                        // does this overlap?
+                        if(strip_contains(vertices, prevP1) || strip_contains(vertices, prevP2) ||
+                           strip_contains(vertices, nextP1) || strip_contains(vertices, nextP2)) 
+                        {
+                            strips.emplace_back(move(vertices));
+                            vertices.clear();
+                        }
+
+                        insert_point(prevP1);
+                        insert_point(prevP2);
+                        insert_point(nextP1);
+                        insert_point(nextP2);
                         continue;
                     }
                 }
@@ -133,11 +292,24 @@ public:
             
             double v = s / _brush_diameter;
 
-            vertices.push_back(p1); 
-            vertices.push_back(p2); 
+            insert_point(p1);
+            insert_point(p2);
+
+            if(i == path.size() - 1)
+            {
+                Point pA = p1 + r * tangents[i];
+                Point pB = p2 + r * tangents[i];
+
+                insert_point(pA);
+                insert_point(pB);
+            }
         }
 
-        return move(vertices);
+
+        if(vertices.size() > 0)
+            strips.emplace_back(move(vertices));
+
+        return strips;
     }
 };
 
