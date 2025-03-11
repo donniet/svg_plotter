@@ -7,6 +7,7 @@
 #include "parser.hpp"
 #include "plotter.hpp"
 #include "fills.hpp"
+#include "attribute_mesh.hpp"
 
 #include <iostream>
 #include <format>
@@ -37,13 +38,13 @@ int main(int ac, char * av[])
     // auto stroke = plotter.fill(greenland, lines);
     auto stroke = plotter.plot(greenland);
     
-    auto mesh = mesher.create(stroke);
+    auto mesh = mesher.create_mesh(stroke);
 
-    // std::cout << JSONMeshOutput(mesh);
+    std::cout << JSONAttributeMeshOutput(mesh);
 
     // std::cout << OBJOutput(mesh.first);
-    for(auto const & m : mesh)
-        std::cout << STLOutput(m);
+    // for(auto const & m : mesh)
+    //     std::cout << STLOutput(m);
 
     return 0;
 }

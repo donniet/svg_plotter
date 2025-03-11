@@ -4,6 +4,8 @@
 #include <string>
 #include <utility>
 
+
+
 struct Point 
 {
     double x, y;

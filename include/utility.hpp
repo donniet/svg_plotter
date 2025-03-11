@@ -9,12 +9,58 @@
 #include <numeric>
 #include <execution>
 #include <vector>
+#include <tuple>
+#include <stdexcept>
 
 using std::iterator_traits;
 using std::is_same_v, std::enable_if_t;
 using std::pair, std::swap;
 using std::min, std::max;
 using std::vector;
+
+template<size_t Start, typename OutputArray, typename InputArray, size_t ... Is>
+void static_fill(OutputArray & out, InputArray const & in, std::index_sequence<Is...>)
+{
+    ((out[Start + Is] = in[Is]), ...);
+}
+
+template<size_t Start, typename T, size_t Sum, size_t ... Ns>
+void array_cat_helper(std::array<T, Sum> & arr, std::array<T, Ns> const & ... As);
+
+template<size_t Start, typename T, size_t Sum>
+void array_cat_helper(std::array<T, Sum> & arr)
+{ }
+
+template<size_t Start, typename T, size_t Sum, size_t N, size_t ... Ns>
+void array_cat_helper(std::array<T, Sum> & arr, std::array<T, N> const & A, std::array<T, Ns> const & ... As)
+{
+    static_fill<Start, Sum>(arr, A, std::make_index_sequence<N>{});
+
+    array_cat_helper<Start + N>(arr, As...);
+}
+
+template<typename T, size_t ... Ns>
+std::array<T, (Ns + ...)> array_cat(std::array<T, Ns> const & ... As)
+{
+    std::array<T, (Ns + ...)> ret;
+
+    array_cat_helper<0>(ret, As...);
+
+}
+
+template<typename Tuple, size_t ... Is>
+void const * runtime_tuple_element_helper(Tuple const & t, size_t i, std::index_sequence<Is...>)
+{
+    void const * all[] = { &get<Is>(t) ... };
+
+    return all[i];
+}
+
+template<typename Tuple>
+void const * runtime_tuple_element(Tuple const & t, size_t i)
+{
+    return runtime_tuple_element_helper(t, i, std::make_index_sequence<std::tuple_size<Tuple>::value>{});
+}
 
 
 template<typename Iter>

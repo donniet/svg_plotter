@@ -4,10 +4,72 @@
 #include "output.hpp"
 
 #include "mesh.hpp"
+#include "attribute_mesh.hpp"
 
 #include <string>
 
 using std::string;
+
+template<typename ... Attrs>
+class JSONAttributeMeshOutput :
+    public Outputer
+{
+private:
+    AttributeMesh<Attrs...> const * _mesh;
+public:
+    JSONAttributeMeshOutput() : _mesh(nullptr) { }
+    JSONAttributeMeshOutput(AttributeMesh<Attrs...> const & m) : _mesh(&m) { }
+    JSONAttributeMeshOutput(JSONAttributeMeshOutput &&) = default;
+    JSONAttributeMeshOutput(JSONAttributeMeshOutput const &) = default;
+
+    JSONAttributeMeshOutput & operator=(JSONAttributeMeshOutput &&) = default;
+    JSONAttributeMeshOutput & operator=(JSONAttributeMeshOutput const &) = default;
+
+    virtual void print(std::ostream & os) const override
+    {
+        string indent = "  ";
+
+        auto ts = [&](int count) -> string
+        {
+            string ret = "";
+            for(int i = 0; i < count; i++)
+                ret += indent;
+            return ret;
+        };
+
+        os  << "{\n"
+            << ts(1) << "\"draw_mode\": \"triangle_strip\",\n"
+            << ts(1) << "\"vertex_count\": " << _mesh->size() << ",\n"
+            << ts(1) << "\"attributes\": {\n"
+            ;
+
+        for(auto a : _mesh->attributes())
+        {  
+            os  << ts(2) << "\"" << a.name() << "\": [ " << a.size() << ", " << _mesh->stride << ", " << a.offset() << " ],\n";
+        }
+    
+        os  << ts(1) << "},\n"
+            << ts(1) << "\"buffer_data\": ["
+            ;
+     
+        size_t c = 0;
+        for(auto i = _mesh->buffer_begin(); i != _mesh->buffer_end(); ++i, ++c)
+        {
+            if(c % _mesh->stride == 0)
+                os << "\n" << ts(2);
+
+            os << *i << ", ";
+        }
+
+        os  << "\n" 
+            << ts(1) << "],\n"
+            << ts(1) << "\"stroke_range\": [0,1],\n"
+            << ts(1) << "\"brush_color\": [1,0,0,1],\n"
+            << "}"
+            ;
+    }
+
+};
 
 class JSONMeshOutput :
     public Outputer
