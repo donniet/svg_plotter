@@ -11,6 +11,7 @@ in vec2 brush;
 uniform vec4 brush_color;
 uniform vec2 stroke_range;
 uniform vec2 resolution;
+uniform vec4 uv_range;
 
 out vec4 fragColor;
 
@@ -71,19 +72,30 @@ float noise01(vec2 p)
 
 vec4 brush_stroke_color(vec4 input_color)
 {
-    // float d = length(pos - brush);
+    float d = length(pos - brush) / 50.;
 
-    float d = length(uv - vec2(arclength / 50., 0));
+    // float d = length(uv - vec2(arclength / 50., 0));
+    // float d = uv_range.y - uv.y;
+    // float d = 1.;
+
+    if(uv.y > uv_range[3])
+        d = length(uv.xy - vec2(0, uv_range[3]));
+
+    if(uv.y < uv_range[1])
+        d = length(uv.xy - vec2(0,uv_range[1]));
+
+    if(d > 1.)
+        return input_color;
     
 
     // float boundary = dtoa(d, 0.3);
     float tex = 0.
-        + noise01(uv.yx * vec2(min(resolution.y, resolution.x) * 0.2, 1.))
-        + noise01(uv.yx * vec2(79., 1.))
-        + noise01(uv.yx * vec2(14., 1.))
+        + noise01(uv.xy * vec2(min(resolution.y, resolution.x) * 0.2, 1.))
+        + noise01(uv.xy * vec2(179., 1.))
+        + noise01(uv.xy * vec2(14., 1.))
         ;
 
-    tex *= 0.333 * abs(uv.y);
+    // tex *= 0.333 * abs(uv.y);
     tex = max(0.008, tex);
 
     float alpha = pow(tex, max(0., d));
@@ -94,8 +106,10 @@ vec4 brush_stroke_color(vec4 input_color)
     alpha = smoothf(alpha);
 
     
-    return mix(input_color, brush_color, alpha);
+//     return mix(input_color, brush_color, alpha);
+    return vec4(brush_color.xyz, alpha);
 }
+
 
 void main()
 {
@@ -110,7 +124,10 @@ void main()
     // fragColor.w = 0.25 - d2;
     // fragColor.xyz = brush_color.xyz;
 
-    fragColor = brush_stroke_color(vec4(0., 0., 0., 0.));
+    fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));
+    // fragColor.w *= 0.5;
+    // fragColor.w = 1.;
+    // fragColor = vec4(1., 1., 0., 1.);
 
     // fragColor.xyzw = (0.25 - d2) * brush_color.xyzw;
 

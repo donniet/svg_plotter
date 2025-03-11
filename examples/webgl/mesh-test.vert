@@ -5,11 +5,13 @@ in vec2 a_position;
 in vec2 a_uv;
 in float a_arclength;
 in vec2 a_brush;
+in float a_section;
 
 out vec2 uv;
 out vec2 pos;
 out float arclength;
 out vec2 brush;
+out float section;
 
 uniform mat3 view;
 uniform vec4 uv_range;
@@ -23,15 +25,15 @@ void main()
     vec2 p = a_position;
     pos = a_position;
 
+    section = a_section;
     arclength = a_arclength;
     brush = a_brush;
+    uv = a_uv;
 
     p.x = dot(view[0].xy, a_position.xy) + view[0][2];
     p.y = dot(view[1].xy, a_position.xy) + view[1][2];
 
-    float z = 1.0 - a_uv[1] / uv_range[3];
+    float z = a_uv[1] / uv_range[3];
 
     gl_Position = vec4(p.xy, z, 1.);
-    
-    uv = a_uv;
 }
