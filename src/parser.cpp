@@ -96,8 +96,8 @@ Point QuadraticCurve::operator()(double t) const
 void Arc::init() 
 {
     // https://svgwg.org/svg2-draft/implnote.html#ArcImplementationNotes
-    double sinA = sin(_angle * pi / 180.);
-    double cosA = cos(_angle * pi / 180.);
+    double sinA = sin(_angle );
+    double cosA = cos(_angle );
     Point xp = (_from - _to) / 2.;
 
     Point xq{
@@ -142,7 +142,7 @@ Point Arc::operator()(double t) const
 
 Arc::Arc(Point from, Point radius, double angle, bool large_arc, bool sweep, Point to) :
     DrawableFromFunction(),
-    _from(from), _to(to), _radius(radius), _angle(angle), _large_arc(large_arc), _sweep(sweep)
+    _from(from), _to(to), _radius(radius), _angle(angle* pi / 180.), _large_arc(large_arc), _sweep(sweep)
 { 
     init();
 
