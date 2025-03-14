@@ -18,7 +18,7 @@ protected:
     Point _from, _to;
 public:
     // length is 0, no need to override
-
+    virtual std::pair<bool, double> last_move_between(double t0, double t1) const override;
     virtual Event at(double t) const override;
     MoveTo(Point from, Point to);
 };
@@ -101,10 +101,12 @@ public:
     virtual double length(double t0, double t1) const override;
     virtual Event at(double t) const override;
     virtual BoundingBox bounding_box() const override;
+    virtual std::pair<bool, double> last_move_between(double t0, double t1) const override;
 
 private:
     // assumes _segments.size() > 0
     std::pair<size_t, double> segment_by_parameter(double t) const;
+    std::pair<double, double> parameter_range(size_t i) const;
 
     double length_to(double t) const;
 

@@ -25,15 +25,18 @@ public:
  
     Plotter();
 
-    std::vector<Point> plot(Drawable const & drawing) ;
+    std::vector<std::vector<Point>> plot(Drawable const & drawing) ;
 
-    std::vector<Point> fill(Cover const & cover,                    // a 2D area to be filled
+    std::vector<std::vector<Point>> fill(Cover const & cover,                    // a 2D area to be filled
                 Drawable const & pattern);
 };
 
 
-std::vector<Point> simplify_plot(std::vector<Point> const &, 
-                                 bool is_closed = false, 
+std::vector<std::vector<Point>> simplify_plot(std::vector<std::vector<Point>> const &, 
+                                              bool is_closed = false, 
+                                              double eps = 1e-5);
+
+std::vector<Point> simplify_path(std::vector<Point> const &,
                                  double eps = 1e-5);
 
 

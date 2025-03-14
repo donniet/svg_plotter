@@ -39,30 +39,35 @@ BoundingBox Drawable::bounding_box() const {
     return ret;
 }
 
-std::pair<bool, double> Drawable::last_move_between(double t0, double t1) const {
-    if (abs(t1 - t0) <= numeric_limits<double>::epsilon())
-        return {false, t1};
-
-    if (length(t0, t1) >= (at(t1) - at(t0)).norm())
-        return {false, t1};
-
-    for (;;) {
-        double tp = (t0 + t1) / 2.;
-
-        if (abs(tp - t0) <= numeric_limits<double>::epsilon())
-            return {true, tp};
-
-        if (length(tp, t1) < (at(t1) - at(tp)).norm()) {
-            t0 = tp;
-            continue;
-        }
-
-        t1 = tp;
-        continue;
-    }
-
-    throw std::logic_error("there must be a problem above if it got here!  it should only return from the loop");
+std::pair<bool, double> Drawable::last_move_between(double t0, double t1) const
+{
+    return { false, t0 };
 }
+
+// std::pair<bool, double> Drawable::last_move_between(double t0, double t1) const {
+//     if (abs(t1 - t0) <= numeric_limits<double>::epsilon())
+//         return {false, t1};
+
+//     if (length(t0, t1) >= (at(t1) - at(t0)).norm())
+//         return {false, t1};
+
+//     for (;;) {
+//         double tp = (t0 + t1) / 2.;
+
+//         if (abs(tp - t0) <= numeric_limits<double>::epsilon())
+//             return {true, tp};
+
+//         if (length(tp, t1) < (at(t1) - at(tp)).norm()) {
+//             t0 = tp;
+//             continue;
+//         }
+
+//         t1 = tp;
+//         continue;
+//     }
+
+//     throw std::logic_error("there must be a problem above if it got here!  it should only return from the loop");
+// }
 
 DrawableFromFunction::DrawableFromFunction(std::function<Point(double)> f,
                                              std::pair<double, double> interval,

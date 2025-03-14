@@ -18,6 +18,8 @@ private:
     vector<Point> const & _strip;
     string _name;
 public:
+    
+
     STLOutput(vector<Point> const & strip, string const & name = "triangle_strip") : 
         _strip(strip), _name(name)
     { }

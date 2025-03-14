@@ -89,6 +89,12 @@ double Point::dot(Point p) const
     return x * p.x + y * p.y; 
 }
 
+
+double Point::cross(Point const & p) const
+{
+    return x * p.y - y * p.x;
+}
+
 Point Point::normalized() const
 {
     return *this / norm();
@@ -168,6 +174,10 @@ Vector normal(Vector const & v)
 double dot(Vector const & u, Vector const & v)
 {
     return u.dot(v);
+}
+double cross(Vector const & u, Vector const & v)
+{
+    return u.cross(v);
 }
 
 Line::Line(Point const & p0, Vector const & v0) :

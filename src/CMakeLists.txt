@@ -33,3 +33,8 @@ target_link_libraries(bezier point)
 add_library(utility utility.cpp)
 target_link_libraries(utility point)
 
+find_package(OpenGL REQUIRED)
+
+add_library(cpath path_lib.cpp)
+target_link_libraries(cpath OpenGL::GL)
+

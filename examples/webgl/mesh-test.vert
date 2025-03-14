@@ -33,7 +33,7 @@ void main()
     p.x = dot(view[0].xy, a_position.xy) + view[0][2];
     p.y = dot(view[1].xy, a_position.xy) + view[1][2];
 
-    float z = a_uv[1] / uv_range[3];
+    float z = clamp(a_uv[1] / uv_range[3], 0., 1.);
 
     gl_Position = vec4(p.xy, z, 1.);
 }

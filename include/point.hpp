@@ -4,6 +4,14 @@
 #include <string>
 #include <utility>
 
+class Point;
+using Vector = Point;
+struct Line;
+struct Segment;
+struct HalfPlane;
+struct Triangle;
+struct Circle;
+struct CircleSegment;
 
 
 struct Point 
@@ -41,22 +49,17 @@ struct Point
     Point rotate(Point) const;
     Point rotate_about(Point, double) const;
 
+    double cross(Point const & p) const;
+
     bool operator==(Point const & p) const;
     bool operator!=(Point const & p) const;
 };
 
-using Vector = Point;
-
 Vector normalize(Vector const &);
 Vector normal(Vector const &);
 double dot(Vector const &, Vector const &);
+double cross(Vector const & u, Vector const & v);
 
-struct Line;
-struct Segment;
-struct HalfPlane;
-struct Triangle;
-struct Circle;
-struct CircleSegment;
 
 struct Line 
 {  

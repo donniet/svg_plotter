@@ -159,6 +159,15 @@ private:
     std::array<std::string, 1 + sizeof...(Attrs)> _names;
     DrawMode _mode;
 
+    AttributeMesh(std::vector<value_type> && attributes,
+                  std::vector<Uniform> const & uniforms,
+                  std::array<std::string, 1 + sizeof...(Attrs)> const & names,
+                  DrawMode mode) :
+        _attributes(std::move(attributes)), _uniforms(uniforms),
+        _names(names), _mode(mode)
+    { }
+        
+
     template<size_t I>
     struct AttributeType
     {
@@ -339,6 +348,65 @@ public:
     Point const & vertex(size_t i) const
     {
         return get<0>((*this)[i]);
+    }
+
+    std::vector<Point> vertices() const
+    {
+        std::vector<Point> ret(_attributes.size());
+        std::transform(std::execution::par_unseq,
+                      _attributes.begin(), _attributes.end(),
+                      ret.begin(),
+        [](value_type const & v) -> Point {
+            return get<0>(v);
+        });
+
+        return ret;
+    }
+
+    template<size_t ... Is>
+    static bool call_predicate(size_t i, value_type const & tup, 
+                        std::function<bool(size_t i, Point const & p, Attrs const & ...)> & pred,
+                        std::index_sequence<Is...>)
+    {
+        return pred(i, get<Is>(tup)...);
+    }
+
+    AttributeMesh<Attrs...> submesh(std::function<bool(size_t i, Point const & p, Attrs const & ...)> && pred) const
+    {
+        std::vector<size_t> result(_attributes.size());
+        std::vector<size_t> scan(_attributes.size());
+
+        std::transform(std::execution::par_unseq,
+                      _attributes.begin(), _attributes.end(),
+                      result.begin(),
+        [&](value_type const & tup) -> size_t {
+            size_t gid = std::distance(&_attributes[0], &tup);
+
+            if(call_predicate(gid, tup, pred, std::make_index_sequence<1 + sizeof...(Attrs)>{}))
+                return 1;
+
+            return 0;
+        });
+
+        std::inclusive_scan(std::execution::par_unseq,
+                            result.begin(), result.end(),
+                            scan.begin());
+
+        size_t found = scan.back();
+
+        std::vector<value_type> sub(found);
+        std::for_each(std::execution::par_unseq,
+                      scan.begin(), scan.end(),
+        [&](size_t & id) {
+            size_t gid = std::distance(&scan[0], &id);
+
+            if(result[gid] != 1)
+                return;
+            
+            sub[id-1] = _attributes[gid];
+        });
+
+        return AttributeMesh<Attrs...>(std::move(sub), _uniforms, _names, _mode);
     }
 
     size_t triangle_count() const 

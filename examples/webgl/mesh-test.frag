@@ -84,26 +84,27 @@ vec4 brush_stroke_color(vec4 input_color)
     if(uv.y < uv_range[1])
         d = length(uv.xy - vec2(0,uv_range[1]));
 
-    if(d > 1.)
-        return input_color;
+    if(d > 0.5)
+        return vec4(brush_color.xyz, 0.);
     
 
     // float boundary = dtoa(d, 0.3);
     float tex = 0.
-        + noise01(uv.xy * vec2(min(resolution.y, resolution.x) * 0.2, 1.))
-        + noise01(uv.xy * vec2(179., 1.))
-        + noise01(uv.xy * vec2(14., 1.))
+        + noise01(uv.xy * vec2(min(resolution.y, resolution.x) * 0.3, 0.5))
+        + noise01(uv.xy * vec2(79., 1.))
+        + noise01(uv.xy * vec2(44., 1.))
         ;
 
-    // tex *= 0.333 * abs(uv.y);
+    tex *= 0.333 * abs(uv.x);
     tex = max(0.008, tex);
 
     float alpha = pow(tex, max(0., d));
 
-    const float alpha_boost = 1.09;
+    const float alpha_boost = 1.19;
 
     alpha = alpha_boost * max(0., alpha - pow(2. * d, 0.5));
     alpha = smoothf(alpha);
+
 
     
 //     return mix(input_color, brush_color, alpha);
@@ -124,7 +125,11 @@ void main()
     // fragColor.w = 0.25 - d2;
     // fragColor.xyz = brush_color.xyz;
 
-    fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));
+    // float border = pow(abs(uv.x) / 0.5, 10.);
+    // if(border > 0.85)
+    //     fragColor = vec4(0.,0.,0.,1.);
+    // else
+        fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));
     // fragColor.w *= 0.5;
     // fragColor.w = 1.;
     // fragColor = vec4(1., 1., 0., 1.);

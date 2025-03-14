@@ -12,36 +12,36 @@ using std::for_each;
 using std::distance;
 using std::transform, std::for_each, std::inclusive_scan;
 
-vector<Point> simplify_plot(vector<Point> const & plot, bool is_closed, double eps)
+vector<Point> simplify_path(vector<Point> const & path, double eps)
 {
     using std::execution::par_unseq;
 
-    if(plot.size() <= 2)
-        return plot;
+    if(path.size() <= 2)
+        return path;
 
-    vector<int> keep(plot.size());
+    vector<int> keep(path.size());
 
     transform(//par_unseq,
-              plot.begin(), plot.end(),
+              path.begin(), path.end(),
               keep.begin(),
     [&](Point const & p) -> int
     {
-        size_t gid = distance(&plot[0], &p);
+        size_t gid = distance(&path[0], &p);
         size_t prev, next;
 
-        if(gid == 0 || gid == plot.size() - 1)
+        if(gid == 0 || gid == path.size() - 1)
             return 1;
 
         prev = gid - 1;
         next = gid + 1;
 
-        if((plot[prev] - p).norm() < eps)
+        if((path[prev] - p).norm() < eps)
             return 0;
 
-        if((plot[next] - p).norm() < eps)
+        if((path[next] - p).norm() < eps)
             return 1;
         
-        double d = Segment{plot[prev], plot[next]}.distance(p);
+        double d = Segment{path[prev], path[next]}.distance(p);
 
         if(abs(d) < eps)
             return 0;
@@ -49,7 +49,7 @@ vector<Point> simplify_plot(vector<Point> const & plot, bool is_closed, double e
         return 1;
     });
 
-    vector<int> scanned(plot.size());
+    vector<int> scanned(path.size());
 
     inclusive_scan(par_unseq,
                    keep.begin(), keep.end(),
@@ -59,10 +59,10 @@ vector<Point> simplify_plot(vector<Point> const & plot, bool is_closed, double e
 
     // pack the rest into simplified
     for_each(//par_unseq,
-             plot.begin(), plot.end(),
+             path.begin(), path.end(),
     [&](Point const & p)
     {
-        size_t gid = distance(&plot[0], &p);
+        size_t gid = distance(&path[0], &p);
         if(keep[gid] == 0)
             return;
         
@@ -72,73 +72,75 @@ vector<Point> simplify_plot(vector<Point> const & plot, bool is_closed, double e
     return move(simplified);
 }
 
+vector<vector<Point>> simplify_plot(vector<vector<Point>> const & plot, bool is_closed, double eps)
+{
+    using std::execution::par_unseq;
+
+    vector<vector<Point>> ret(plot.size());
+
+    for(size_t i = 0; i < plot.size(); i++)
+        ret[i] = simplify_path(plot[i], eps);
+
+    return ret;
+}
+
 Plotter::Plotter() :
     draw_speed(1), sample_count(100), 
     epsilon(1e-2), parameter_interval(0,1)
 { }
 
-std::vector<Point> Plotter::plot(Drawable const & drawing) 
+std::vector<std::vector<Point>> Plotter::plot(Drawable const & drawing) 
 {
     Point p0 = drawing.at(parameter_interval.first);
     Point p1 = drawing.at(parameter_interval.second);
 
     bool is_closed = (p1 - p0).norm() < epsilon;
 
+    // return sample_interval(drawing, sample_count, parameter_interval);
+
     return simplify_plot(
                sample_interval(drawing, sample_count, parameter_interval),
                is_closed, epsilon);
 }
 
-std::vector<Point> Plotter::fill(Cover const & cover,                    // a 2D area to be filled
-                            Drawable const & pattern)               // a drawable which we will sample over the interval [0,1] to fill
+std::vector<std::vector<Point>> Plotter::fill(Cover const & cover,                    // a 2D area to be filled
+                                              Drawable const & pattern)               // a drawable which we will sample over the interval [0,1] to fill
 {
     using std::execution::par_unseq;
 
-    std::vector<Point> sample = plot(pattern);
+    std::vector<std::vector<Point>> sample = plot(pattern);
+
+    std::vector<std::vector<Point>> ret;
+    if(sample.size() == 0)
+        return ret;
+
     std::vector<int> is_inside(sample_count);
     std::vector<int> scanned(sample_count);
-    
-    for_each(par_unseq,
-             sample.begin(), sample.end(),
-    [&](Point & p) 
+
+    for(size_t i = 0; i < sample.size(); i++) 
     {
-        size_t gid = distance(&sample[0], &p);
+        bool is_move = true;
+        vector<Point> const & path = sample[i];
 
-        is_inside[gid] = cover.is_inside(p) ? 1 : 0;
-    });
+        for(size_t j = 0; j < path.size(); j++)
+        {
+            Point const & p = path[j];
 
-    inclusive_scan(par_unseq, 
-                is_inside.begin(), is_inside.end(), 
-                scanned.begin());
-                    
-    int last = 0;
-    bool b = true;
-    size_t count = 0;
-    size_t total = scanned.back();
-
-    std::vector<Point> inside(total);
-
-    // pack the sample
-    for_each(/* par_unseq, */
-            sample.begin(), sample.end(),
-    [&](Point & e) 
-    {
-        size_t gid = distance(&sample[0], &e);
-
-        // is this event inside our cover?
-        if(!is_inside[gid])
-            return; // nope
-
-        // use our scanned vector to calculate the index 
-        // of this inside event in the final vector
-        Point * pe = &inside[scanned[gid]-1];
-        *pe = e;
-        
-        // // are we the first event
-        // if(gid == 0 || !is_inside[gid-1])
-        //     make_move_to(*pe); // turn this into a move_to
-
-    });
-    
-    return move(inside); // turn this into a stroke and return it
+            if(cover.is_inside(p))
+            {
+                if(is_move)
+                {
+                    ret.emplace_back(0);
+                    is_move = false;
+                }
+                
+                ret.back().push_back(p);   
+            }
+            else 
+            {
+                is_move = true;
+            }
+        }
+    }
+    return move(ret); // turn this into a stroke and return it
 }

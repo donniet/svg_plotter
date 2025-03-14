@@ -32,6 +32,11 @@ Event MoveTo::at(double t) const
     return Event(_to, dp, 0.); // 0 means a move_to
 }
 
+std::pair<bool, double> MoveTo::last_move_between(double t0, double t1) const
+{
+    // TODO: should I check if [t0, t1] intersects [0,1]?
+    return { true, t0 };
+}
 MoveTo::MoveTo(Point from, Point to) :
     _from(from), _to(to)
 {  }
@@ -91,8 +96,8 @@ Point QuadraticCurve::operator()(double t) const
 void Arc::init() 
 {
     // https://svgwg.org/svg2-draft/implnote.html#ArcImplementationNotes
-    double sinA = sin(_angle);
-    double cosA = cos(_angle);
+    double sinA = sin(_angle * pi / 180.);
+    double cosA = cos(_angle * pi / 180.);
     Point xp = (_from - _to) / 2.;
 
     Point xq{
@@ -179,6 +184,48 @@ BoundingBox SVGPath::bounding_box() const
     return _box;
 }
 
+std::pair<bool, double> SVGPath::last_move_between(double t0, double t1) const
+{
+    size_t seg0, seg1;
+    double _;
+
+    tie(seg0, _) = segment_by_parameter(t0);
+    tie(seg1, _) = segment_by_parameter(t1);
+
+    for(; seg0 <= seg1; --seg1)
+    {
+        auto m = _segments[seg1]->last_move_between(0, 1);
+        if(m.first) 
+        {
+            // calculate the parameter range of this segment
+            auto r = parameter_range(seg1);
+            
+            // interpolate using m.second
+            return { true, r.first + m.second * (r.second - r.first) };
+        }
+
+        if(seg1 == 0)
+            break;
+    }
+
+    return { false, t1 };
+}
+
+pair<double, double> SVGPath::parameter_range(size_t i) const
+{
+    if(i >= _segments.size())
+        return {1., 1.};
+
+    double l0 = 0.;
+    if(i > 0)
+        l0 = _length_index[i-1];
+
+    double l1 = _length_index[i];
+    double l = length(0., 1.);
+
+    return { l0 / l, l1 / l };
+}
+
 // assumes _segments.size() > 0
 pair<size_t, double> SVGPath::segment_by_parameter(double t) const 
 {
@@ -260,6 +307,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
 
     bool rel = (key != upper_key);
 
+    double len = 0.;
+
     switch(upper_key) {
     case 'M':
         for(int i = 0; i < coords.size(); i += 2) {
@@ -271,7 +320,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
             seg = dynamic_cast<Drawable*>(new MoveTo(pen, to));
 
             _segments.emplace_back(seg);
-            _lengths.push_back(0.);
+            len = 0.;
+            _lengths.push_back(len);
 
             pen = to;
         }
@@ -286,7 +336,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
 
             seg = dynamic_cast<Drawable*>(new LineTo(pen, to));
             _segments.emplace_back(seg);
-            _lengths.push_back(seg->length(0, 1));
+            len = seg->length(0, 1);
+            _lengths.push_back(len);
 
             pen = to;
         }
@@ -301,7 +352,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
 
             seg = dynamic_cast<Drawable*>(new LineTo(pen, to));
             _segments.emplace_back(seg);
-            _lengths.push_back(seg->length(0, 1));
+            len = seg->length(0, 1);
+            _lengths.push_back(len);
 
             pen = to;
         }
@@ -316,7 +368,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
 
             seg = dynamic_cast<Drawable*>(new LineTo(pen, to));
             _segments.emplace_back(seg);
-            _lengths.push_back(seg->length(0, 1));
+            len = seg->length(0, 1);
+            _lengths.push_back(len);
 
             pen = to;
         }
@@ -333,8 +386,9 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
             adjust_box(to);
 
             seg = dynamic_cast<Drawable*>(new Arc(pen, radius, angle, large_arc, clockwise, to));
+            len = seg->length(0, 1);
             _segments.emplace_back(seg);
-            _lengths.push_back(seg->length(0, 1));
+            _lengths.push_back(len);
 
             pen = to;
         }
@@ -354,7 +408,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
 
             seg = dynamic_cast<Drawable*>(new CubicBezier(pen, p1, p2, p3));
             _segments.emplace_back(seg);
-            _lengths.push_back(seg->length(0, 1));
+            len = seg->length(0, 1);
+            _lengths.push_back(len);
 
             pen = p3;
             dir = p3 - p2;
@@ -372,7 +427,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
 
             seg = dynamic_cast<Drawable*>(new CubicBezier(pen, pen + dir, p1, p2));
             _segments.emplace_back(seg);
-            _lengths.push_back(seg->length(0, 1));
+            len = seg->length(0, 1);
+            _lengths.push_back(len);
 
             pen = p2;
             dir = p2 - p1;
@@ -390,7 +446,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
 
             seg = dynamic_cast<Drawable*>(new QuadraticCurve(pen, p1, p2));
             _segments.emplace_back(seg);
-            _lengths.push_back(seg->length(0, 1));
+            len = seg->length(0, 1);
+            _lengths.push_back(len);
 
             pen = p2;
             dir = p2 - p1;
@@ -406,7 +463,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
 
             seg = dynamic_cast<Drawable*>(new QuadraticCurve(pen, pen + dir, p1));
             _segments.emplace_back(seg);
-            _lengths.push_back(seg->length(0, 1));
+            len = seg->length(0, 1);
+            _lengths.push_back(len);
 
             pen = p1;
             dir = p1 - pen - dir;
@@ -415,7 +473,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
     case 'Z':
         seg = dynamic_cast<Drawable*>(new LineTo(pen, _from));
         _segments.emplace_back(seg);
-        _lengths.push_back(seg->length(0, 1));
+        len = seg->length(0, 1);
+        _lengths.push_back(len);
 
         pen = _from;
         dir = Vector{0,0};

@@ -15,10 +15,10 @@
 class Drawable 
 {
 public:
-    virtual double length(double t0, double t1) const;
+    virtual double length(double t0 = 0., double t1 = 1.) const;
     virtual Event at(double t) const;
     virtual BoundingBox bounding_box() const;
-    virtual std::pair<bool, double> last_move_between(double t0, double t1) const;
+    virtual std::pair<bool, double> last_move_between(double t0 = 0., double t1 = 1.) const;
     virtual ~Drawable() = default;
 };
 
