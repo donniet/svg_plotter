@@ -384,7 +384,7 @@ double enclosed_area(Iter begin, Iter end)
 }
 
 pair<double,double> intersect_intervals(pair<double,double> a, pair<double,double> b);
-pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin);
+pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin, double epsilon = 1e-5);
 
 
 

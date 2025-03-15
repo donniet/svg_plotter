@@ -6,46 +6,56 @@ pair<double,double> intersect_intervals(pair<double,double> a, pair<double,doubl
     return {max(a.first, b.first), min(a.second, b.second)};
 }
 
-pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin)
+pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin, double eps)
 {
-    p0 -= ray_origin;
-    p1 -= ray_origin;
+    /*
+        r(t) = o +   (1;0) * t
+        s(u) = p + (q - p) * u
 
-    // ensure p0 has a lower y value than p1
-    if(p0.y > p1.y) 
-        swap(p0, p1);
+        with t >= 0
+        u \in [0,1)
 
-    pair<bool,double> false_value{false,0.};
+        o - p = ( 1  q.x-p.x   ( t
+                  0  q.y-p.y )   u )
 
-    // is our ray in the right y-range?
-    if(p0.y > 0 || p1.y < 0)
-        return false_value;
-    
-    // is the segment horizontal?
-    if(p0.y == p1.y) {
-        if(p0.x >= 0 && p1.x >= 0)
-            return {true, min(p0.x, p1.x)};
+        o - p = ( 1  dx   ( t
+                  0  dy )   u )
+
+        |A| = q.y - p.y = dy
+        A^{-1} = ( 1  -dx/dy 
+                   0    1/dy ) 
+
+        ( 1  -dx/dy   ( o.x - p.x   = ( t
+          0    1/dy )   o.y - p.y )     u )
+
+
+     */
+
+    double det = p1.y - p0.y;
+
+    if(abs(det) < eps)
+    {
+        if(abs(p0.y - ray_origin.y) > eps || max(p0.x, p1.x) < ray_origin.x - eps)
+            return { false, 0. };
         
-        if(p0.x >= 0)
-            return {true, p0.x};
+        if(p0.x > ray_origin.x - eps && p1.x > ray_origin.x - eps)
+            return { true, min(p0.x, p1.x) };
+        
+        if(p0.x > ray_origin.x - eps)
+            return { true, p0.x };
 
-        if(p1.x >= 0)
-            return {true, p1.x};
-            
-        return false_value;
+        return { true, p1.x };
     }
 
-    // calculate x-intercept
-    double t = -p0.y / (p1.y - p0.y);
+    Vector a{ 1, -(p1.x - p0.x) / det };
+    Vector b{ 0, 1/det };
+    Vector r = ray_origin - p0;
 
-    if(t < 0. || t > 1.)
-        return false_value;
+    double t = a.dot(r);
+    double u = b.dot(r);
 
-    // is this to the right of our point?
-    double x = p0.x + t * (p1.x - p0.x);
+    if(t > -eps && u > -eps && u < 1 + eps)
+        return { true, t };
 
-    if(x < 0)
-        return false_value;
-
-    return { true, x };
+    return { false, 0. };
 }

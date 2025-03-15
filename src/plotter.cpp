@@ -114,21 +114,38 @@ vector<vector<Point>> simplify_plot(vector<vector<Point>> const & plot, bool is_
 }
 
 Plotter::Plotter() :
-    draw_speed(1), sample_count(100), 
-    epsilon(1e-2), parameter_interval(0,1)
+    _sample_count(100), 
+    _epsilon(1e-2), _parameter_interval(0,1)
 { }
+
+Plotter::Plotter(size_t sample_count, std::pair<double,double> parameter_interval, double epsilon) :
+    _sample_count(sample_count), _parameter_interval(parameter_interval), _epsilon(epsilon)
+{ }
+
+size_t Plotter::sample_count() const
+{
+    return _sample_count;
+}
+std::pair<double,double> Plotter::parameter_interval() const
+{
+    return _parameter_interval;
+}
+double Plotter::epsilon() const
+{
+    return _epsilon;
+}
 
 std::vector<std::vector<Point>> Plotter::plot(Drawable const & drawing) 
 {
-    Point p0 = drawing.at(parameter_interval.first);
-    Point p1 = drawing.at(parameter_interval.second);
+    Point p0 = drawing.at(_parameter_interval.first);
+    Point p1 = drawing.at(_parameter_interval.second);
 
-    bool is_closed = (p1 - p0).norm() < epsilon;
+    bool is_closed = (p1 - p0).norm() < _epsilon;
 
-    return sample_interval(drawing, sample_count, parameter_interval);
+    return sample_interval(drawing, _sample_count, _parameter_interval);
 
     // return simplify_plot(
-    //            sample_interval(drawing, sample_count, parameter_interval),
+    //            sample_interval(drawing, sample_count, _parameter_interval),
     //            is_closed, epsilon);
 }
 
@@ -143,8 +160,8 @@ std::vector<std::vector<Point>> Plotter::fill(Cover const & cover,              
     if(sample.size() == 0)
         return ret;
 
-    std::vector<int> is_inside(sample_count);
-    std::vector<int> scanned(sample_count);
+    std::vector<int> is_inside(_sample_count);
+    std::vector<int> scanned(_sample_count);
 
     for(size_t i = 0; i < sample.size(); i++) 
     {

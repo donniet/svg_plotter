@@ -17,18 +17,24 @@
 */
 class Plotter 
 {
-public:
-    double draw_speed; // length/time
-    size_t sample_count;
-    double epsilon; 
-    std::pair<double,double> parameter_interval;
+private:
+    // double draw_speed; // length/time
+    size_t _sample_count;
+    double _epsilon; 
+    std::pair<double,double> _parameter_interval;
  
+public:
     Plotter();
+    Plotter(size_t = 5000, std::pair<double,double> = {0,1}, double = 1e-5);
 
     std::vector<std::vector<Point>> plot(Drawable const & drawing) ;
 
     std::vector<std::vector<Point>> fill(Cover const & cover,                    // a 2D area to be filled
                                          Drawable const & pattern);
+
+    size_t sample_count() const;
+    std::pair<double,double> parameter_interval() const;
+    double epsilon() const;
 };
 
 

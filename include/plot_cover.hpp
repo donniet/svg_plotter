@@ -14,10 +14,13 @@ class PlotCover :
 {
 private:
     std::vector<std::vector<Point>> _plot;
+    Plotter _plotter;
 
 public:
     PlotCover() = default;
     PlotCover(Drawable const & d, size_t sample_count = 1000, std::pair<double, double> parameter_interval = {0,1}, double epsilon = 1e-2);
+
+    void replot(Drawable const & d);
 
     // virtual double area() const override; // not implemented
     // virtual double perimeter() const override; // not implemented
