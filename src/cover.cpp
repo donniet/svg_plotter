@@ -21,8 +21,8 @@ double Cover::perimeter() const {
     return 0.;
 }
 
-vector<Point> Cover::outline() const {
-    return vector<Point>(0);
+vector<vector<Point>> Cover::outline() const {
+    return vector<vector<Point>>{};
 }
 
 double & Cover::margin() {
@@ -68,8 +68,21 @@ vector<Point> BoundingBox::corners() const {
     };
 }
 
-vector<Point> BoundingBox::outline() const {
-    return corners();
+vector<Segment> BoundingBox::sides() const
+{
+    Point p01{p0.x, p1.y};
+    Point p10{p1.x, p0.y};
+
+    return {
+        Segment{p0, p01},
+        Segment{p01, p1},
+        Segment{p1, p10},
+        Segment{p10, p0}
+    };
+}
+
+vector<vector<Point>> BoundingBox::outline() const {
+    return vector<vector<Point>>({corners()});
 }
 
 bool BoundingBox::is_inside(Point const & p) const {

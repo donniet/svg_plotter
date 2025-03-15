@@ -8,6 +8,7 @@
 #include "plotter.hpp"
 #include "fills.hpp"
 #include "attribute_mesh.hpp"
+#include "plot_cover.hpp"
 
 #include <iostream>
 #include <format>
@@ -37,29 +38,32 @@ int main(int ac, char * av[])
     plotter.sample_count = 5000;
     plotter.epsilon = 1e-3;
 
-    // Lines lines(greenland.bounding_box(), 50, Vector(1./sqrt(2), 1./sqrt(2)));
+    Lines lines(greenland.bounding_box(), 50, Vector(1./sqrt(2), 1./sqrt(2)));
 
-    // auto stroke = plotter.fill(greenland, lines);
-    auto stroke = plotter.plot(greenland);
+    PlotCover cover(greenland, 5000, {0,1}, 1e-3);
 
+    auto stroke = plotter.fill(cover, lines);
+    // auto stroke = plotter.plot(greenland);
+
+    stroke = simplify_plot(stroke, false, 1e-4);
     
     auto mesh = mesher.create_mesh(stroke);
 
-    // std::cout << JSONAttributeMeshOutput(mesh) << std::endl;
+    std::cout << JSONAttributeMeshOutput(mesh) << std::endl;
 
-    for(size_t section = 0;; section++)
-    {
-        auto s = mesh.submesh([section](size_t i, Point const & p, Point const & uv, Point const & brush, double const & sec) -> bool {
-            return section == (size_t)sec;
-        });
+    // for(size_t section = 0;; section++)
+    // {
+    //     auto s = mesh.submesh([section](size_t i, Point const & p, Point const & uv, Point const & brush, double const & sec) -> bool {
+    //         return section == (size_t)sec;
+    //     });
 
-        if(s.size() == 0)
-            break;
+    //     if(s.size() == 0)
+    //         break;
 
-        std::cout << STLOutput(s.vertices()) << std::endl;
+    //     std::cout << STLOutput(s.vertices()) << std::endl;
 
 
-    }
+    // }
 
 
     // std::cout << OBJOutput(mesh.first);

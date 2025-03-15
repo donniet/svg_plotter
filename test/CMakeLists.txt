@@ -20,7 +20,7 @@ target_link_libraries(test_adapters adapters)
 add_test(adapters test_adapters)
 
 add_executable(test_mesh test_mesh.cpp)
-target_link_libraries(test_mesh mesh plotter parser fills)
+target_link_libraries(test_mesh mesh plotter parser fills plot_cover)
 add_test(mesh test_mesh)
 
 add_executable(test_line test_line.cpp)

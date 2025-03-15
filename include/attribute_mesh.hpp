@@ -264,7 +264,7 @@ public:
         };
     }
 
-    AttributeMesh() : _mode(DrawMode::triangles), _names("position") { }
+    AttributeMesh() : _mode(DrawMode::triangles), _names({"position"}) { }
 
     template<typename ... Names>
     AttributeMesh(DrawMode mode, std::string position_name, Names ... names) :
@@ -373,6 +373,9 @@ public:
 
     AttributeMesh<Attrs...> submesh(std::function<bool(size_t i, Point const & p, Attrs const & ...)> && pred) const
     {
+        if(_attributes.size() == 0)
+            return *this;
+
         std::vector<size_t> result(_attributes.size());
         std::vector<size_t> scan(_attributes.size());
 

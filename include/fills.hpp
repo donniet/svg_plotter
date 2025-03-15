@@ -23,17 +23,19 @@ protected:
     BoundingBox _bbox;
     double _separation;
 
-    // calculated
-    using parameter_type = pair<double, int>;
-
     Vector _separation_direction;
-    pair<parameter_type, parameter_type> _parameter_range;
 
-    vector<Point> _line_origins;
+    vector<Segment> _segments;
     vector<double> _line_lengths;
     vector<double> _length_index;
 
 private:
+    static int find_minimum_index(BoundingBox const &, 
+                                     Point const &, Vector const &);
+    static std::pair<double,double> intersect(Line const &, BoundingBox const &);
+
+    void add_segment(Segment && s);
+
     void init();
 public:
     virtual double length(double t0, double t1) const override;

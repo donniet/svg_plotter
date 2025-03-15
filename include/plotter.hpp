@@ -28,7 +28,7 @@ public:
     std::vector<std::vector<Point>> plot(Drawable const & drawing) ;
 
     std::vector<std::vector<Point>> fill(Cover const & cover,                    // a 2D area to be filled
-                Drawable const & pattern);
+                                         Drawable const & pattern);
 };
 
 

@@ -22,6 +22,7 @@ public:
     virtual ~Drawable() = default;
 };
 
+
 class DrawableFromFunction : public Drawable
 {
 protected:

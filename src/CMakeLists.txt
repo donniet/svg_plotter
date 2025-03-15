@@ -33,6 +33,10 @@ target_link_libraries(bezier point)
 add_library(utility utility.cpp)
 target_link_libraries(utility point)
 
+add_library(plot_cover plot_cover.cpp)
+target_link_libraries(plot_cover cover utility plotter)
+
+set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 
 add_library(cpath path_lib.cpp)

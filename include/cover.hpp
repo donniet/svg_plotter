@@ -20,7 +20,7 @@ private:
 public:
     virtual double area() const;
     virtual double perimeter() const;
-    virtual std::vector<Point> outline() const;
+    virtual std::vector<std::vector<Point>> outline() const;
     virtual double & margin();
     virtual double margin() const;
     virtual bool is_inside(Point const & p) const;
@@ -29,6 +29,7 @@ public:
     Cover();
     virtual ~Cover() = default; // Add a virtual destructor
 };
+
 
 
 class BoundingBox : 
@@ -42,7 +43,8 @@ public:
     virtual double perimeter() const override;
     Vector diagonal() const;
     std::vector<Point> corners() const;
-    virtual std::vector<Point> outline() const override;
+    std::vector<Segment> sides() const;
+    virtual std::vector<std::vector<Point>> outline() const override;
     virtual bool is_inside(Point const & p) const override;
     virtual std::pair<bool, double> intersect_ray(Point const & origin, Vector const & ray) const override;
 

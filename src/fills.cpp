@@ -19,123 +19,112 @@ using std::logic_error;
 using std::pair, std::tie;
 
 
+int Lines::find_minimum_index(BoundingBox const & bbox, 
+                              Point const & origin, Vector const & separation)
+{
+    // f_i(t) = origin + i * separation + t * direction
+    //       where direction is orthogonal to separation
+    // we want to find the min i such that for some t', f_i(t') = bbox.corner[j]
+
+    // f_i(t) = origin + (separation; direction) * (i, t) 
+    // f_i(t) - origin = A * (i, t) 
+    // (i, t) = A^{-1} (f_i(t) - origin)
+    /* 
+        sep.x =  dir.y;
+        sep.y = -dir.x;
+
+        A       = ( sep.x  dir.x 
+                    sep.y  dir.y )
+
+        |A|     = sep.x * dir.y - dir.x * sep.y
+                = sep.x * sep.x + sep.y * sep.y
+                = |sep|
+
+        A^{-1}  = ( dir.y/|A|  -dir.x/|A|
+                    -sep.y/|A|  sep.x/|A| )
+                
+                = ( sep.x/|A|   sep.y/|A| 
+                   -sep.y/|A|   sep.x/|A| )
+
+        i = sep / |A| . (bb - origin)
+          = - sep / |sep| . (bb - origin)
+          = - sep.proj(bb - origin)
+    */
+
+    Vector n = separation / separation.norm2();
+    auto c = bbox.corners();
+
+    double i0 = n.dot(c[0] - origin);
+    double i1 = n.dot(c[1] - origin);
+    double i2 = n.dot(c[2] - origin);
+    double i3 = n.dot(c[3] - origin);
+
+    double i = min({i0, i1, i2, i3});
+
+    int in = ceil(i);
+    if(in == (int)i)
+        ++in;
+    
+    return in;
+}
+
+
+std::pair<double,double> Lines::intersect(Line const & l, BoundingBox const & b)
+{
+    auto segs = b.sides();
+
+    double t0 = numeric_limits<double>::max(), 
+           t1 = numeric_limits<double>::min();
+
+    for(int i = 0; i < 4; i++)
+    {
+        auto a = l.intersect(segs[i]);
+        if(!a.first)
+            continue;
+
+        t0 = min(t0, a.second);
+        t1 = max(t1, a.second);
+    }
+    
+    return {t0, t1};
+}
+
+void Lines::add_segment(Segment && seg) 
+{
+    double s = 0.;
+    if(_length_index.size() > 0)
+        s = _length_index.back();
+
+    double l = seg.length();
+    
+    _segments.push_back(seg);
+    _line_lengths.push_back(l);
+    _length_index.push_back(s + l);
+}
+
 void Lines::init()
 {
-    using std::execution::par_unseq;
 
     _separation_direction = Vector(_direction.y, -_direction.x);
     _separation_direction = _separation * _separation_direction.normalized();
 
-    if(_direction.is_parallel({1,0}))
-    {
-        // f_i(t) = (_origin + _separation * i * Y) + t * _direction
+    int i = find_minimum_index(_bbox, _origin, _separation_direction);
 
-        double t0 = (_bbox.p0.x - _origin.x ) / _direction.x;
-        double t1 = (_bbox.p1.x - _origin.x ) / _direction.x;
+    double t0, t1;
+
+    for(;; i++)
+    {
+        auto line = Line{ _origin + (double)i * _separation_direction, _direction };
+
+        tie(t0, t1) = intersect(line, _bbox);
         
-        double i0 = (_bbox.p0.y - _origin.y ) / _separation;
-        double i1 = (_bbox.p1.y - _origin.y ) / _separation;
+        if(t0 >= t1)
+            break;
 
-        _parameter_range.first =  { min(t0, t1), (int)ceil(min(i0, i1)) };
-        _parameter_range.second = { max(t0, t1), (int)floor(max(i0, i1)) };
-
-        auto line_count = _parameter_range.second.second - _parameter_range.first.second;
-        _line_origins.resize(line_count);
-        _line_lengths.resize(line_count);
-
-        for_each(par_unseq,
-                    _line_origins.begin(), _line_origins.end(),
-        [&](Point & p) 
-        {
-            size_t gid = distance(&_line_origins[0], &p);
-
-            // TODO: check for negative/positive cases
-            p = _origin + _separation * gid * Point(0,1);
-            _line_lengths[gid] = _bbox.p1.x - _bbox.p0.x;
-        });
-    }
-    else if(_direction.is_parallel({0,1}))
-    {
-        double t0 = (_bbox.p0.y - _origin.y ) / _direction.y;
-        double t1 = (_bbox.p0.y - _origin.y ) / _direction.y;
-
-        double i0 = (_bbox.p0.x - _origin.x ) / _separation;
-        double i1 = (_bbox.p1.x - _origin.x ) / _separation;
-
-        _parameter_range.first =  { min(t0, t1), (int)ceil(min(i0, i1)) };
-        _parameter_range.second = { max(t0, t1), (int)floor(max(i0, i1)) };
-
-        for_each(par_unseq,
-            _line_origins.begin(), _line_origins.end(),
-        [&](Point & p) 
-        {
-            size_t gid = distance(&_line_origins[0], &p);
-
-            // TODO: check for negative/positive cases
-            p = _origin + _separation * gid * Point(1,0);
-            _line_lengths[gid] = _bbox.p1.y - _bbox.p0.y;
-        });
-    }
-    else 
-    {
-        // pick the corner of the bounding box to start in.  This will be the
-        // smallest i value of all the corners
-        double i0 = numeric_limits<double>::max();
-        double t0 = numeric_limits<double>::max();
-
-        double i1 = numeric_limits<double>::min();
-        double t1 = numeric_limits<double>::min();
-
-        for(Point p : _bbox.corners())
-        {
-            double iy = ( p.y - _origin.y ) / _separation_direction.y;
-            double ix = ( p.x - _origin.x ) / _separation_direction.x;
-
-            i0 = min({i0, ix, iy});
-            i1 = max({i1, ix, iy});
-
-            double tx0 = ( p.x - _origin.x - _separation_direction.x * i0 ) / _direction.x;
-            double tx1 = ( p.x - _origin.x - _separation_direction.x * i1 ) / _direction.x;
-            double ty0 = ( p.y - _origin.y - _separation_direction.y * i0 ) / _direction.y;
-            double ty1 = ( p.y - _origin.y - _separation_direction.y * i1 ) / _direction.y;
-
-            t0 = min({t0, tx0, ty0, tx1, ty1 });
-            t1 = max({t1, tx0, ty0, tx1, ty1 });
-        }
-
-        _parameter_range.first =  { t0, (int)ceil(i0)  };
-        _parameter_range.second = { t1, (int)floor(i1) };
-
-        bool intersects;
-        double intersection_parameter;
-        // now calculate the origins of each line
-        for(int sep = _parameter_range.first.second; sep <= _parameter_range.second.second; sep++)
-        {
-            Point o = _origin + _separation_direction * sep;
-
-            // where does this line intersect the bounding box?
-            tie(intersects, intersection_parameter) = 
-                _bbox.intersect_ray(o, _direction);
-
-            // HACK: hopefully they all intersect, but just to be sure lets throw an error if it doesn't
-            if(!intersects)
-                throw logic_error("All lines within the parameter range should intersec the bounding box.  Check the logic above");
-
-            o = o + intersection_parameter * _direction;
-            
-            tie(intersects, intersection_parameter) = 
-                _bbox.intersect_ray(o, _direction);
-
-            if(!intersects)
-                continue; // just grazed the corner perhaps?
-
-            _line_origins.push_back(o);
-            _line_lengths.push_back((intersection_parameter * _direction).norm());
-        }
+        add_segment(Segment{line(t0), line(t1)});
     }
 
-    _length_index.resize(_line_lengths.size());
-    inclusive_scan(par_unseq, _line_lengths.begin(), _line_lengths.end(), _length_index.begin());
+
 }
 
 double Lines::length(double t0, double t1) const
@@ -152,18 +141,25 @@ Event Lines::at(double t) const
     if(_length_index.size() == 0)
         return Event{_origin, _direction, 0.};
 
-    double s = t * length(0, 1);
+    double s = t * length(0, 1);  // the total length we shold go along
+                                  // all the lines
 
     auto i = lower_bound(_length_index.begin(), _length_index.end(), s);
     if(i == _length_index.end())
         return Event{};
 
     size_t gid = distance(_length_index.begin(), i);
-    double sp = *i - _line_lengths[gid];
 
-    double ds = s - sp;
+    double rem;                   // the remaining length
+    if(i == _length_index.begin())
+        rem = s;
+    else
+        rem = s - *(i-1);
+        
+    auto seg = _segments[gid];
+    auto v = (seg.p1 - seg.p0).normalized();
 
-    return Event{_line_origins[gid] + ds * _direction, _direction };
+    return Event{seg.p0 + v * rem, _direction };
 }
 
 pair<bool, double> Lines::last_move_between(double t0, double t1) const

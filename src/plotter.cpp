@@ -14,6 +14,35 @@ using std::transform, std::for_each, std::inclusive_scan;
 
 vector<Point> simplify_path(vector<Point> const & path, double eps)
 {
+    if(path.size() <= 2)
+        return path;
+
+    vector<Point> ret;
+
+    ret.push_back(path.front());
+    Point p0 = ret.back();
+
+    for(size_t i = 1; i < path.size() - 1; i++)
+    {
+        Point p1 = path[i+1];
+        Point p = path[i];
+
+        double d = Segment{p0, p1}.distance(p);
+
+        if(abs(d) < eps)
+            continue;
+
+        ret.push_back(p);
+        p0 = ret.back();
+    }
+
+    ret.push_back(path.back());
+
+    return ret;
+}
+
+vector<Point> simplify_path_par(vector<Point> const & path, double eps)
+{
     using std::execution::par_unseq;
 
     if(path.size() <= 2)
@@ -96,11 +125,11 @@ std::vector<std::vector<Point>> Plotter::plot(Drawable const & drawing)
 
     bool is_closed = (p1 - p0).norm() < epsilon;
 
-    // return sample_interval(drawing, sample_count, parameter_interval);
+    return sample_interval(drawing, sample_count, parameter_interval);
 
-    return simplify_plot(
-               sample_interval(drawing, sample_count, parameter_interval),
-               is_closed, epsilon);
+    // return simplify_plot(
+    //            sample_interval(drawing, sample_count, parameter_interval),
+    //            is_closed, epsilon);
 }
 
 std::vector<std::vector<Point>> Plotter::fill(Cover const & cover,                    // a 2D area to be filled
@@ -119,28 +148,31 @@ std::vector<std::vector<Point>> Plotter::fill(Cover const & cover,              
 
     for(size_t i = 0; i < sample.size(); i++) 
     {
-        bool is_move = true;
         vector<Point> const & path = sample[i];
 
-        for(size_t j = 0; j < path.size(); j++)
+        vector<Point> q;
+        q.push_back(path[0]);
+
+        for(size_t j = 1; j < path.size(); j++)
         {
             Point const & p = path[j];
 
             if(cover.is_inside(p))
             {
-                if(is_move)
-                {
-                    ret.emplace_back(0);
-                    is_move = false;
-                }
-                
-                ret.back().push_back(p);   
+                q.push_back(p);
             }
             else 
             {
-                is_move = true;
+                if(q.size() >= 2)
+                    ret.emplace_back(move(q));
+                
+                q.clear();
             }
         }
+
+        if(q.size() >= 2)
+            ret.emplace_back(move(q));
     }
+
     return move(ret); // turn this into a stroke and return it
 }

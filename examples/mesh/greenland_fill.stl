@@ -1,0 +1,1078 @@
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex -51.2894 592.178 0
+		vertex -47.7539 581.571 0
+		vertex -54.825 588.642 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex -47.7539 581.571 0
+		vertex -51.2894 592.178 0
+		vertex -44.2184 585.107 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 47.9667 691.434 0
+		vertex -44.2184 585.107 0
+		vertex -51.2894 592.178 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex -44.2184 585.107 0
+		vertex 47.9667 691.434 0
+		vertex 55.0377 684.363 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 51.5022 694.969 0
+		vertex 55.0377 684.363 0
+		vertex 47.9667 691.434 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 55.0377 684.363 0
+		vertex 51.5022 694.969 0
+		vertex 58.5733 687.898 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex -50.3121 522.444 0
+		vertex -46.7765 511.838 0
+		vertex -53.8476 518.909 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex -46.7765 511.838 0
+		vertex -50.3121 522.444 0
+		vertex -43.241 515.373 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 118.571 691.328 0
+		vertex -43.241 515.373 0
+		vertex -50.3121 522.444 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex -43.241 515.373 0
+		vertex 118.571 691.328 0
+		vertex 125.643 684.257 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 122.107 694.863 0
+		vertex 125.643 684.257 0
+		vertex 118.571 691.328 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 125.643 684.257 0
+		vertex 122.107 694.863 0
+		vertex 129.178 687.792 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex -11.9006 490.145 0
+		vertex -8.36511 479.539 0
+		vertex -15.4362 486.61 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex -8.36511 479.539 0
+		vertex -11.9006 490.145 0
+		vertex -4.82957 483.074 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 189.574 691.62 0
+		vertex -4.82957 483.074 0
+		vertex -11.9006 490.145 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex -4.82957 483.074 0
+		vertex 189.574 691.62 0
+		vertex 196.645 684.549 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 193.11 695.156 0
+		vertex 196.645 684.549 0
+		vertex 189.574 691.62 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 196.645 684.549 0
+		vertex 193.11 695.156 0
+		vertex 200.181 688.085 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex -29.3856 401.95 0
+		vertex -25.85 391.343 0
+		vertex -32.9211 398.414 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex -25.85 391.343 0
+		vertex -29.3856 401.95 0
+		vertex -22.3145 394.879 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 259.494 690.829 0
+		vertex -22.3145 394.879 0
+		vertex -29.3856 401.95 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex -22.3145 394.879 0
+		vertex 259.494 690.829 0
+		vertex 266.565 683.758 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 263.03 694.365 0
+		vertex 266.565 683.758 0
+		vertex 259.494 690.829 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 266.565 683.758 0
+		vertex 263.03 694.365 0
+		vertex 270.101 687.294 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 23.1551 383.78 0
+		vertex 26.6906 373.173 0
+		vertex 19.6196 380.244 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 26.6906 373.173 0
+		vertex 23.1551 383.78 0
+		vertex 30.2262 376.708 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 331.293 691.918 0
+		vertex 30.2262 376.708 0
+		vertex 23.1551 383.78 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 30.2262 376.708 0
+		vertex 331.293 691.918 0
+		vertex 338.364 684.847 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 334.829 695.453 0
+		vertex 338.364 684.847 0
+		vertex 331.293 691.918 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 338.364 684.847 0
+		vertex 334.829 695.453 0
+		vertex 341.9 688.382 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 34.6138 324.528 0
+		vertex 38.1493 313.921 0
+		vertex 31.0782 320.992 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 38.1493 313.921 0
+		vertex 34.6138 324.528 0
+		vertex 41.6848 317.456 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 40.5395 330.453 0
+		vertex 41.6848 317.456 0
+		vertex 34.6138 324.528 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 41.6848 317.456 0
+		vertex 40.5395 330.453 0
+		vertex 47.6106 323.382 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 44.075 333.989 0
+		vertex 47.6106 323.382 0
+		vertex 40.5395 330.453 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 47.6106 323.382 0
+		vertex 44.075 333.989 0
+		vertex 51.1461 326.918 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 227.2 517.114 0
+		vertex 230.736 506.507 0
+		vertex 223.665 513.578 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 230.736 506.507 0
+		vertex 227.2 517.114 0
+		vertex 234.271 510.043 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 402.009 691.923 0
+		vertex 234.271 510.043 0
+		vertex 227.2 517.114 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 234.271 510.043 0
+		vertex 402.009 691.923 0
+		vertex 409.081 684.852 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 405.545 695.459 0
+		vertex 409.081 684.852 0
+		vertex 402.009 691.923 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 409.081 684.852 0
+		vertex 405.545 695.459 0
+		vertex 412.616 688.388 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 302.759 521.962 0
+		vertex 306.294 511.355 0
+		vertex 299.223 518.426 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 306.294 511.355 0
+		vertex 302.759 521.962 0
+		vertex 309.83 514.891 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 471.642 690.845 0
+		vertex 309.83 514.891 0
+		vertex 302.759 521.962 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 309.83 514.891 0
+		vertex 471.642 690.845 0
+		vertex 478.713 683.774 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 475.178 694.381 0
+		vertex 478.713 683.774 0
+		vertex 471.642 690.845 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 478.713 683.774 0
+		vertex 475.178 694.381 0
+		vertex 482.249 687.31 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex nan -nan 0
+		vertex nan -nan 0
+		vertex nan -nan 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex nan -nan 0
+		vertex nan -nan 0
+		vertex nan -nan 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex nan -nan 0
+		vertex nan -nan 0
+		vertex nan -nan 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex nan -nan 0
+		vertex nan -nan 0
+		vertex nan -nan 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 372.79 521.282 0
+		vertex 376.325 510.675 0
+		vertex 369.254 517.747 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 376.325 510.675 0
+		vertex 372.79 521.282 0
+		vertex 379.861 514.211 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 543.155 691.647 0
+		vertex 379.861 514.211 0
+		vertex 372.79 521.282 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 379.861 514.211 0
+		vertex 543.155 691.647 0
+		vertex 550.226 684.576 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 546.69 695.183 0
+		vertex 550.226 684.576 0
+		vertex 543.155 691.647 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 550.226 684.576 0
+		vertex 546.69 695.183 0
+		vertex 553.761 688.111 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 432.849 510.63 0
+		vertex 436.384 500.024 0
+		vertex 429.313 507.095 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 436.384 500.024 0
+		vertex 432.849 510.63 0
+		vertex 439.92 503.559 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 613.584 691.365 0
+		vertex 439.92 503.559 0
+		vertex 432.849 510.63 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 439.92 503.559 0
+		vertex 613.584 691.365 0
+		vertex 620.655 684.294 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 617.119 694.901 0
+		vertex 620.655 684.294 0
+		vertex 613.584 691.365 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 620.655 684.294 0
+		vertex 617.119 694.901 0
+		vertex 624.19 687.83 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 438.841 445.912 0
+		vertex 442.376 435.305 0
+		vertex 435.305 442.376 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 442.376 435.305 0
+		vertex 438.841 445.912 0
+		vertex 445.912 438.841 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 480.321 487.392 0
+		vertex 445.912 438.841 0
+		vertex 438.841 445.912 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 445.912 438.841 0
+		vertex 480.321 487.392 0
+		vertex 487.392 480.321 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 483.857 490.928 0
+		vertex 487.392 480.321 0
+		vertex 480.321 487.392 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 487.392 480.321 0
+		vertex 483.857 490.928 0
+		vertex 490.928 483.857 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 501.061 508.132 0
+		vertex 504.597 497.526 0
+		vertex 497.526 504.597 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 504.597 497.526 0
+		vertex 501.061 508.132 0
+		vertex 508.132 501.061 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 512.913 519.984 0
+		vertex 508.132 501.061 0
+		vertex 501.061 508.132 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 508.132 501.061 0
+		vertex 512.913 519.984 0
+		vertex 519.984 512.913 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 516.448 523.519 0
+		vertex 519.984 512.913 0
+		vertex 512.913 519.984 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 519.984 512.913 0
+		vertex 516.448 523.519 0
+		vertex 523.519 516.448 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 515.875 522.947 0
+		vertex 519.411 512.34 0
+		vertex 512.34 519.411 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 522.947 515.875 0
+		vertex 515.875 522.947 0
+		vertex 519.411 512.34 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 515.875 522.947 0
+		vertex 522.947 515.875 0
+		vertex 652.167 659.238 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 659.238 652.167 0
+		vertex 652.167 659.238 0
+		vertex 522.947 515.875 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 652.167 659.238 0
+		vertex 659.238 652.167 0
+		vertex 655.703 662.774 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 662.774 655.703 0
+		vertex 655.703 662.774 0
+		vertex 659.238 652.167 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 465.573 401.934 0
+		vertex 469.109 391.327 0
+		vertex 462.038 398.398 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 469.109 391.327 0
+		vertex 465.573 401.934 0
+		vertex 472.644 394.862 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 504.09 440.451 0
+		vertex 472.644 394.862 0
+		vertex 465.573 401.934 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 472.644 394.862 0
+		vertex 504.09 440.451 0
+		vertex 511.161 433.38 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 507.626 443.986 0
+		vertex 511.161 433.38 0
+		vertex 504.09 440.451 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 511.161 433.38 0
+		vertex 507.626 443.986 0
+		vertex 514.697 436.915 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 548.533 484.894 0
+		vertex 552.069 474.287 0
+		vertex 544.998 481.358 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 552.069 474.287 0
+		vertex 548.533 484.894 0
+		vertex 555.605 477.823 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 557.422 493.782 0
+		vertex 555.605 477.823 0
+		vertex 548.533 484.894 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 555.605 477.823 0
+		vertex 557.422 493.782 0
+		vertex 564.493 486.711 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 560.958 497.318 0
+		vertex 564.493 486.711 0
+		vertex 557.422 493.782 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 564.493 486.711 0
+		vertex 560.958 497.318 0
+		vertex 568.029 490.247 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 579.644 516.004 0
+		vertex 583.179 505.397 0
+		vertex 576.108 512.468 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 583.179 505.397 0
+		vertex 579.644 516.004 0
+		vertex 586.715 508.933 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 652.234 588.594 0
+		vertex 586.715 508.933 0
+		vertex 579.644 516.004 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 586.715 508.933 0
+		vertex 652.234 588.594 0
+		vertex 659.305 581.523 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 655.769 592.13 0
+		vertex 659.305 581.523 0
+		vertex 652.234 588.594 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 659.305 581.523 0
+		vertex 655.769 592.13 0
+		vertex 662.84 585.059 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 508.458 374.107 0
+		vertex 511.993 363.501 0
+		vertex 504.922 370.572 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 511.993 363.501 0
+		vertex 508.458 374.107 0
+		vertex 515.529 367.036 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 545.494 411.143 0
+		vertex 515.529 367.036 0
+		vertex 508.458 374.107 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 515.529 367.036 0
+		vertex 545.494 411.143 0
+		vertex 552.565 404.072 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 549.029 414.679 0
+		vertex 552.565 404.072 0
+		vertex 545.494 411.143 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 552.565 404.072 0
+		vertex 549.029 414.679 0
+		vertex 556.1 407.608 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 622.528 488.178 0
+		vertex 626.064 477.571 0
+		vertex 618.993 484.642 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 626.064 477.571 0
+		vertex 622.528 488.178 0
+		vertex 629.599 481.107 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 656.601 522.251 0
+		vertex 629.599 481.107 0
+		vertex 622.528 488.178 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 629.599 481.107 0
+		vertex 656.601 522.251 0
+		vertex 663.672 515.18 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 660.137 525.786 0
+		vertex 663.672 515.18 0
+		vertex 656.601 522.251 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 663.672 515.18 0
+		vertex 660.137 525.786 0
+		vertex 667.208 518.715 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 562.795 357.735 0
+		vertex 566.331 347.128 0
+		vertex 559.26 354.199 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 566.331 347.128 0
+		vertex 562.795 357.735 0
+		vertex 569.867 350.663 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 706.495 501.434 0
+		vertex 569.867 350.663 0
+		vertex 562.795 357.735 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 569.867 350.663 0
+		vertex 706.495 501.434 0
+		vertex 713.566 494.363 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 710.03 504.969 0
+		vertex 713.566 494.363 0
+		vertex 706.495 501.434 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 713.566 494.363 0
+		vertex 710.03 504.969 0
+		vertex 717.101 497.898 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 610.809 335.038 0
+		vertex 614.345 324.431 0
+		vertex 607.274 331.502 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 614.345 324.431 0
+		vertex 610.809 335.038 0
+		vertex 617.88 327.967 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 711.547 435.775 0
+		vertex 617.88 327.967 0
+		vertex 610.809 335.038 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 617.88 327.967 0
+		vertex 711.547 435.775 0
+		vertex 718.618 428.704 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 715.082 439.311 0
+		vertex 718.618 428.704 0
+		vertex 711.547 435.775 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 718.618 428.704 0
+		vertex 715.082 439.311 0
+		vertex 722.154 432.24 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 668.795 322.313 0
+		vertex 672.331 311.706 0
+		vertex 665.26 318.777 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 672.331 311.706 0
+		vertex 668.795 322.313 0
+		vertex 675.866 315.242 0
+	endloop
+endfacet
+endsolid
+
+solid triangle_strip
+
+facet normal 0 0 1
+	outer loop
+		vertex 682.128 335.646 0
+		vertex 675.866 315.242 0
+		vertex 668.795 322.313 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 675.866 315.242 0
+		vertex 682.128 335.646 0
+		vertex 689.199 328.575 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 685.664 339.181 0
+		vertex 689.199 328.575 0
+		vertex 682.128 335.646 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 689.199 328.575 0
+		vertex 685.664 339.181 0
+		vertex 692.735 332.11 0
+	endloop
+endfacet
+endsolid
+

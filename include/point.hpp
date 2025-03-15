@@ -86,6 +86,29 @@ struct Line
     void swap(Line &);
 };
 
+struct Ray
+{
+    Point p;
+    Vector v;
+    
+    Ray() = default;
+    Ray(Ray &&) = default;
+    Ray(Ray const &) = default;
+    Ray(Point const &, Vector const &);
+
+    std::pair<bool, double> intersect(Ray) const;
+    std::pair<bool, double> intersect(Line) const;
+    std::pair<bool, double> intersect(Segment) const;
+    std::pair<bool, double> intersect(HalfPlane) const;
+
+    std::pair<double, double> intersect(Triangle) const;
+    std::pair<double, double> intersect(Circle) const;
+    std::pair<double, double> intersect(CircleSegment) const;
+
+    Point operator()(double) const;
+    void swap(Ray &);
+};
+
 struct HalfPlane
 {
     Point p;
@@ -110,6 +133,7 @@ struct Segment
     Segment(Point const &, Point const &);
 
     double distance(Point p) const;
+    double length() const;
 
     std::pair<bool, double> intersect(Line) const;
     std::pair<bool, double> intersect(Segment) const;

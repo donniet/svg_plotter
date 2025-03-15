@@ -215,11 +215,30 @@ double Line::distance(Point q) const
 
 pair<bool, double> Line::intersect(Line l1) const
 {
-    double det = v.x * l1.v.y - v.y * l1.v.x;
+    /*
+        f(t) = p + t * v
+        g(t) = q + u * w
+
+        p - q = ( v , w ) ( t ; -u )
+
+        p - q = ( v.x  -w.x   ( t 
+                  v.y  -w.y )   u )
+              
+        |A| = -v.x * w.y + w.x * v.y
+
+        A^{-1} = ( -w.y  w.x   
+                   -v.y  v.x ) / |A|
+
+        ( t   = A^{-1} ( p.x - q.x 
+          u )            p.y - q.y )
+
+     */
+
+    double det = -v.x * l1.v.y + l1.v.x * v.y;
     if (abs(det) < 1e-9)
     {
         // Check for coincidence:
-        double cross_product = (l1.p.x - p.x) * v.y - (l1.p.y - p.y) * v.x;
+        double cross_product = (p.x - l1.p.x) * v.y - (p.y - l1.p.y) * v.x;
         if (std::abs(cross_product) < 1e-9)
             // Lines are coincident (overlapping)
             return { true, 0.0 }; // Indicate intersection (coincidence)
@@ -228,7 +247,7 @@ pair<bool, double> Line::intersect(Line l1) const
         return { false, 0.0 };
     }
     
-    double t = ((l1.p.x - p.x) * l1.v.y - (l1.p.y - p.y) * l1.v.x) / det;
+    double t = ( (p.x - l1.p.x) * l1.v.y - (p.y - l1.p.y) * l1.v.x) / det;
 
     return { true, t };
 }
@@ -362,6 +381,16 @@ pair<double, double> Line::intersect(CircleSegment cs) const
     return {t0, t1};
 }
 
+Ray::Ray(Point const & p0, Vector const & v0) :
+    p(p0), v(v0)
+{ }
+
+Point Ray::operator()(double t) const
+{
+    return p + t * v;
+}
+void swap(Ray &);
+
 bool HalfPlane::contains(Point const & q) const
 {
     Vector d = q - p;
@@ -374,6 +403,11 @@ bool HalfPlane::contains(Point const & q) const
 Segment::Segment(Point const & q0, Point const & q1) :
     p0(q0), p1(q1)
 { }
+
+double Segment::length() const
+{
+    return (p1 - p0).norm();
+}
 
 double Segment::distance(Point q) const
 {
