@@ -14,6 +14,11 @@ using std::pair;
 using std::swap, std::tie;
 using std::numbers::pi;
 
+/**
+ * Point class implementation
+ * 
+ */
+
 Point::Point(double x0, double y0) : 
     x(x0), y(y0)
 { }
@@ -162,7 +167,11 @@ bool Point::operator!=(Point const & p) const
     return !operator==(p);
 }
 
-
+void swap(Point & p0, Point & p1)
+{
+    swap(p0.x, p1.x);
+    swap(p0.y, p1.y);
+}
 Vector normalize(Vector const & v)
 {
     return v.normalized();
@@ -179,6 +188,11 @@ double cross(Vector const & u, Vector const & v)
 {
     return u.cross(v);
 }
+
+/**
+ * Line class implementation
+ * 
+ */
 
 Line::Line(Point const & p0, Vector const & v0) :
     p(p0), v(v0)
@@ -250,6 +264,20 @@ pair<bool, double> Line::intersect(Line l1) const
     double t = ( (p.x - l1.p.x) * l1.v.y - (p.y - l1.p.y) * l1.v.x) / det;
 
     return { true, t };
+}
+
+pair<bool, double> Line::intersect(Ray r) const
+{
+    // treat the ray as a line and intersect it, then check the intersection parameter
+    Line lr{r.p, r.v};
+
+    auto i = lr.intersect(*this);
+
+    if(i.first && i.second >= 0)
+        return intersect(lr);
+    
+    return { false, 0. };
+        
 }
 
 pair<bool, double> Line::intersect(Segment s) const
@@ -381,6 +409,10 @@ pair<double, double> Line::intersect(CircleSegment cs) const
     return {t0, t1};
 }
 
+/** 
+ *  Ray class implementation
+ */
+
 Ray::Ray(Point const & p0, Vector const & v0) :
     p(p0), v(v0)
 { }
@@ -389,7 +421,57 @@ Point Ray::operator()(double t) const
 {
     return p + t * v;
 }
-void swap(Ray &);
+void Ray::swap(Ray & r)
+{
+    ::swap(p, r.p);
+    ::swap(v, r.v);
+}
+
+/// UNIMPLEMENTD
+// double Ray::nearest(Point p) const { }
+// double Ray::distance(Point p) const { }
+
+pair<bool, double> Ray::intersect(Line l) const 
+{
+    Line rl{p, v};
+    auto i = rl.intersect(l);
+
+    if(i.first && i.second >= 0.)
+        return i;
+
+    return { false, i.second };
+}
+pair<bool, double> Ray::intersect(Ray r) const 
+{
+    Line l{p, v};
+    Line rl{r.p, r.v};
+
+    auto i = intersect(rl);
+    if(!i.first)
+        return i;
+    
+    auto j = rl.intersect(*this);
+    if(!j.first)
+        return j;
+
+    return i;
+}
+pair<bool, double> Ray::intersect(Segment s) const 
+{
+    Line l{p, v};
+
+    auto i = l.intersect(s);
+    if(i.first && i.second >= 0)
+        return i;
+
+    return { false, i.second };
+}
+
+/// UNIMPLEMENTED
+// pair<bool, double> Ray::intersect(HalfPlane) const {}
+// pair<double, double> Ray::intersect(Triangle) const {}
+// pair<double, double> Ray::intersect(Circle) const {}
+// pair<double, double> Ray::intersect(CircleSegment) const {} 
 
 bool HalfPlane::contains(Point const & q) const
 {
@@ -398,7 +480,9 @@ bool HalfPlane::contains(Point const & q) const
     return dot(d, n) >= 0;
 }
     
-
+/**
+ * Segment class implementation
+ */
 
 Segment::Segment(Point const & q0, Point const & q1) :
     p0(q0), p1(q1)
@@ -422,7 +506,7 @@ double Segment::distance(Point q) const
     return ((*this)(t) - q).norm();
 }
 
-std::pair<bool, double> Segment::intersect(Line l) const
+pair<bool, double> Segment::intersect(Line l) const
 {
     Line l0(p0, p1 - p0);
 
@@ -433,7 +517,23 @@ std::pair<bool, double> Segment::intersect(Line l) const
 
     return res;
 }
-std::pair<bool, double> Segment::intersect(Segment s) const
+pair<bool, double> Segment::intersect(Ray r) const
+{
+    Line l0(p0, p1 - p0);
+    Line lr(r.p, r.v);
+
+    auto res = l0.intersect(lr);
+
+    if(!res.first || res.second < 0. || res.second > 1.)
+        return { false, res.second };
+
+    auto res2 = lr.intersect(*this);
+    if(!res2.first || res2.second < 0)
+        return { false, res.second };
+
+    return res;
+}
+pair<bool, double> Segment::intersect(Segment s) const
 {
     Line l0(p0, p1 - p0);
     Line l1(s.p0, s.p1 - s.p0);
@@ -455,7 +555,7 @@ std::pair<bool, double> Segment::intersect(Segment s) const
     
     return { true, t0 };
 }
-std::pair<double,double> Segment::intersect(Triangle tri) const
+pair<double,double> Segment::intersect(Triangle tri) const
 {
     double t0 = 1, t1 = 0;
 

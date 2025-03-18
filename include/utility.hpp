@@ -383,8 +383,9 @@ double enclosed_area(Iter begin, Iter end)
     return ret * 0.5;
 }
 
-pair<double,double> intersect_intervals(pair<double,double> a, pair<double,double> b);
-pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin, double epsilon = 1e-5);
+std::pair<double,double> intersect_intervals(std::pair<double,double> a, std::pair<double,double> b);
+std::pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin, double epsilon = 1e-5);
+std::pair<bool,double> segment_intersects_vertical_ray(Point p0, Point p1, Point ray_origin, double eps);
 
 
 

@@ -7,6 +7,7 @@
 class Point;
 using Vector = Point;
 struct Line;
+struct Ray;
 struct Segment;
 struct HalfPlane;
 struct Triangle;
@@ -55,6 +56,7 @@ struct Point
     bool operator!=(Point const & p) const;
 };
 
+void swap(Point & p0, Point & p1);
 Vector normalize(Vector const &);
 Vector normal(Vector const &);
 double dot(Vector const &, Vector const &);
@@ -75,6 +77,7 @@ struct Line
     double distance(Point) const;
 
     std::pair<bool, double> intersect(Line) const;
+    std::pair<bool, double> intersect(Ray) const;
     std::pair<bool, double> intersect(Segment) const;
     std::pair<bool, double> intersect(HalfPlane) const;
 
@@ -96,8 +99,11 @@ struct Ray
     Ray(Ray const &) = default;
     Ray(Point const &, Vector const &);
 
-    std::pair<bool, double> intersect(Ray) const;
+    double nearest(Point) const;
+    double distance(Point) const;
+
     std::pair<bool, double> intersect(Line) const;
+    std::pair<bool, double> intersect(Ray) const;
     std::pair<bool, double> intersect(Segment) const;
     std::pair<bool, double> intersect(HalfPlane) const;
 
@@ -135,11 +141,15 @@ struct Segment
     double distance(Point p) const;
     double length() const;
 
+    
     std::pair<bool, double> intersect(Line) const;
+    std::pair<bool, double> intersect(Ray) const;
     std::pair<bool, double> intersect(Segment) const;
-    std::pair<double,double> intersect(Triangle) const;
-    std::pair<bool, double> intersect(Circle) const;
-    std::pair<bool, double> intersect(CircleSegment) const;
+    std::pair<bool, double> intersect(HalfPlane) const;
+
+    std::pair<double, double> intersect(Triangle) const;
+    std::pair<double, double> intersect(Circle) const;
+    std::pair<double, double> intersect(CircleSegment) const;
 
     Point operator()(double) const;
     void swap(Segment &);
@@ -156,6 +166,7 @@ struct Triangle
 
     bool contains(Point const &) const;
     std::pair<bool, Segment> intersect(Line) const;
+    std::pair<bool, Segment> intersect(Ray) const;
     std::pair<bool, Segment> intersect(Segment) const;
     std::pair<bool, CircleSegment> intersect(Circle) const;
     std::pair<bool, CircleSegment> intersect(CircleSegment) const;

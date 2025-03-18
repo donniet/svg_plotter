@@ -32,7 +32,7 @@ bool PlotCover::is_inside(Point const & p) const
     for(size_t j = 0; j < _plot.size(); j++) 
         for(size_t i = 1; i < _plot[j].size(); i++) 
         {
-            if(segment_intersects_horizontal_ray(_plot[j][i-1], _plot[j][i], p, _plotter.epsilon()).first)
+            if(segment_intersects_vertical_ray(_plot[j][i-1], _plot[j][i], p, _plotter.epsilon()).first)
                 count++;
 
             Segment s{_plot[j][i-1], _plot[j][i] };

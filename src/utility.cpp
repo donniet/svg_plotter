@@ -1,9 +1,64 @@
 #include "utility.hpp"
 
+#include <utility>
+
+using std::pair;
 
 pair<double,double> intersect_intervals(pair<double,double> a, pair<double,double> b)
 {
     return {max(a.first, b.first), min(a.second, b.second)};
+}
+
+pair<bool,double> segment_intersects_vertical_ray(Point p0, Point p1, Point ray_origin, double eps)
+{
+    /*
+        r(t) = o +   (0;1) * t
+        s(u) = p + (q - p) * u
+
+        with t >= 0
+        u \in [0,1)
+
+        o - p = ( 0  q.x-p.x   ( t
+                  1  q.y-p.y )   u )
+
+        o - p = ( 0  dx   ( t
+                  1  dy )   u )
+
+        |A| = -dx 
+        A^{-1} = ( -dy/dx    1 
+                     1/dx    0 ) 
+
+        ( -dy/dx  1   ( o.x - p.x   = ( t
+            1/dx  0 )   o.y - p.y )     u )
+     */
+
+    double det = p0.x - p1.x;
+
+    if(abs(det) < eps)
+    {
+        if(abs(p0.x - ray_origin.x) > eps || max(p0.y, p1.y) <= ray_origin.y - eps)
+            return { false, 0. };
+        
+        if(p0.y > ray_origin.y- eps && p1.y > ray_origin.y - eps)
+            return { true, min(p0.x, p1.x) };
+        
+        if(p0.y > ray_origin.y - eps)
+            return { true, p0.y };
+
+        return { true, p1.y };
+    }
+
+    Vector a{ (p1.y - p0.y) / det, 1 };
+    Vector b{ -1./det, 0 };
+    Vector r = ray_origin - p0;
+
+    double t = a.dot(r);
+    double u = b.dot(r);
+
+    if(t > -eps && u > -eps && u < 1 + eps)
+        return { true, t };
+
+    return { false, 0. };
 }
 
 pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin, double eps)
