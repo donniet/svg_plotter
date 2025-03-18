@@ -39,7 +39,7 @@ int main(int ac, char * av[])
     Lines lines(greenland.bounding_box(), 7.5, Vector(1./sqrt(2), 1./sqrt(2)));
 
     PlotCover cover(greenland, 50000, {0,1}, 1e-4);
-    cover.margin() = -10.;
+    cover.margin() = 8.;
 
     auto fill = plotter.fill(cover, lines);
     auto plot = plotter.plot(greenland);
