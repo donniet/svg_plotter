@@ -49,6 +49,27 @@ template<>
 double const & AttributeAdapter<double>::get<0>(double const & x)
 { return x; }
 
+
+template<>
+class AttributeAdapter<size_t>
+{
+public:
+    static inline constexpr size_t size = 1;
+    using row_type = std::array<double,1>;
+    using attribute_type = size_t;
+
+    template<size_t I>
+    static size_t const & get(attribute_type const & x);
+    static size_t const & get(attribute_type const & x, size_t i) 
+    { return x; }
+
+    static row_type row(attribute_type const & a) { return row_type{(double)a}; }
+};
+
+template<>
+size_t const & AttributeAdapter<size_t>::get<0>(size_t const & x)
+{ return x; }
+
 template<>
 class AttributeAdapter<Point>
 {
@@ -131,9 +152,9 @@ template<typename ... Attrs>
 class AttributeMesh
 {
 public:
-    static constexpr size_t stride = (2 + (AttributeAdapter<Attrs>::size + ...));
+    static constexpr size_t _stride = (2 + (AttributeAdapter<Attrs>::size + ...));
     using value_type = std::tuple<Point, Attrs...>;
-    using row_type = std::array<double, stride>;
+    using row_type = std::array<double, _stride>;
 
     static inline constexpr size_t triangle_strip_offsets[2][3] = {
         { 0, 1, 2 }, // even case
@@ -145,13 +166,18 @@ public:
 
     static constexpr std::pair<size_t, size_t> attribute_index(size_t i)
     {
-        i = i % stride;
+        i = i % _stride;
         size_t j = 0;
 
         for(; i >= attribute_sizes[j]; i -= attribute_sizes[j++])
         { }
 
         return {j, i};
+    }
+
+    static constexpr size_t stride() 
+    {
+        return _stride;
     }
 private:
     std::vector<value_type> _attributes;
@@ -329,17 +355,26 @@ public:
         }
 
         double operator*() const {
-            size_t row = _i / stride;
-            size_t col = _i % stride;
+            size_t row = _i / _stride;
+            size_t col = _i % _stride;
 
             return _m->row_element(row, col);
         }
     };
 
     size_t size() const { return _attributes.size(); }
-    size_t buffer_size() const { return _attributes.size() * stride; }
+    size_t buffer_size() const { return _attributes.size() * _stride; }
     buffer_iterator buffer_begin() const { return buffer_iterator(this, 0); }
     buffer_iterator buffer_end() const { return buffer_iterator(this, buffer_size()); }
+    value_type & front() { return operator[](0); }
+    value_type const & front() const { return operator[](0); }
+    value_type & back() { return operator[](size() - 1); }
+    value_type const & back() const { return operator[](size() - 1); }
+
+    auto begin() { return _attributes.begin(); }
+    auto begin() const { return _attributes.begin(); }
+    auto end() { return _attributes.end(); }
+    auto end() const { return _attributes.end(); }
 
     Point & vertex(size_t i)
     {

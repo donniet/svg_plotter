@@ -55,7 +55,7 @@ int main(int ac, char * av[])
 
 
 
-    std::cout << JSONAttributeMeshOutput(mesh) << std::endl;
+    std::cout << JSONAttributeMeshOutput({640, 816}, RGBA(1,1,1,0), mesh) << std::endl;
 
     // for(size_t section = 0;; section++)
     // {

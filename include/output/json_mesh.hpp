@@ -5,6 +5,7 @@
 
 #include "mesh.hpp"
 #include "attribute_mesh.hpp"
+#include "point.hpp"
 
 #include <string>
 
@@ -16,9 +17,16 @@ class JSONAttributeMeshOutput :
 {
 private:
     AttributeMesh<Attrs...> const * _mesh;
+    
+    std::pair<double, double> _canvas_size;
+    RGBA _clear_color;
 public:
-    JSONAttributeMeshOutput() : _mesh(nullptr) { }
-    JSONAttributeMeshOutput(AttributeMesh<Attrs...> const & m) : _mesh(&m) { }
+    JSONAttributeMeshOutput(std::pair<double, double> canvas_size = {1., 1.}, RGBA clear_color = RGBA(1, 1, 1, 1)) : 
+        _mesh(nullptr), _canvas_size(canvas_size), _clear_color(clear_color)
+    { }
+    JSONAttributeMeshOutput(std::pair<double,double> canvas_size, RGBA clear_color, AttributeMesh<Attrs...> const & m) : 
+        _mesh(&m), _canvas_size(canvas_size), _clear_color(clear_color)
+    { }
     JSONAttributeMeshOutput(JSONAttributeMeshOutput &&) = default;
     JSONAttributeMeshOutput(JSONAttributeMeshOutput const &) = default;
 
@@ -38,14 +46,17 @@ public:
         };
 
         os  << "{\n"
+            << ts(1) << "\"canvas\": [" << _canvas_size.first << ", " << _canvas_size.second << "],\n"
+            << ts(1) << "\"clear_color\": [" << _clear_color.r << ", " << _clear_color.g << ", " << _clear_color.b << ", " << _clear_color.a << "],\n"
             << ts(1) << "\"draw_mode\": \"triangle_strip\",\n"
             << ts(1) << "\"vertex_count\": " << _mesh->size() << ",\n"
+            << ts(1) << "\"stride\": " << _mesh->stride() << ",\n"
             << ts(1) << "\"attributes\": {\n"
             ;
 
         for(auto a : _mesh->attributes())
         {  
-            os  << ts(2) << "\"" << a.name() << "\": [ " << a.size() << ", " << _mesh->stride << ", " << a.offset() << " ],\n";
+            os  << ts(2) << "\"" << a.name() << "\": [ " << a.size() << ", " << a.offset() << " ],\n";
         }
     
         os  << ts(1) << "},\n"
@@ -55,16 +66,61 @@ public:
         size_t c = 0;
         for(auto i = _mesh->buffer_begin(); i != _mesh->buffer_end(); ++i, ++c)
         {
-            if(c % _mesh->stride == 0)
+            if(c % _mesh->stride() == 0)
                 os << "\n" << ts(2);
 
             os << *i << ", ";
         }
 
-        os  << "\n" 
-            << ts(1) << "],\n"
-            << ts(1) << "\"stroke_range\": [0,1],\n"
-            << ts(1) << "\"brush_color\": [1,0,0,1],\n"
+        os  << ts(1) << "],\n"
+            << ts(1) << "\"layers\": {\n"
+            << ts(2) << "\"background\": {\n"
+            << ts(3) << "\"draw_mode\": \"triangle_strip\",\n"
+            << ts(3) << "\"range\": [0, " << _mesh->size() << "],\n"
+            << ts(3) << "\"arclength\": " << get<1>(_mesh->back()).y << ",\n"
+            << ts(3) << "\"uniforms\": {\n"
+            << ts(4) << "\"u_brush_color\": { \"3f\": [  0.03515625, 0.1796875, 0.1640625 ] },\n"
+            << ts(4) << "\"u_brush_size\": { \"1f\": [ 10. ] },\n"
+            << ts(3) << "},\n"
+            << ts(3) << "\"section_end\": [\n"
+            << ts(4)
+            ;
+
+        size_t sec = 0;
+        for(size_t i = 0; i < _mesh->size(); ++i)
+        {
+            size_t n = get<3>((*_mesh)[i]);
+
+            if(sec != n) 
+            {
+                os << i << ",";
+                sec = n;
+            }
+        }
+
+        os  << "\n"
+            << ts(3) << "],\n"
+            << ts(3) << "\"section_length\": [\n"
+            << ts(4)
+            ;
+
+        sec = 0;
+        for(size_t i = 0; i < _mesh->size(); ++i)
+        {
+            Point uv = get<1>((*_mesh)[i]);
+            size_t n = get<3>((*_mesh)[i]);
+
+            if(sec != n) 
+            {
+                os << uv.y << ",";
+                sec = n;
+            }
+        }
+
+        os  << "\n"
+            << ts(3) << "],\n"
+            << ts(2) << "},\n"
+            << ts(1) << "},\n"
             << "}"
             ;
     }

@@ -190,6 +190,41 @@ double cross(Vector const & u, Vector const & v)
 }
 
 /**
+ * RGB class implementation
+ */
+RGB::RGB() : r(0), g(0), b(0) { }
+
+RGB::RGB(double r0, double g0, double b0) :
+    r(r0), g(g0), b(b0)
+{ }
+
+void RGB::swap(RGB & rgb)
+{
+    ::swap(r, rgb.r);
+    ::swap(g, rgb.g);
+    ::swap(b, rgb.b);
+}
+
+/**
+ * RGBA class implementation
+ */
+RGBA::RGBA() : RGB(), a(0) { }
+
+RGBA::RGBA(double r0, double g0, double b0, double a0) :
+    RGB(r0, g0, b0), a(a0)
+{ }
+
+RGBA::RGBA(RGB const & rgb, double a0) :
+    RGB(rgb), a(a0)
+{ }
+
+void RGBA::swap(RGBA & rgb)
+{
+    RGB::swap(rgb);
+    ::swap(a, rgb.a);
+}
+
+/**
  * Line class implementation
  * 
  */

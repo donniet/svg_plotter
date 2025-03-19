@@ -3,7 +3,6 @@
 // It will receive data from a buffer
 
 in vec2 a_position;
-in float a_arclength;
 in vec2 a_brush;
 
 in float a_section;
@@ -11,7 +10,6 @@ in vec2 a_uv;
 
 out vec2 uv;
 out vec2 pos;
-out float arclength;
 out vec2 brush;
 out float section;
 
@@ -29,7 +27,6 @@ void main()
     pos = a_position;
 
     section = a_section;
-    arclength = a_arclength;
     brush = a_brush;
     uv = a_uv;
 

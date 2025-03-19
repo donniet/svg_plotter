@@ -85,7 +85,7 @@ public:
         return false;
     }
 
-    using mesh_type =   AttributeMesh<Point, Point, double>;
+    using mesh_type =   AttributeMesh<Point, Point, size_t>;
     
     mesh_type create_mesh(std::vector<std::vector<Point>> const & plot, bool is_closed = false) const
     {
@@ -99,7 +99,7 @@ public:
         double s = 0;
         size_t current_size = 0;
 
-        auto start_fresh = [&strip, &section](Point & nuv, bool even = true)
+        auto start_fresh = [&strip, &section](Point const & nuv, bool even = true)
         {
             // copies of the last two inserted vertices
             auto pA = strip[strip.size()-2];
@@ -109,6 +109,10 @@ public:
             section++;
             get<3>(pA) = section;
             get<3>(pB) = section;
+
+            // update UV
+            get<1>(pA).y = nuv.y;
+            get<1>(pB).y = nuv.y;
             
             if(even) 
             {
@@ -125,7 +129,7 @@ public:
 
 
         auto insert_point = [&last_cross_product, &strip, &start_fresh, &section, &current_size]
-                            (Point const & p, Point uv, Point const & brush)
+                            (Point const & p, Point const & uv, Point const & brush)
         {
             if(current_size >= 2)
             {
@@ -135,7 +139,7 @@ public:
                 double c = cross(pB - pA, p - pA);
 
                 // cross_product sign should switch each time
-                if(last_cross_product * c > 0 || strip.contains(p)) 
+                if(last_cross_product * c > 0) // || strip.contains(p)) 
                     start_fresh(uv, c > 0);
                 
                 last_cross_product = c;

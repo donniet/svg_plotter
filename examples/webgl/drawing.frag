@@ -4,7 +4,6 @@ precision highp float;
 
 in vec2 uv;
 in vec2 pos;
-in float arclength;
 in vec2 brush;
 
 
@@ -115,8 +114,12 @@ vec4 brush_stroke_color(vec4 input_color)
 
 void main()
 {
-    float dummy = u_range.x + u_brush_color.x + u_brush_size;
+    // float dummy = u_range.x + u_brush_color.x + u_brush_size;
 
-    fragColor = vec4(1,0,dummy,1);
-    // fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));
+    // fragColor = vec4(1,0,dummy,1);
+    // fragColor = vec4(0,1,0,1);
+    vec4 col = brush_stroke_color(vec4(1., 1., 1., 1.));
+
+    // fragColor = vec4(1., col.a, 0., 1.);
+    fragColor = col;
 }

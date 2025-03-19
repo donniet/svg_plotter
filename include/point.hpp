@@ -63,6 +63,38 @@ double dot(Vector const &, Vector const &);
 double cross(Vector const & u, Vector const & v);
 
 
+struct RGB
+{
+    double r, g, b;
+
+    RGB();
+    RGB(double, double, double);
+    RGB(RGB const &) = default;
+    RGB(RGB &&) = default;
+
+    RGB & operator=(RGB const &) = default;
+    RGB & operator=(RGB &&) = default;
+
+    void swap(RGB &);
+};
+
+struct RGBA :
+    public RGB
+{
+    double a;
+
+    RGBA();
+    RGBA(double, double, double, double);
+    RGBA(RGB const &, double);
+    RGBA(RGBA const &) = default;
+    RGBA(RGBA &&) = default;
+
+    RGBA & operator=(RGBA const &) = default;
+    RGBA & operator=(RGBA &&) = default;
+
+    void swap(RGBA &);
+};
+
 struct Line 
 {  
     Point p;
