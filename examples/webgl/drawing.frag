@@ -5,6 +5,7 @@ precision highp float;
 in vec2 uv;
 in vec2 pos;
 in vec2 brush;
+in float arclength;
 
 
 uniform vec3 u_brush_color;
@@ -78,11 +79,11 @@ vec4 brush_stroke_color(vec4 input_color)
     // float d = uv_range.y - uv.y;
     // float d = 1.;
 
-    if(uv.y > u_uv_range[3])
-        d = length(uv.xy - vec2(0, u_uv_range[3]));
+    // if(uv.y > u_uv_range[3])
+    //     d = length(uv.xy - vec2(0, u_uv_range[3]));
 
-    if(uv.y < u_uv_range[1])
-        d = length(uv.xy - vec2(0,u_uv_range[1]));
+    // if(uv.y < u_uv_range[1])
+    //     d = length(uv.xy - vec2(0,u_uv_range[1]));
 
     if(d > 0.5)
         return vec4(u_brush_color.xyz, 0.);

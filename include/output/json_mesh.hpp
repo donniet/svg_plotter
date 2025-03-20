@@ -77,7 +77,7 @@ public:
             << ts(2) << "\"background\": {\n"
             << ts(3) << "\"draw_mode\": \"triangle_strip\",\n"
             << ts(3) << "\"range\": [0, " << _mesh->size() << "],\n"
-            << ts(3) << "\"arclength\": " << get<1>(_mesh->back()).y << ",\n"
+            << ts(3) << "\"arclength\": " << get<4>(_mesh->back()) << ",\n"
             << ts(3) << "\"uniforms\": {\n"
             << ts(4) << "\"u_brush_color\": { \"3f\": [  0.03515625, 0.1796875, 0.1640625 ] },\n"
             << ts(4) << "\"u_brush_size\": { \"1f\": [ 10. ] },\n"
@@ -107,12 +107,12 @@ public:
         sec = 0;
         for(size_t i = 0; i < _mesh->size(); ++i)
         {
-            Point uv = get<1>((*_mesh)[i]);
+            double s = get<4>((*_mesh)[i]);
             size_t n = get<3>((*_mesh)[i]);
 
             if(sec != n) 
             {
-                os << uv.y << ",";
+                os << s << ",";
                 sec = n;
             }
         }

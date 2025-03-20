@@ -7,11 +7,13 @@ in vec2 a_brush;
 
 in float a_section;
 in vec2 a_uv;
+in float a_arclength;
 
 out vec2 uv;
 out vec2 pos;
 out vec2 brush;
 out float section;
+out float arclength;
 
 
 uniform mat3 u_view;
@@ -29,6 +31,7 @@ void main()
     section = a_section;
     brush = a_brush;
     uv = a_uv;
+    arclength = a_arclength;
 
     p.x = dot(u_view[0].xy, a_position.xy) + u_view[0][2];
     p.y = dot(u_view[1].xy, a_position.xy) + u_view[1][2];
