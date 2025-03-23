@@ -28,6 +28,66 @@ enum class LineJoin {
     Chamfer
 };
 
+void coordinate_space(std::vector<Point> const & path, 
+                      std::vector<Vector> & tangents, 
+                      std::vector<Vector> & normals,
+                      bool is_closed = false);
+
+enum class BrushStyle {
+    // PencilNo2,
+    // Graphite2B,
+    // SharpiePoint,
+    BrushRound,
+};
+
+class MeshPlot
+{
+public:
+    //          Vertex    UV     Brush, Section,  Arclength
+    typedef AttributeMesh<Point, Point,  size_t,     double> mesh_type;
+
+    static inline constexpr const char * attribute_names[] = {
+        "a_position", "a_uv", "a_brush", "a_section", "a_arclength"
+    };
+
+    static inline const char * brush_color_uniform_name = "u_brush_color";
+    static inline const char * brush_size_uniform_name = "u_brush_size";
+    // static const char * brush_color_uniform_name = "u_arclength";
+
+private:
+    struct StrokePlot
+    {
+        BrushStyle brush_style;
+        double brush_size;
+        RGBA brush_color;
+        std::pair<double, double> time_range;
+        DrawMode draw_mode;
+        double arclength;
+        std::pair<size_t, size_t> vertex_range;
+        std::pair<size_t, size_t> section_range;
+    };
+
+    mesh_type _mesh;
+    std::vector<StrokePlot> _strokes;
+public:
+    /**
+     * stroke method appends a triangle mesh onto _mesh by creating a path of triangles along the plot parameter
+     * @param {Plot} plot
+     * @param {double} brush_size
+     * @param {RGBA} brush_color
+     */
+    void stroke(std::vector<std::vector<Point>> plot, 
+                BrushStyle brush_style = BrushStyle::BrushRound,
+                double brush_size = 1., 
+                RGBA brush_color = RGBA{0,0,0,1}, 
+                std::pair<double,double> time_range = {0.,1.});
+
+    void to_c(std::ostream & os);
+    void to_json(std::ostream & os);
+    void to_stl(std::ostream & os);
+    void to_obj(std::ostream & os);
+};
+
 class StrokeMesh
 {
 private:
@@ -39,41 +99,7 @@ public:
         _brush_diameter(brush_diameter), _join(join)
     { }
 
-    void coordinate_space(std::vector<Point> const & path, 
-                          std::vector<Vector> & tangents, 
-                          std::vector<Vector> & normals,
-                          bool is_closed = false) const
-    {
-        // Calculate tangents
-        for (size_t i = 0; i < path.size(); ++i) 
-        {
-            size_t prev, next;
-
-            if(is_closed)
-            {
-                prev = (i + path.size() - 1) % path.size();
-                next = (i + 1) % path.size();
-            }
-            else 
-            {
-                if(i == 0) 
-                    prev = 0;
-                else
-                    prev = i - 1;
-
-                if(i == path.size() - 1)
-                    next = i;
-                else 
-                    next = i + 1;
-            }
-
-            Vector v = path[next] - path[prev];
-            double l = v.norm();
-
-            tangents.push_back(v / l);
-            normals.push_back(normal(tangents.back()));
-        }
-    }
+    
 
 
     bool strip_contains(std::vector<Point> const & strip, Point const & p) const
