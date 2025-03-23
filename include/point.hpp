@@ -56,6 +56,35 @@ struct Point
     bool operator!=(Point const & p) const;
 };
 
+namespace std 
+{
+    template<size_t I>
+    double & get(Point & p)
+    {
+        switch(I)
+        {
+        case 0: 
+            return p.x;
+        case 1:
+        default:
+            return p.y;
+        }
+    }
+
+    template<size_t I>
+    double const & get(Point const & p)
+    {
+        switch(I)
+        {
+        case 0: 
+            return p.x;
+        case 1:
+        default:
+            return p.y;
+        }
+    }
+}
+
 void swap(Point & p0, Point & p1);
 Vector normalize(Vector const &);
 Vector normal(Vector const &);

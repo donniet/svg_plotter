@@ -38,17 +38,12 @@ public:
     using attribute_type = double;
 
     template<size_t I>
-    static double const & get(attribute_type const & x);
+    static double const & get(attribute_type const & x) { return x; }
     static double const & get(attribute_type const & x, size_t i) 
     { return x; }
 
     static row_type row(attribute_type const & a) { return row_type{a}; }
 };
-
-template<>
-double const & AttributeAdapter<double>::get<0>(double const & x)
-{ return x; }
-
 
 template<>
 class AttributeAdapter<size_t>
@@ -59,16 +54,12 @@ public:
     using attribute_type = size_t;
 
     template<size_t I>
-    static size_t const & get(attribute_type const & x);
+    static size_t const & get(attribute_type const & x) { return x; }
     static size_t const & get(attribute_type const & x, size_t i) 
     { return x; }
 
     static row_type row(attribute_type const & a) { return row_type{(double)a}; }
 };
-
-template<>
-size_t const & AttributeAdapter<size_t>::get<0>(size_t const & x)
-{ return x; }
 
 template<>
 class AttributeAdapter<Point>
@@ -79,7 +70,10 @@ public:
     using attribute_type = Point;
 
     template<size_t I>
-    static double const & get(Point const & p);
+    static double const & get(Point const & p)
+    {
+        return std::get<I>(p);
+    }
 
     static double const & get(Point const & p, size_t i)
     {
@@ -93,15 +87,6 @@ public:
 
 };
 
-template<>
-double const & AttributeAdapter<Point>::get<0>(Point const & p) 
-{ return p.x; }
-
-template<>
-double const & AttributeAdapter<Point>::get<1>(Point const & p) 
-{ return p.y; }
-
-
 
 
 template<size_t I, typename T>
@@ -110,17 +95,30 @@ double attribute_get(T const & a)
     return AttributeAdapter<T>::template get<I>(a);
 }
 
-
-double get_element(Point const & p, size_t i)
+template<typename T>
+double get_element(T const & p, size_t i)
 {
-    if(i == 0)
-        return p.x;
-
-    return p.y;
-}
-double get_element(double const & p, size_t i)
-{
-    return p;
+    switch(i)
+    {
+    case  0: return attribute_get< 0>(p);
+    case  1: return attribute_get< 1>(p);
+    case  2: return attribute_get< 2>(p);
+    case  3: return attribute_get< 3>(p);
+    case  4: return attribute_get< 4>(p);
+    case  5: return attribute_get< 5>(p);
+    case  6: return attribute_get< 6>(p);
+    case  7: return attribute_get< 7>(p);
+    case  8: return attribute_get< 8>(p);
+    case  9: return attribute_get< 9>(p);
+    case 10: return attribute_get<10>(p);
+    case 11: return attribute_get<11>(p);
+    case 12: return attribute_get<12>(p);
+    case 13: return attribute_get<13>(p);
+    case 14: return attribute_get<14>(p);
+    case 15: return attribute_get<15>(p);
+    default:
+        return attribute_get<0>(p);
+    }
 }
 
 template<typename Tuple, size_t I, size_t ... Is>

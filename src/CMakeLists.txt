@@ -36,6 +36,9 @@ target_link_libraries(utility point)
 add_library(plot_cover plot_cover.cpp)
 target_link_libraries(plot_cover cover utility plotter)
 
+add_library(stroke_mesh stroke_mesh.cpp)
+target_link_libraries(stroke_mesh stroke)
+
 set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 
