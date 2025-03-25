@@ -40,6 +40,23 @@ enum class BrushStyle {
     BrushRound,
 };
 
+namespace std
+{
+    string to_string(::BrushStyle const & s);
+}
+
+struct StrokePlot
+{
+    BrushStyle brush_style;
+    double brush_size;
+    RGBA brush_color;
+    std::pair<double, double> time_range;
+    DrawMode draw_mode;
+    double arclength;
+    std::pair<size_t, size_t> vertex_range;
+    std::pair<size_t, size_t> section_range;
+};
+
 class MeshPlot
 {
 public:
@@ -55,21 +72,10 @@ public:
     // static const char * brush_color_uniform_name = "u_arclength";
 
 private:
-    struct StrokePlot
-    {
-        BrushStyle brush_style;
-        double brush_size;
-        RGBA brush_color;
-        std::pair<double, double> time_range;
-        DrawMode draw_mode;
-        double arclength;
-        std::pair<size_t, size_t> vertex_range;
-        std::pair<size_t, size_t> section_range;
-    };
-
     mesh_type _mesh;
     std::vector<StrokePlot> _strokes;
 public:
+    MeshPlot();
     /**
      * stroke method appends a triangle mesh onto _mesh by creating a path of triangles along the plot parameter
      * @param {Plot} plot
@@ -82,10 +88,10 @@ public:
                 RGBA brush_color = RGBA{0,0,0,1}, 
                 std::pair<double,double> time_range = {0.,1.});
 
-    void to_c(std::ostream & os);
-    void to_json(std::ostream & os);
-    void to_stl(std::ostream & os);
-    void to_obj(std::ostream & os);
+    void to_c(std::ostream & os) const;
+    void to_json(std::ostream & os) const;
+    void to_stl(std::ostream & os) const;
+    void to_obj(std::ostream & os) const;
 };
 
 class StrokeMesh

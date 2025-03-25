@@ -142,8 +142,13 @@ double row_element_helper(Tuple const & r, size_t attr, size_t el, std::index_se
 
 class Uniform
 {
+private:
+    std::string _name;
 public:
-    std::string name() const;
+    std::string name() const
+    {
+        return _name;
+    }
 };
 
 template<typename ... Attrs>
@@ -287,6 +292,9 @@ public:
             ._end = AttributeIterator(this, attribute_count)
         };
     }
+
+    std::vector<Uniform> const & uniforms() const { return _uniforms; }
+    std::vector<Uniform> & uniforms() { return _uniforms; }
 
     AttributeMesh() : _mode(DrawMode::triangles), _names({"position"}) { }
 

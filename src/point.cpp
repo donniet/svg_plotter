@@ -749,6 +749,15 @@ namespace std {
 
         return format("draw({},{},{})", p.x, p.y, p.dt);
     }
+
+    string to_string(RGBA const & c)
+    {
+        return format("RGBA{{ .r={},.g={},.b={},.a={} }}", c.r, c.g, c.b, c.a);
+    }
+    string to_string(RGB const & c)
+    {
+        return format("RGB{{ .r={},.g={},.b={} }}", c.r, c.g, c.b);
+    }
 }
 
 

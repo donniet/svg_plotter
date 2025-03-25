@@ -26,7 +26,7 @@ int main(int ac, char * av[])
     //     Event(Point(1,0), Vector(1,0), 1)
     // });
 
-    StrokeMesh mesher(25);
+    // StrokeMesh mesher(25);
 
     // auto mesh = mesher(stroke);
     // std::cout << JSONMeshOutput(mesh.first);
@@ -48,14 +48,18 @@ int main(int ac, char * av[])
 
     auto stroke = simplify_plot(plot, false, 1e-4);
 
+    MeshPlot meshplot;
+
+    meshplot.stroke(stroke, BrushStyle::BrushRound, 10., RGBA{0.03515625, 0.1796875, 0.1640625, 1.}, {0.,1.});
+
 
     
     
-    auto mesh = mesher.create_mesh(stroke);
+    // auto mesh = mesher.create_mesh(stroke);
 
 
 
-    std::cout << JSONAttributeMeshOutput({640, 816}, RGBA(1,1,1,0), mesh) << std::endl;
+    // std::cout << JSONAttributeMeshOutput({640, 816}, RGBA(1,1,1,0), mesh) << std::endl;
 
     // for(size_t section = 0;; section++)
     // {
@@ -75,6 +79,8 @@ int main(int ac, char * av[])
     // std::cout << OBJOutput(mesh.first);
     // for(auto const & m : mesh)
     //     std::cout << STLOutput(m);
+
+    meshplot.to_c(std::cout);
 
     return 0;
 }

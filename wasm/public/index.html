@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset='UTF-8' />
+        <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0' />
+        <meta http-equiv='X-UA-Compatible' content='ie=edge' />
+        <title>Drawing</title>
+        
+        <style type="text/css">
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+canvas {
+  margin: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* canvas { position: absolute; left: 0; right: 0; } */
+        </style>
+
+<script type="text/javascript">
+  async function init() {
+    const { instance } = await WebAssembly.instantiateStreaming(
+      fetch("./greenland.wasm")
+    );
+    console.log(instance.exports);
+
+    const buf = new Float32Array(instance.exports.memory.buffer, instance.exports.get_buffer(), instance.exports.buffer_size());
+
+    const attribute_name = function(i)
+    {
+        const dat = new Uint8Array(instance.exports.memory.buffer, instance.exports.get_attribute_name_ptr(i), instance.exports.get_attribute_name_length(i));
+
+        return (new TextDecoder()).decode(dat);
+    }
+
+    const uniform_name = function(i)
+    {
+        const dat = new Uint8Array(instance.exports.memory.buffer, instance.exports.get_uniform_name_ptr(i), instance.exports.get_uniform_name_length(i));
+
+        return (new TextDecoder()).decode(dat);
+    }
+
+    const uniform_data = function(i)
+    {
+        return new Float32Array(instance.exports.memory.buffer, instance.exports.get_uniform_data(i), instance.exports.get_uniform_size(i));
+    }
+
+    // create a new canvas object
+    const canvas = document.querySelector("canvas");
+    canvas.width = document.body.clientWidth;
+    canvas.height = document.body.clientHeight;
+    // document.body.appendChild(canvas);
+
+    // console.log(instance.exports.add(4, 1));
+  }
+</script>
+
+    </head>
+    <body onload="init()">
+        <canvas />
+    </body>
+</html>

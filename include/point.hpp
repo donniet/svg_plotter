@@ -299,6 +299,8 @@ double abs(Point p);
 namespace std {
     string to_string(Point const & p);
     string to_string(Event const & p);
+    string to_string(RGBA const & c);
+    string to_string(RGB const & c);
 }
 
 
