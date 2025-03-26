@@ -5,59 +5,965 @@
         <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0' />
         <meta http-equiv='X-UA-Compatible' content='ie=edge' />
         <title>Drawing</title>
-        
-        <style type="text/css">
 
+<style type="text/css">
 body {
     margin: 0;
     padding: 0;
 }
 
 canvas {
-  margin: 0;
-  width: 100vw;
-  height: 100vh;
+    margin: 0;
+    width: 100vw;
+    height: 100vh;
 }
 
 /* canvas { position: absolute; left: 0; right: 0; } */
-        </style>
+</style>
+
+
+<script type="x-shader/x-vertex" id="vertex_shader">
+#version 300 es
+// an attribute is an input (in) to a vertex shader.
+// It will receive data from a buffer
+
+in vec2 a_position;
+in vec2 a_brush;
+
+in float a_section;
+in vec2 a_uv;
+in float a_arclength;
+
+out vec2 uv;
+out vec2 pos;
+out vec2 brush;
+out float section;
+out float arclength;
+
+
+uniform mat3 u_view;
+uniform vec4 u_uv_range;
+uniform vec2 u_range;
+
+// all shaders have a main function
+void main() 
+{
+    // gl_Position is a special variable a vertex shader
+    // is responsible for setting
+    vec2 p = a_position;
+    pos = a_position;
+
+    section = a_section;
+    brush = a_brush;
+    uv = a_uv;
+    arclength = a_arclength;
+
+    p.x = dot(u_view[0].xy, a_position.xy) + u_view[0][2];
+    p.y = dot(u_view[1].xy, a_position.xy) + u_view[1][2];
+
+    float z = clamp(a_uv[1] / u_uv_range[3], 0., 1.);
+
+    gl_Position = vec4(p.xy, 0., 1.);
+}
+</script>
+
+
+<script type="x-shader/x-fragment" id="fragment_shader">
+#version 300 es
+
+precision highp float;
+
+in vec2 uv;
+in vec2 pos;
+in float arclength;
+in vec2 brush;
+
+
+uniform vec4 brush_color;
+uniform vec2 stroke_range;
+uniform vec2 resolution;
+uniform vec4 uv_range;
+
+out vec4 fragColor;
+
+// calculate the nearest point on the centerline of the stoke
+// the centerline has uv coordinates of (s, 0)
+// where s is the arclength
+// vec2 centerline(vec2 position, vec2 uv, float s)
+// {
+//     // pos = A * uv + b
+
+// }
+
+
+float smoothf(float x)
+{
+    return x*x*x*(x*(x*6. - 15.) + 10.);
+}
+
+float dtoa(float d, float amount)
+{
+    float x = clamp(d, 1.0/amount, 1.0) * amount;
+    return clamp(1.0 / x, 0.,1.);
+}
+
+// hash & simplex noise from https://www.shadertoy.com/view/Msf3WH
+vec2 hash( vec2 p )
+{
+    p = vec2( dot(p,vec2(127.1,311.7)),
+                dot(p,vec2(269.5,183.3)) );
+    return -1.0 + 2.0*fract(sin(p)*43758.5453123);
+}
+
+// returns -.5 to 1.5. i think.
+float noise( in vec2 p )
+{
+    const float K1 = 0.366025404; // (sqrt(3)-1)/2;
+    const float K2 = 0.211324865; // (3-sqrt(3))/6;
+
+    vec2 i = floor( p + (p.x+p.y)*K1 );
+    
+    vec2 a = p - i + (i.x+i.y)*K2;
+    vec2 o = (a.x>a.y) ? vec2(1.0,0.0) : vec2(0.0,1.0); //vec2 of = 0.5 + 0.5*vec2(sign(a.x-a.y), sign(a.y-a.x));
+    vec2 b = a - o + K2;
+    vec2 c = a - 1.0 + 2.0*K2;
+
+    vec3 h = max( 0.5-vec3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );
+
+    vec3 n = h*h*h*h*vec3( dot(a,hash(i+0.0)), dot(b,hash(i+o)), dot(c,hash(i+1.0)));
+
+    return dot( n, vec3(70.0) );	
+}
+
+
+float noise01(vec2 p)
+{
+    return clamp((noise(p)+.5)*.5, 0.,1.);
+}
+
+vec4 brush_stroke_color(vec4 input_color)
+{
+    float d = length(pos - brush) / 50.;
+
+    // float d = length(uv - vec2(arclength / 50., 0));
+    // float d = uv_range.y - uv.y;
+    // float d = 1.;
+
+    if(uv.y > uv_range[3])
+        d = length(uv.xy - vec2(0, uv_range[3]));
+
+    if(uv.y < uv_range[1])
+        d = length(uv.xy - vec2(0,uv_range[1]));
+
+    if(d > 0.5)
+        return vec4(brush_color.xyz, 0.);
+    
+
+    // float boundary = dtoa(d, 0.3);
+    float tex = 0.
+        + noise01(uv.xy * vec2(min(resolution.y, resolution.x) * 0.3, 0.5))
+        + noise01(uv.xy * vec2(79., 1.))
+        + noise01(uv.xy * vec2(44., 1.))
+        ;
+
+    tex *= 0.333 * abs(uv.x);
+    tex = max(0.008, tex);
+
+    float alpha = pow(tex, max(0., d));
+
+    const float alpha_boost = 1.19;
+
+    alpha = alpha_boost * max(0., alpha - pow(2. * d, 0.5));
+    alpha = smoothf(alpha);
+
+
+    
+//     return mix(input_color, brush_color, alpha);
+    return vec4(brush_color.xyz, alpha);
+}
+
+
+void main()
+{
+    // uv.x == arclength of brushstroke
+    // uv.y == distance from centerline
+    // brush diameter is 1
+
+    // vec2 rel = vec2(arclength, 0) - uv;
+
+    // float d2 = dot(rel, rel);
+
+    // fragColor.w = 0.25 - d2;
+    // fragColor.xyz = brush_color.xyz;
+
+    // float border = pow(abs(uv.x) / 0.5, 10.);
+    // if(border > 0.85)
+    //     fragColor = vec4(0.,0.,0.,1.);
+    // else
+        fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));
+    // fragColor.w *= 0.5;
+    // fragColor.w = 1.;
+    // fragColor = vec4(1., 1., 0., 1.);
+
+    // fragColor.xyzw = (0.25 - d2) * brush_color.xyzw;
+
+    // fragColor = vec4( uv.xy,0, 1);
+}
+</script>
+
 
 <script type="text/javascript">
-  async function init() {
-    const { instance } = await WebAssembly.instantiateStreaming(
-      fetch("./greenland.wasm")
+
+const UV_RANGE_UNIFORM_NAME = "u_uv_range";
+const STROKE_LENGTH_UNIFORM_NAME = "u_stroke_length";
+const RANGE_UNIFORM_NAME = "u_range";
+const VIEW_UNIFORM_NAME = "u_view";
+const RESOLUTION_UNIFORM_NAME = "u_resolution";
+const BRUSH_SIZE_UNIFORM_NAEM = "u_brush_size";
+const DRAW_DURATION_UNIFORM_NAME = "u_draw_time";
+const MOUSE_UNIFORM_NAME = "u_mouse";
+const MOUSE_STATE_UNIFORM_NAME = "u_mouse_state";
+const TIME_UNIFORM_NAME = "u_time";
+
+const SECTION_ATTRIBUTE_NAME = "a_section";
+const UV_ATTRIBUTE_NAME = "a_uv";
+
+const DEFAULT_DRAW_MODE = "triangle_strip";
+const DEFAULT_LAYER_NAME = "layer";
+const DEFAULT_BRUSH_SIZE = 25.;
+const DEFAULT_MOUSE_ACTIONS = ["move", "down", "up", "over", "leave", "wheel", "enter"];
+const SHADER_TYPES = [ "vertex", "fragment" ];
+
+const WEBGL_CONTEXT_NAME = "webgl2";
+
+const FLOAT_BYTES = 4;
+const THROTTLE_FRAMES = false;
+
+
+/**
+ * returns the lowest index which val could be inserted into the sorted array arr
+ * without affecting the sort
+ * @param {Array} arr a sorted array
+ * @param {*} val the value to find in the sorted array
+ * @param {Number} begin the beginning of the range to check
+ * @param {Number} end the end of the (exclusive) of the range to check
+ */
+function lower_bound(arr, val, less = (a,b) => a < b, begin = 0, end = -1) {
+    if (end < 0)
+        end = arr.length;
+
+    while (begin < end) 
+    {
+        let mid = Math.floor((begin + end) / 2);
+
+        // check for <=
+        if(less(val, arr[mid]) || !less(arr[mid], val))
+        {
+            end = mid;
+            continue;
+        }
+        // ASSERT(val > arr[mid])
+        // if begin + 1 == end then mid will equal begin
+        // in this case we return end
+        if (begin == mid)
+            break;
+
+        // ASSERT(begin != mid)
+        begin = mid;
+    }
+
+    return end;
+}
+
+
+/**
+ * returns the greatest index which val could be inserted into the sorted array arr
+ * without affecting the sort
+ * @param {Array} arr a sorted array
+ * @param {*} val the value to find in the sorted array
+ * @param {Number} begin the beginning of the range to check
+ * @param {Number} end the end of the (exclusive) of the range to check
+ */
+function upper_bound(arr, val, less = (a,b) => a < b, begin = 0, end = -1) {
+    if (end < 0)
+        end = arr.length;
+
+    while (begin < end) 
+    {
+        let mid = Math.floor((begin + end) / 2);
+
+        if (less(val, arr[mid])) 
+        {
+            end = mid;
+            continue;
+        }
+        // ASSERT(val > arr[mid])
+        // if begin + 1 == end then mid will equal begin
+        // in this case we return end
+        if (begin == mid)
+            break;
+
+        // ASSERT(begin != mid)
+        begin = mid;
+    }
+
+    return end;
+}
+
+
+// TODO: add mechanism for integer uniforms
+function set_uniform_value(gl, uniform_name, uniform_location, value)
+{
+    // TODO: handle invalid uniform_locations witha single console log message
+
+    switch(value.length)
+    {
+    case 1:
+        gl.uniform1fv(uniform_location, value); break;
+    case 2:
+        gl.uniform2fv(uniform_location, value); break;
+    case 3: 
+        gl.uniform2fv(uniform_location, value); break;
+    case 4:
+        gl.uniform4fv(uniform_location, value); break;
+    default:
+        console.log(`could not deduce length of value "${value}"" for uniform "${uniform_name}".`);
+    }
+}
+
+function create_uniform_value_setter(gl, program, uniform_name)
+{
+    var location = gl.getUniformLocation(program, uniform_name);
+
+    return function(value) {
+        set_uniform_value(gl, uniform_name, location, value);
+    };
+}
+
+// TODO: add mechanism for integer uniforms
+function set_uniform_matrix(gl, uniform_name, uniform_location, value, normalized)
+{
+    // TODO: handle invalid uniform_locations witha single console log message
+
+    switch(value.length)
+    {
+    case 1:
+        gl.uniformMatrix1fv(uniform_location, normalized, value); break;
+    case 4:
+        gl.uniformMatrix2fv(uniform_location, normalized, value); break;
+    case 9: 
+        gl.uniformMatrix3fv(uniform_location, normalized, value); break;
+    case 16:
+        gl.uniformMatrix4fv(uniform_location, normalized, value); break;
+    default:
+        console.error(`could not deduce length of value "${value}" for matrix uniform "${uniform_name}"`);
+    }
+}
+
+function create_uniform_matrix_setter(gl, program, uniform_name)
+{
+    var location = gl.getUniformLocation(program, uniform_name);
+
+    return function(value, normalized) {
+        set_uniform_matrix(gl, uniform_name, location, value, normalized);
+    };
+}
+
+function compile_shader(gl, shader_type, shader_source)
+{
+    // create a new webgl shader of shader_type
+    var shader = gl.createShader(shader_type);
+
+    // specify the source of the shader
+    gl.shaderSource(shader, shader_source);
+
+    // attempt to compile the shader
+    gl.compileShader(shader);
+
+    // if we compiled successfully return the shader
+    if(gl.getShaderParameter(shader, gl.COMPILE_STATUS))
+        return shader;
+
+    // otherwise display the error and clean up
+    const last_error = gl.getShaderInfoLog(shader);
+    console.error(`error compiling "${shader_type}" shader: ${last_error}`);
+    gl.deleteShader(shader);
+    return null;
+}
+
+function create_program(gl, shaders)
+{
+    // create a new webgl program
+    var program = gl.createProgram();
+
+    // attach our shaders
+    for(const shader of shaders)
+        gl.attachShader(program, shader);
+
+    // attempt to link the program
+    gl.linkProgram(program);
+
+    // if we linked successfully return the program
+    if(gl.getProgramParameter(program, gl.LINK_STATUS))
+        return program;
+
+    // otherwise show the error in the console and clean up
+    const last_error = gl.getProgramInfoLog(program);
+    console.error(`error linking program: ${last_error}`);
+    gl.deleteProgram(program);
+    return null;
+}
+
+function compile_script_shader(gl, script_element)
+{
+    switch(script_element.type)
+    {
+    case 'x-shader/x-vertex':
+        return compile_shader(gl, gl.VERTEX_SHADER, 
+            script_element.textContent.trimStart());
+
+    case 'x-shader/x-fragment':
+        return compile_shader(gl, gl.FRAGMENT_SHADER, 
+            script_element.textContent.trimStart());
+
+    default:
+        console.error(`unknown shader type: ${script_element.type}`);
+    }
+
+    return null;
+}
+
+function create_program_from_scripts(gl, script_elements)
+{
+    // compile each shader from the body of the script_elements
+    const shaders = [];
+    for(const e of script_elements)
+    {
+        const shader = compile_script_shader(gl, e);
+
+        // if our shader failed to compile then we return null
+        if(!shader)
+            return null;
+
+        // otherwise add it to the list of shaders to be linked
+        shaders.push(shader);
+    }
+
+    // create and link the program
+    return create_program(gl, shaders);
+}
+
+/**
+ * Layer class
+ * */
+function Layer(gl, program, name, draw_mode, 
+               arclength, vertex_range, time_range, brush_size, brush_color, 
+               sections, uniforms)
+{
+    this.name = name || DEFAULT_LAYER_NAME;
+    this.draw_mode = draw_mode || gl[DEFAULT_DRAW_MODE.toUpperCase()];
+    this.arclength = arclength || 1;
+    this.vertex_range = vertex_range || [0,0];
+    this.time_range = time_range || [0,1];
+    this.brush_size = brush_size || 10.;
+    this.brush_color = brush_color || [0., 0., 0., 1.];
+    this.uniforms = uniforms || {};
+    this.sections = sections || [];
+
+    // calculate the uv ranges
+    this.uv_range_of = this.sections.map(function(s, i, sections) {
+        // if this is the first section, our minimum arclength should be zero
+        if(i == 0)
+            return [ -0.5, 0., 0.5, s.cumulative_arclength ];
+
+        // otherwise subtract 0.5 from the previous arclength as the minimum
+        return [ -0.5, sections[i-1].cumulative_arclength, 0.5, s.cumulative_arclength ];
+    });
+
+    // create functions to accept values for the uniforms in this layer
+    this.uniform_functions = {};
+    for(const [key, u] of Object.entries(this.uniforms))
+        this.uniform_functions[key] = create_uniform_value_setter(gl, program, u);
+
+    this.set_uv_range = create_uniform_value_setter(gl, program, UV_RANGE_UNIFORM_NAME);
+    this.set_stroke_length = create_uniform_value_setter(gl, program, STROKE_LENGTH_UNIFORM_NAME);
+}
+
+
+Layer.prototype.vertex_range_of_section = function(section)
+{
+    // if we are the first section, return the overall range up to the first section end
+    if(section == 0)
+        return [
+            this.vertex_range[0],
+            this.vertex_range[0] + this.sections[0].end_vertex
+        ];
+  
+    // otherwise return the end of the last section up to this section end
+    return [
+        this.vertex_range[0] + this.sections[section-1].end_vertex,
+        this.vertex_range[0] + this.sections[section].end_vertex
+    ];
+};
+
+Layer.prototype.draw_section = function(gl, section, range, t)
+{
+    // find the range of vertices in this section
+    const [begin, end] = this.vertex_range_of_section(section);
+  
+    // lookup the uv range of this section
+    const uv_range = this.uv_range_of[section];
+
+    // setup our uv_range uniform
+    this.set_uv_range([
+        uv_range[0], uv_range[1], 
+        uv_range[2], uv_range[1] + t * (uv_range[3] - uv_range[1])
+    ]);
+
+    // set our arclength uniform
+    this.set_stroke_length([this.sections[section].cumulative_arclength]);
+
+    // draw the section
+    gl.drawArrays(this.draw_mode, 
+                  begin, 
+                  end - begin); 
+};
+
+function less_section_length(a, b)
+{
+    if(typeof a === "number")
+        return a < b.cumulative_arclength;
+
+    if(typeof b === "number")
+        return a.cumulative_arclength < b;
+
+    return a.cumulative_arclength < b.cumulative_arclength;
+}
+
+/**
+ * Layer::section_range method calculates the range of sections to draw
+ * based on the percentages passed into the range parameter
+ * */
+Layer.prototype.section_range = function(range)
+{
+    // calculate the arclengths that we should draw
+    const s0 = this.arclength * range[0];
+    const s1 = this.arclength * range[1];
+
+    // begin at the lower bound of the lower arclength
+    let begin = lower_bound(this.sections, s0, less_section_length);
+
+    // end at the upper bound of the higher arclength
+    let end = upper_bound(this.sections, s1, less_section_length);
+
+    if(begin >= this.sections.length || begin >= end)
+        return [0, 0]; // empty range
+
+    return [begin, Math.min(end+1, this.sections.length)];
+};
+
+Layer.prototype.draw = function(gl, range)
+{
+    // calculate the range of sections we need to draw
+    let [begin, end] = this.section_range(range);
+
+    // nothing to draw!
+    if(begin + 1 >= end) 
+        return;
+
+    // get the length of the sections up to this one
+    let s0 = 0.;
+    if(end - begin >= 2)
+        s0 = this.sections[end-2].cumulative_arclength;
+
+    // calculate the maximum length we should be drawing based on this range
+    let s1 = this.arclength * range[1];
+
+    // arclength of the current section only
+    let s = this.sections[end-1].cumulative_arclength - s0;
+
+    // calculate the percentage of the last section we should draw
+    let ds = (s1 - s0) / s;
+
+    // set our Layer specific uniforms like u_brush_color
+    for(const [name, value] of Object.entries(this.uniforms))
+        this.uniform_functions[name](value);
+
+    // we draw our sections in reverse, from the last to the first
+    for(let e = end; begin < e; e--)
+    {    
+        this.draw_section(gl, e - 1, range, ds);
+
+        // the next section will not be the last, so we should draw the whole thing
+        ds = 1.;
+    }
+};
+
+function view_from(drawing_size)
+{
+    return new Float32Array([
+        2./ drawing_size[0],  0., -1.,
+        0., -2./ drawing_size[1],  1.,
+        0.,                   0.,  1.  
+    ]);
+}
+
+function Drawing(gl, program, 
+                 vertex_data, stride, 
+                 attributes, uniforms, layers, 
+                 drawing_size, draw_time, clear_color)
+{
+    this.program = program;
+
+    // setup our vertex attribute array
+    this.vao = gl.createVertexArray();
+    gl.bindVertexArray(this.vao);
+    this.buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertex_data, gl.STATIC_DRAW);
+    
+    // calculate the number of vertices/rows
+    this.rows = ( vertex_data.length / stride ) >> 0;
+
+    // create functions to enable each of our attributes
+    this.attribute_enablers = attributes.map(a =>
+        Drawing.prototype.enable_attribute.bind(this, 
+            gl.getAttribLocation(program, a.name), stride, a.size, a.offset)
     );
-    console.log(instance.exports);
 
-    const buf = new Float32Array(instance.exports.memory.buffer, instance.exports.get_buffer(), instance.exports.buffer_size());
+    // create value setters for our uniforms
+    this.uniforms = uniforms;
+    this.set_uniform = {};
+    for(const [key, u] of Object.entries(this.uniforms))
+        this.set_uniform[key] = create_uniform_value_setter(gl, program, u);
 
-    const attribute_name = function(i)
+    // draw state uniform setters
+    this.set_uniform_view = create_uniform_matrix_setter(gl, program, 
+        VIEW_UNIFORM_NAME);
+    this.set_uniform_range = create_uniform_value_setter(gl, program, 
+        RANGE_UNIFORM_NAME);
+    this.set_uniform_resolution = create_uniform_value_setter(gl, program, 
+        RESOLUTION_UNIFORM_NAME);
+    this.set_uniform_mouse = create_uniform_value_setter(gl, program, 
+        MOUSE_UNIFORM_NAME);
+    this.set_uniform_mouse_state = create_uniform_value_setter(gl, program, 
+        MOUSE_STATE_UNIFORM_NAME);
+    this.set_uniform_time = create_uniform_value_setter(gl, program, 
+        TIME_UNIFORM_NAME);
+    this.set_uniform_draw_duration = create_uniform_value_setter(gl, program,
+        DRAW_DURATION_UNIFORM_NAME);
+
+    // extract our layer information
+    this.layers = [];
+    for(const [name, l] of Object.entries(layers))
     {
-        const dat = new Uint8Array(instance.exports.memory.buffer, instance.exports.get_attribute_name_ptr(i), instance.exports.get_attribute_name_length(i));
-
-        return (new TextDecoder()).decode(dat);
+        this.layers.push(
+            new Layer(gl, program, name, l.draw_mode, 
+                l.arclength, l.vertex_range, l.time_range, l.brush_size, l.brush_color, 
+                l.sections, l.uniforms));
     }
 
-    const uniform_name = function(i)
-    {
-        const dat = new Uint8Array(instance.exports.memory.buffer, instance.exports.get_uniform_name_ptr(i), instance.exports.get_uniform_name_length(i));
+    //// optional parameters
+    this.drawing_size = drawing_size || [1,1];
+    this.aspect_ratio = this.drawing_size[0] / this.drawing_size[1];
+    this.view_matrix = view_from(this.drawing_size);
+    this.draw_time = draw_time || 1.;
+    this.clear_color = clear_color || [0., 0., 0., 0.];
 
-        return (new TextDecoder()).decode(dat);
+    //// internal members
+    this.__prev_time = 0;
+    this.__mouse = [0., 0., 0.];
+    this.__mouse_state = 0;
+
+    //// mouse event handlers
+    let mouse_actions = DEFAULT_MOUSE_ACTIONS;
+
+    for(const [id, action] of mouse_actions.entries())
+        gl.canvas.addEventListener(`mouse${action}`, 
+            Drawing.prototype.mouse_handler.bind(this, id)
+        );
+}
+
+Drawing.prototype.mouse_handler = function(event, mouse_action_id)
+{
+    this.__mouse[0]    = event.clientX;
+    this.__mouse[1]    = event.clientY;
+    this.__mouse[2]   += event.deltaY;
+    // use Gödel numbering to send both the button and the action in one value
+    this.__mouse_state = Math.pow(2, event.button) * Math.pow(3, mouse_action_id);
+};
+
+Drawing.prototype.read_vertex_data = function(gl, buffer_data, stride)
+{
+    // create a GL buffer and specify the buffer data
+    let b = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, b);
+    gl.bufferData(gl.ARRAY_BUFFER, buffer_data, gl.STATIC_DRAW);
+};
+
+Drawing.prototype.enable_attribute = function(location, stride, size, offset, gl)
+{
+    // setup the vertex attribute pointer
+    gl.vertexAttribPointer(location, size, gl.FLOAT, false, stride, offset);
+
+    // enable this attribute's location
+    gl.enableVertexAttribArray(location);
+};
+
+Drawing.prototype.resize_canvas = function(gl, clientWidth, clientHeight)
+{
+    if (gl.canvas.width !== clientWidth || gl.canvas.height !== clientHeight) 
+    {
+        gl.canvas.width  = clientWidth;
+        gl.canvas.height = clientHeight;
+
+        let width_by_height = gl.canvas.height * this.aspect_ratio;
+        let height_by_width = gl.canvas.width / this.aspect_ratio;
+
+        if(gl.canvas.height > height_by_width)
+            gl.viewport(0, (gl.canvas.height - height_by_width) / 2., gl.canvas.width, height_by_width);
+        else
+            gl.viewport((gl.canvas.width - width_by_height) / 2., 0, width_by_height, gl.canvas.height);
+
+        return true;
     }
 
-    const uniform_data = function(i)
+    return false;
+};
+
+
+Drawing.prototype.draw = function(gl, upto)
+{
+    // turn our time into a fraction of the animation
+    let u = upto / this.draw_time;
+
+    // initialize the canvas
+    gl.clearColor(...this.clear_color);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER);
+    gl.depthFunc(gl.ALWAYS);
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFuncSeparate(gl.DST_ALPHA, gl.SRC_ALPHA, gl.ONE, gl.ONE);
+    gl.blendEquationSeparate(gl.MAX, gl.MAX);
+
+    // ensure our program is being used
+
+    gl.useProgram(this.program);
+
+    // setup our base uniforms
+    this.set_uniform_view(this.view_matrix);
+    this.set_uniform_range([0, u]);
+    this.set_uniform_resolution(this.drawing_size);
+    this.set_uniform_mouse(this.__mouse);
+    this.set_uniform_mouse_state([this.__mouse_state]);
+    this.set_uniform_time([upto]);
+    this.set_uniform_draw_duration([this.draw_time]);
+
+    // set any additional uniforms from the wasm instance
+    for(const [name, value] of Object.entries(this.uniforms))
+        this.set_uniform[name](value);
+
+    // ensure our vertex attribute object is bound
+    gl.bindVertexArray(this.vao);
+
+    // enable our vertex attributes
+    for(const enable_attribute of this.attribute_enablers)
+        enable_attribute(gl);
+
+    // draw our layers
+    this.layers.forEach(l => 
+        l.draw(gl, [0., u])
+    );
+};
+
+Drawing.prototype.render = function(gl, time)
+{
+    let elapsed = time - this.__prev_time;
+
+    // if we are a bit early just wait for the next frame
+    if(!THROTTLE_FRAMES || elapsed > this.frame_period)
     {
-        return new Float32Array(instance.exports.memory.buffer, instance.exports.get_uniform_data(i), instance.exports.get_uniform_size(i));
+        this.__prev_time = time;
+        const sec = time * 0.001;
+
+        this.resize_canvas(gl, document.body.clientWidth, 
+                               document.body.clientHeight);
+        this.draw(gl, sec);
     }
 
-    // create a new canvas object
+    // continue the animation
+    this.continue_animate(gl);
+};
+
+Drawing.prototype.continue_animate = function(gl)
+{
+    requestAnimationFrame(Drawing.prototype.render.bind(this, gl));
+};
+
+/**
+ * Mesh class proceses the wasm instance to ready it for rednering 
+ * with the Drawing class
+ ** */
+function Mesh(instance)
+{
+    this.__instance = instance;
+    this.__exports = instance.exports;
+    this.__buf = instance.exports.memory.buffer;
+
+    this.__dec = new TextDecoder();
+}
+Mesh.prototype.string_from_buffer = function(ptr, len)
+{
+    let dat = new Uint8Array(this.__buf, ptr, len);
+    return this.__dec.decode(dat);
+}
+Mesh.prototype.float32_array_from_buffer = function(ptr, len)
+{
+    return new Float32Array(this.__buf, ptr, len);
+}
+Mesh.prototype.vertex_data = function()
+{
+    return new Float32Array(this.__buf, 
+        this.__exports.buffer(), this.__exports.buffer_size())
+};
+Mesh.prototype.stride = function()
+{
+    return this.__exports.stride();
+};
+Mesh.prototype.attributes = function()
+{
+    let a = [];
+
+    for(let i = 0; i < this.__exports.attribute_count(); i++)
+    {
+        a.push({
+            name:   this.string_from_buffer(
+                        this.__exports.attribute_name_ptr(i),
+                        this.__exports.attribute_name_length(i)
+                    ),
+            size:   this.__exports.attribute_size(i),
+            offset: this.__exports.attribute_offset(i),
+        })
+    }
+
+    return a;
+};
+
+// TODO: allow for integer uniforms
+Mesh.prototype.uniforms = function()
+{
+    let u = {};
+
+    for(let i = 0; i < this.__exports.uniform_count(); i++)
+    {
+        const name = this.string_from_buffer(
+            this.__exports.uniform_name_ptr(i),
+            this.__exports.uniform_name_length(i)
+        );
+        const value = this.float32_array_from_buffer(
+            this.__exports.uniform_data(i),
+            this.__exports.uniform_size(i)
+        );
+
+        u[name] = value;
+    }
+
+    return u;
+};
+
+Mesh.prototype.layers = function()
+{
+    let lays = [];
+
+    for(let i = 0; i < this.__exports.stroke_count(); i++)
+    {
+        let l = {};
+        l.name = this.string_from_buffer(
+            this.__exports.stroke_name_ptr(i),
+            this.__exports.stroke_name_length(i)
+        );
+        l.draw_mode = this.__exports.stroke_draw_mode(i);
+        l.arclength = this.__exports.stroke_arclength(i);
+        l.vertex_range = [
+            this.__exports.stroke_vertex_start(i),
+            this.__exports.stroke_vertex_end(i)
+        ];
+        l.time_range = [
+            this.__exports.stroke_time_start(i), 
+            this.__exports.stroke_time_end(i)
+        ];
+        l.brush_size = this.__exports.stroke_brush_size(i);
+        l.brush_color = this.float32_array_from_buffer(
+            this.__exports.stroke_brush_color_ptr(i),
+            this.__exports.stroke_brush_color_length(i)
+        );
+        l.sections = [];
+        for(let j = 0; j < this.__exports.stroke_section_count(i); j++)
+        {
+            const s = {};
+            s.end_vertex = this.__exports.stroke_section_end_vertex(i, j);
+            s.cumulative_arclength = this.__exports.stroke_section_cumulative_arclength(i, j);
+            l.sections.push(s);
+        }
+        lays.push(l);
+    }
+
+    return lays;
+}
+
+Mesh.prototype.drawing_size = function()
+{
+    return new Float32Array([
+        this.__exports.drawing_width(),
+        this.__exports.drawing_height()
+    ]);
+};
+
+Mesh.prototype.draw_time = function()
+{
+    return this.__exports.draw_time();
+}
+
+Mesh.prototype.clear_color = function()
+{
+    return this.float32_array_from_buffer(
+        this.__exports.clear_color_ptr(),
+        this.__exports.clear_color_length()
+    );
+}
+
+async function init()
+{
     const canvas = document.querySelector("canvas");
-    canvas.width = document.body.clientWidth;
-    canvas.height = document.body.clientHeight;
-    // document.body.appendChild(canvas);
+    const gl = canvas.getContext(WEBGL_CONTEXT_NAME);
 
-    // console.log(instance.exports.add(4, 1));
-  }
+    // TODO: lookup wasm by time
+    const { instance } = await WebAssembly.instantiateStreaming(
+        fetch("./greenland.wasm")
+    );
+
+    // parse the wasm instance into mesh data
+    const mesh = new Mesh(instance);
+
+    // get the elements containing our vertex and fragment shaders
+    const vertex_shader = document.getElementById("vertex_shader");
+    const fragment_shader = document.getElementById("fragment_shader");
+
+    // compile and link our shader program
+    const program = create_program_from_scripts(gl, [vertex_shader, fragment_shader]);
+
+    // setup our drawing class
+    const drawing = new Drawing(gl, program,
+        mesh.vertex_data(), mesh.stride(), 
+        mesh.attributes(), mesh.uniforms(), mesh.layers(),
+        mesh.drawing_size(), mesh.draw_time(), mesh.clear_color()
+    );
+
+    // begin the animation
+    drawing.continue_animate(gl);
+}   
+
 </script>
 
     </head>
