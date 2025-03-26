@@ -54,6 +54,7 @@ struct StrokePlot
     std::pair<double, double> time_range;
     DrawMode draw_mode;
     double arclength;
+    double strokelength;
     std::pair<size_t, size_t> vertex_range;
     std::pair<size_t, size_t> section_range;
 };

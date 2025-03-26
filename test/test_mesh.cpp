@@ -44,13 +44,20 @@ int main(int ac, char * av[])
     auto fill = plotter.fill(cover, lines);
     auto plot = plotter.plot(greenland);
 
-    plot.insert(plot.end(), fill.begin(), fill.end());    
+    // plot.insert(plot.end(), fill.begin(), fill.end());    
 
     auto stroke = simplify_plot(plot, false, 1e-4);
+    fill = simplify_plot(fill, false, 1e-4);
 
     MeshPlot meshplot;
 
-    meshplot.stroke("outline", stroke, BrushStyle::BrushRound, 10., RGBA{0.03515625, 0.1796875, 0.1640625, 1.}, {0.,1.});
+    meshplot.stroke("outline", stroke, 
+        BrushStyle::BrushRound, 10., RGBA{0.03515625, 0.1796875, 0.1640625, 1.}, {0.,60.});
+
+    meshplot.stroke("fill", fill, 
+        BrushStyle::BrushRound, 45., RGBA{0.03515625, 0.1796875, 0.1640625, .75}, {30.,60.});
+
+    
 
 
     

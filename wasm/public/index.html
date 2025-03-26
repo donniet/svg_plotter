@@ -61,7 +61,7 @@ void main()
     p.x = dot(u_view[0].xy, a_position.xy) + u_view[0][2];
     p.y = dot(u_view[1].xy, a_position.xy) + u_view[1][2];
 
-    float z = clamp(a_uv[1] / u_uv_range[3], 0., 1.);
+    // float z = clamp(a_uv[1] / u_uv_range[3], 0., 1.);
 
     gl_Position = vec4(p.xy, 0., 1.);
 }
@@ -79,10 +79,11 @@ in float arclength;
 in vec2 brush;
 
 
-uniform vec4 brush_color;
-uniform vec2 stroke_range;
-uniform vec2 resolution;
-uniform vec4 uv_range;
+uniform float u_brush_size;
+uniform vec4 u_brush_color;
+uniform vec2 u_stroke_range;
+uniform vec2 u_resolution;
+uniform vec4 u_uv_range;
 
 out vec4 fragColor;
 
@@ -143,25 +144,27 @@ float noise01(vec2 p)
 
 vec4 brush_stroke_color(vec4 input_color)
 {
-    float d = length(pos - brush) / 50.;
+    float d = length(pos - brush) / u_brush_size;
 
     // float d = length(uv - vec2(arclength / 50., 0));
     // float d = uv_range.y - uv.y;
     // float d = 1.;
 
-    if(uv.y > uv_range[3])
-        d = length(uv.xy - vec2(0, uv_range[3]));
+    // return vec4(u_brush_color.xyz, d);
 
-    if(uv.y < uv_range[1])
-        d = length(uv.xy - vec2(0,uv_range[1]));
+    if(uv.y > u_uv_range[3])
+        d = length(uv.xy - vec2(0, u_uv_range[3]));
+
+    if(uv.y < u_uv_range[1])
+        d = length(uv.xy - vec2(0, u_uv_range[1]));
 
     if(d > 0.5)
-        return vec4(brush_color.xyz, 0.);
+        return vec4(u_brush_color.xyz, 0.);
     
 
     // float boundary = dtoa(d, 0.3);
     float tex = 0.
-        + noise01(uv.xy * vec2(min(resolution.y, resolution.x) * 0.3, 0.5))
+        + noise01(uv.xy * vec2(min(u_resolution.y, u_resolution.x) * 0.3, 0.5))
         + noise01(uv.xy * vec2(79., 1.))
         + noise01(uv.xy * vec2(44., 1.))
         ;
@@ -179,7 +182,7 @@ vec4 brush_stroke_color(vec4 input_color)
 
     
 //     return mix(input_color, brush_color, alpha);
-    return vec4(brush_color.xyz, alpha);
+    return vec4(u_brush_color.xyz, alpha);
 }
 
 
@@ -203,13 +206,14 @@ void main()
 
     // fragColor.w *= 0.5;
     // fragColor.w = 1.;
-    fragColor = vec4(1., 1., 0., 1.);
+    //fragColor = vec4(1., 1., 0., 1.);
 
     // fragColor.xyzw = (0.25 - d2) * brush_color.xyzw;
 
     // fragColor = vec4( uv.xy,0, 1);
 
-        /* fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));*/
+    
+    fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));
     
 }
 </script>
@@ -222,7 +226,8 @@ const STROKE_LENGTH_UNIFORM_NAME = "u_stroke_length";
 const RANGE_UNIFORM_NAME = "u_range";
 const VIEW_UNIFORM_NAME = "u_view";
 const RESOLUTION_UNIFORM_NAME = "u_resolution";
-const BRUSH_SIZE_UNIFORM_NAEM = "u_brush_size";
+const BRUSH_SIZE_UNIFORM_NAME = "u_brush_size";
+const BRUSH_COLOR_UNIFORM_NAME = "u_brush_color";
 const DRAW_DURATION_UNIFORM_NAME = "u_draw_time";
 const MOUSE_UNIFORM_NAME = "u_mouse";
 const MOUSE_STATE_UNIFORM_NAME = "u_mouse_state";
@@ -347,6 +352,12 @@ function create_uniform_value_setter(gl, program, uniform_name)
 function set_uniform_matrix(gl, uniform_name, uniform_location, value, normalized)
 {
     // TODO: handle invalid uniform_locations witha single console log message
+    if(!uniform_location && !gl[`__warned_uniform_${uniform_name}`])
+    {
+        console.log(`uniform ${uniform_name} not found in program`);
+        gl[`__warned_uniform_${uniform_name}`] = true;
+        return;
+    }
 
     switch(value.length)
     {
@@ -460,7 +471,7 @@ function create_program_from_scripts(gl, script_elements)
  * Layer class
  * */
 function Layer(gl, program, name, draw_mode, 
-               arclength, vertex_range, time_range, section_range,
+               arclength, strokelength, vertex_range, time_range, section_range,
                brush_size, brush_color, 
                sections, uniforms)
 {
@@ -470,8 +481,9 @@ function Layer(gl, program, name, draw_mode,
     this.vertex_range = vertex_range || [0,0];
     this.time_range = time_range || [0,1];
     this.section_range = section_range || [0,1];
-    this.brush_size = brush_size || 10.;
     this.brush_color = brush_color || [0., 0., 0., 1.];
+    this.brush_size = brush_size || 10.;
+    this.strokelength = strokelength || this.arclength / this.brush_size;
     this.uniforms = uniforms || {};
     this.sections = sections || [];
 
@@ -492,6 +504,8 @@ function Layer(gl, program, name, draw_mode,
 
     this.set_uv_range = create_uniform_value_setter(gl, program, UV_RANGE_UNIFORM_NAME);
     this.set_stroke_length = create_uniform_value_setter(gl, program, STROKE_LENGTH_UNIFORM_NAME);
+    this.set_brush_size = create_uniform_value_setter(gl, program, BRUSH_SIZE_UNIFORM_NAME);
+    this.set_brush_color = create_uniform_value_setter(gl, program, BRUSH_COLOR_UNIFORM_NAME);
 }
 
 
@@ -501,14 +515,48 @@ Layer.prototype.vertex_range_of_section = function(section)
     if(section == 0)
         return [
             this.vertex_range[0],
-            this.vertex_range[0] + this.sections[0].end_vertex
+            this.sections[0].end_vertex
         ];
   
     // otherwise return the end of the last section up to this section end
     return [
-        this.vertex_range[0] + this.sections[section-1].end_vertex,
-        this.vertex_range[0] + this.sections[section].end_vertex
+        this.sections[section-1].end_vertex,
+        this.sections[section].end_vertex
     ];
+};
+
+
+function less_section_length(a, b)
+{
+    if(typeof a === "number")
+        return a < b.cumulative_arclength;
+
+    if(typeof b === "number")
+        return a.cumulative_arclength < b;
+
+    return a.cumulative_arclength < b.cumulative_arclength;
+}
+
+/**
+ * Layer::section_range method calculates the range of sections to draw
+ * based on the percentages passed into the range parameter
+ * */
+Layer.prototype.section_range_of = function(range)
+{
+    // calculate the arclengths that we should draw
+    const s0 = this.strokelength * range[0];
+    const s1 = this.strokelength * range[1];
+
+    // begin at the lower bound of the lower arclength
+    let begin = lower_bound(this.sections, s0, less_section_length); //, ...this.section_range);
+
+    // end at the upper bound of the higher arclength
+    let end = upper_bound(this.sections, s1, less_section_length); //, ...this.section_range);
+
+    if(begin >= this.sections.length || begin >= end)
+        return [0, 0]; // empty range
+
+    return [begin, Math.min(end+1, this.sections.length)];
 };
 
 Layer.prototype.draw_section = function(gl, section, range, t)
@@ -534,39 +582,6 @@ Layer.prototype.draw_section = function(gl, section, range, t)
                   end - begin); 
 };
 
-function less_section_length(a, b)
-{
-    if(typeof a === "number")
-        return a < b.cumulative_arclength;
-
-    if(typeof b === "number")
-        return a.cumulative_arclength < b;
-
-    return a.cumulative_arclength < b.cumulative_arclength;
-}
-
-/**
- * Layer::section_range method calculates the range of sections to draw
- * based on the percentages passed into the range parameter
- * */
-Layer.prototype.section_range_of = function(range)
-{
-    // calculate the arclengths that we should draw
-    const s0 = this.arclength * range[0];
-    const s1 = this.arclength * range[1];
-
-    // begin at the lower bound of the lower arclength
-    let begin = lower_bound(this.sections, s0, less_section_length, ...this.section_range);
-
-    // end at the upper bound of the higher arclength
-    let end = upper_bound(this.sections, s1, less_section_length, ...this.section_range);
-
-    if(begin >= this.sections.length || begin >= end)
-        return [0, 0]; // empty range
-
-    return [begin, Math.min(end+1, this.sections.length)];
-};
-
 Layer.prototype.draw = function(gl, range)
 {
     // calculate the range of sections we need to draw
@@ -582,17 +597,22 @@ Layer.prototype.draw = function(gl, range)
         s0 = this.sections[end-2].cumulative_arclength;
 
     // calculate the maximum length we should be drawing based on this range
-    let s1 = this.arclength * range[1];
+    let s1 = this.strokelength * range[1];
 
     // arclength of the current section only
     let s = this.sections[end-1].cumulative_arclength - s0;
 
     // calculate the percentage of the last section we should draw
-    let ds = (s1 - s0) / s;
+    let ds = 1.;
+    if(s > 0.001)
+        ds = (s1 - s0) / s;
 
     // set our Layer specific uniforms like u_brush_color
     for(const [name, value] of Object.entries(this.uniforms))
         this.uniform_functions[name](value);
+
+    this.set_brush_color(this.brush_color);
+    this.set_brush_size([this.brush_size]);
 
     // we draw our sections in reverse, from the last to the first
     for(let e = end; begin < e; e--)
@@ -664,7 +684,7 @@ function Drawing(gl, program,
     {
         this.layers.push(
             new Layer(gl, program, name, l.draw_mode, 
-                l.arclength, l.vertex_range, l.time_range, l.section_range, 
+                l.arclength, l.strokelength, l.vertex_range, l.time_range, l.section_range, 
                 l.brush_size, l.brush_color, 
                 l.sections, l.uniforms));
     }
@@ -690,11 +710,11 @@ function Drawing(gl, program,
         );
 }
 
-Drawing.prototype.mouse_handler = function(event, mouse_action_id)
+Drawing.prototype.mouse_handler = function(mouse_action_id, event)
 {
     this.__mouse[0]    = event.clientX;
     this.__mouse[1]    = event.clientY;
-    this.__mouse[2]   += event.deltaY;
+    this.__mouse[2]   += (typeof event.deltaY === "number" ? event.deltaY : 0);
     // use Gödel numbering to send both the button and the action in one value
     this.__mouse_state = Math.pow(2, event.button) * Math.pow(3, mouse_action_id);
 };
@@ -891,6 +911,7 @@ Mesh.prototype.layers = function()
         );
         l.draw_mode = this.__exports.stroke_draw_mode(i);
         l.arclength = this.__exports.stroke_arclength(i);
+        l.strokelength = this.__exports.stroke_strokelength(i);
         l.vertex_range = [
             this.__exports.stroke_vertex_start(i),
             this.__exports.stroke_vertex_end(i)

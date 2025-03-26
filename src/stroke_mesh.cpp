@@ -61,7 +61,7 @@ void MeshPlot::stroke(string name,
                       RGBA brush_color, 
                       pair<double,double> time_range)
 {
-    StrokePlot & m = _strokes.emplace_back(StrokePlot{
+    StrokePlot m{
         .name = name,
         .brush_style = brush_style,
         .brush_size = brush_size,
@@ -69,9 +69,10 @@ void MeshPlot::stroke(string name,
         .time_range = time_range,
         .draw_mode = DrawMode::triangle_strip,
         .arclength = 0,
+        .strokelength = 0,
         .vertex_range = {0,0},
         .section_range = {0,0}
-    });
+    };
 
     double last_cross_product = 0;
     double r = m.brush_size * 0.5;
@@ -203,8 +204,11 @@ void MeshPlot::stroke(string name,
     }
 
     m.vertex_range = { start_vertex, _mesh.size() };
-    m.section_range = { start_section, start_section + section };
+    m.section_range = { start_section, section };
     m.arclength = s;
+    m.strokelength = s / m.brush_size;
+
+    _strokes.emplace_back(m);
 }
 
 
@@ -224,6 +228,7 @@ void MeshPlot::to_c(ostream & os) const
         .time_range = {{ {}, {} }},
         .draw_mode = {},
         .arclength = {},
+        .strokelength = {},
         .vertex_range = {{ {}, {} }},
         .section_range = {{ {}, {} }},
     }})", 
@@ -231,8 +236,9 @@ void MeshPlot::to_c(ostream & os) const
             to_string(p.brush_style), p.brush_size, 
             p.brush_color.r, p.brush_color.g, p.brush_color.b, p.brush_color.a, 
             p.time_range.first, p.time_range.second, 
-            to_string(p.draw_mode), p.arclength, p.vertex_range.first, 
-            p.vertex_range.second, p.section_range.first, p.section_range.second);
+            to_string(p.draw_mode), p.arclength, p.strokelength, 
+            p.vertex_range.first, p.vertex_range.second, 
+            p.section_range.first, p.section_range.second);
 
     };
     auto strokes_to_c = [&]() -> string {
@@ -319,7 +325,7 @@ void MeshPlot::to_c(ostream & os) const
         {
             // append the arclength (brush.y)
             s = get<1>(p).y;
-            
+
             // get the section of this vertex
             size_t n = get<3>(p);
 

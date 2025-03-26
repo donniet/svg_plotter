@@ -35,6 +35,7 @@ typedef struct
     TimeRange time_range;
     DrawMode draw_mode;
     float arclength;
+    float strokelength;
     IndexRange vertex_range;
     IndexRange section_range;
 } Stroke;
@@ -76,6 +77,8 @@ float _drawing_height;
 
 float _draw_time;
 float _clear_color[4];
+
+
 
 uint string_length(const char * s)
 {
@@ -193,6 +196,11 @@ extern DrawMode stroke_draw_mode(uint i)
 extern float stroke_arclength(uint i)
 {
     return _strokes[i].arclength;
+}
+
+extern float stroke_strokelength(uint i)
+{
+    return _strokes[i].strokelength;
 }
 
 extern float stroke_section_start(uint i)
