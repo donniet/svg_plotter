@@ -1,7 +1,15 @@
 #include "stroke_mesh.hpp"
 
-
+#include <vector>
+#include <string>
 #include <format>
+#include <iostream>
+
+using std::vector;
+using std::string;
+using std::format;
+using std::to_string;
+using std::ostream;
 
 typedef enum {
     beginning = -1,
@@ -36,21 +44,25 @@ double offset_from_point_type(point_type t)
     }
 }
 
-MeshPlot::MeshPlot() : _mesh(DrawMode::triangle_strip, 
-    MeshPlot::attribute_names[0], 
-    MeshPlot::attribute_names[1], 
-    MeshPlot::attribute_names[2], 
-    MeshPlot::attribute_names[3], 
-    MeshPlot::attribute_names[4]) 
+MeshPlot::MeshPlot(pair<double,double> drawing_size) : 
+    _mesh(DrawMode::triangle_strip, 
+        MeshPlot::attribute_names[0], 
+        MeshPlot::attribute_names[1], 
+        MeshPlot::attribute_names[2], 
+        MeshPlot::attribute_names[3], 
+        MeshPlot::attribute_names[4]),
+    _drawing_size(drawing_size)
 { }
 
-void MeshPlot::stroke(vector<vector<Point>> plot, 
+void MeshPlot::stroke(string name,
+                      vector<vector<Point>> plot, 
                       BrushStyle brush_style,
                       double brush_size, 
                       RGBA brush_color, 
                       pair<double,double> time_range)
 {
     StrokePlot & m = _strokes.emplace_back(StrokePlot{
+        .name = name,
         .brush_style = brush_style,
         .brush_size = brush_size,
         .brush_color = brush_color,
@@ -61,11 +73,18 @@ void MeshPlot::stroke(vector<vector<Point>> plot,
         .section_range = {0,0}
     });
 
-    size_t section = 0;
     double last_cross_product = 0;
     double r = m.brush_size * 0.5;
     double s = 0;
 
+    size_t start_vertex = 0;
+    size_t start_section = 0;
+    if(_strokes.size() > 0)
+    {
+        start_section = _strokes.back().section_range.second;
+        start_vertex = _strokes.back().vertex_range.second;
+    }
+    size_t section = start_section;
 
     auto start_fresh = [&](size_t j, size_t i)
     {
@@ -182,93 +201,181 @@ void MeshPlot::stroke(vector<vector<Point>> plot,
 
         }
     }
+
+    m.vertex_range = { start_vertex, _mesh.size() };
+    m.section_range = { start_section, start_section + section };
+    m.arclength = s;
 }
 
 
-std::string ts(size_t level)
+string ts(size_t level)
 {
-    return std::string(level * 3, ' ');
+    return string(level * 3, ' ');
 }
 
-void MeshPlot::to_c(std::ostream & os) const
+void MeshPlot::to_c(ostream & os) const
 {
-    auto stroke_to_c = [&](StrokePlot const & p) -> std::string { 
-        return std::format(R"({{
-            .brush_style = {},
-            .brush_size = {},
-            .brush_color = {},
-            .time_range = {{ {}, {} }},
-            .draw_mode = {},
-            .arclength = {},
-            .vertex_range = {{ {}, {} }},
-            .section_range = {{ {}, {} }},
-        }})", 
-            std::to_string(p.brush_style), p.brush_size, std::to_string(p.brush_color), p.time_range.first, p.time_range.second, 
-            std::to_string(p.draw_mode), p.arclength, p.vertex_range.first, 
+    auto stroke_to_c = [&](StrokePlot const & p) -> string { 
+        return format(R"(   {{
+        .name = "{}",
+        .brush_style = {},
+        .brush_size = {},
+        .brush_color = {{ {}, {}, {}, {} }},
+        .time_range = {{ {}, {} }},
+        .draw_mode = {},
+        .arclength = {},
+        .vertex_range = {{ {}, {} }},
+        .section_range = {{ {}, {} }},
+    }})", 
+            p.name,
+            to_string(p.brush_style), p.brush_size, 
+            p.brush_color.r, p.brush_color.g, p.brush_color.b, p.brush_color.a, 
+            p.time_range.first, p.time_range.second, 
+            to_string(p.draw_mode), p.arclength, p.vertex_range.first, 
             p.vertex_range.second, p.section_range.first, p.section_range.second);
 
     };
-    auto strokes_to_c = [&]() -> std::string {
-        std::string out = "[\n";
+    auto strokes_to_c = [&]() -> string {
+        string out = "{\n";
         for(StrokePlot const & p : _strokes)
         {
             out += stroke_to_c(p) + ",\n";
         }
-        out += "\n]";
+        out += "\n}";
         return out;
     };
-    auto attributes_to_c = [&]() -> std::string { 
-        std::string out = "[\n";
+    auto attributes_to_c = [&]() -> string { 
+        string out = "{\n";
         for(auto const & a : _mesh.attributes())
         {
-            out += std::format(R"({{
-                .name = {},
-                .size = {},
-                .offset = {},
-            }},
+            out += format(R"(   {{
+        .name = "{}",
+        .size = {},
+        .offset = {},
+    }},
             )", a.name(), a.size(), a.offset());
         }
-        out += "\n]";
+        out += "\n}";
         return out;
     };
-    auto uniforms_to_c = [&]() -> std::string { 
+    auto uniforms_to_c = [&]() -> string { 
         // TODO: add more uniform details to the attribute_mesh
-        std::string out = "[\n";
+        string out = "{\n";
         for(auto const & u : _mesh.uniforms())
         {
-            out += std::format(R"({{
-                .name = {},
-            }})", u.name());
+            out += format(R"(   {{
+        .name = "{}",
+    }})", u.name());
         }
-        out += "\n]";
+        out += "\n}";
         return out;
     };
-    auto buffer_to_c = [&]() -> std::string { 
-        std::string out = "[";
+    auto buffer_to_c = [&]() -> string { 
+        string out = "{\n";
         auto i = _mesh.buffer_begin();
         for(size_t c = 0; i != _mesh.buffer_end(); ++i, ++c)
         {
             if(c % _mesh.stride() == 0)
                 out += "\n";
             
-            out += std::format("{},", *i);
+            out += format("{},", *i);
         }
-        out += "\n]";
+        out += "\n}";
         return out;
     };
+    auto section_end_vertex_to_c = [&]() -> string {
+        string out = "{";
 
-    os << std::format(R"({{
-        .strokes = {},
-        .attributes = {},
-        .uniforms = {},
-        .buffer = {},
-    }})", strokes_to_c(), attributes_to_c(), uniforms_to_c(), buffer_to_c());
+        size_t section = 0;
+        size_t vertex_index = 0;
+        for(auto const & p : _mesh)
+        {
+            // get the section of this vertex
+            size_t n = get<3>(p);
+
+            if(n != section) 
+            {
+                out += format("{},", vertex_index);
+            
+                // TEMPORARY: to verify the logic above works
+                if(n != section + 1)
+                    throw std::logic_error(format("sections are not sequential at {} from {} to {}", vertex_index, section, n));
+            }
+            
+            section = n;
+            vertex_index++;
+        }
+
+        // output the total vertices as the last section
+        out += format("{},", vertex_index);
+        return out += "}";
+    };
+    auto section_arclength_to_c = [&]() -> string {
+        string out = "{";
+
+        size_t section = 0;
+        double s = 0.;
+        for(auto const & p : _mesh)
+        {
+            // append the arclength (brush.y)
+            s = get<1>(p).y;
+            
+            // get the section of this vertex
+            size_t n = get<3>(p);
+
+            if(n != section)
+                out += format("{},", s);
+            
+            section = n;
+        }
+
+        // output the total arclength as the last section
+        out += format("{},", s);
+        return out += "}";
+    };
+
+    double max_draw_time = 0.;
+    for(StrokePlot const & p : _strokes)
+        max_draw_time = max(max_draw_time, p.time_range.second);
+
+    os << format(R"(
+#include "mesh.h"
+
+float _drawing_width = {};
+float _drawing_height = {};
+float _draw_time = {};
+float _clear_color[4] = {{ 0., 0., 0., 0. }};
+
+uint _section_end_vertex[] = {};
+float _section_cumulative_arclength[] = {};
+
+Stroke const _strokes[] = {};
+uint _stroke_count = {};
+
+Attribute const _attributes[] = {};
+uint _attribute_count = {};
+
+Uniform const _uniforms[] = {};
+uint _uniform_count = {};
+
+uint _stride = {};
+
+float const _buffer[] = {};
+uint _buffer_size = {};
+    )", 
+        _drawing_size.first, _drawing_size.second, max_draw_time, 
+        section_end_vertex_to_c(), section_arclength_to_c(),
+        strokes_to_c(), _strokes.size(), 
+        attributes_to_c(), _mesh.attribute_count,  
+        uniforms_to_c(), _mesh.uniforms().size(),
+        _mesh.stride(), 
+        buffer_to_c(), _mesh.buffer_size());
 }
 
-void coordinate_space(std::vector<Point> const & path, 
-                     std::vector<Vector> & tangents, 
-                     std::vector<Vector> & normals,
-                     bool is_closed)
+void coordinate_space(vector<Point> const & path, 
+                      vector<Vector> & tangents, 
+                      vector<Vector> & normals,
+                      bool is_closed)
 {
     // Calculate tangents
     for (size_t i = 0; i < path.size(); ++i) 

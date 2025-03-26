@@ -54,6 +54,11 @@ public:
     DrawMode & operator=(DrawMode const &) = default;
 };
 
+namespace std
+{
+    string to_string(DrawMode const & m);
+}
+
 class Mesh
 {
 protected:

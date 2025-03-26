@@ -200,14 +200,17 @@ void main()
     // if(border > 0.85)
     //     fragColor = vec4(0.,0.,0.,1.);
     // else
-        fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));
+
     // fragColor.w *= 0.5;
     // fragColor.w = 1.;
-    // fragColor = vec4(1., 1., 0., 1.);
+    fragColor = vec4(1., 1., 0., 1.);
 
     // fragColor.xyzw = (0.25 - d2) * brush_color.xyzw;
 
     // fragColor = vec4( uv.xy,0, 1);
+
+        /* fragColor = brush_stroke_color(vec4(1., 1., 1., 1.));*/
+    
 }
 </script>
 
@@ -457,7 +460,8 @@ function create_program_from_scripts(gl, script_elements)
  * Layer class
  * */
 function Layer(gl, program, name, draw_mode, 
-               arclength, vertex_range, time_range, brush_size, brush_color, 
+               arclength, vertex_range, time_range, section_range,
+               brush_size, brush_color, 
                sections, uniforms)
 {
     this.name = name || DEFAULT_LAYER_NAME;
@@ -465,6 +469,7 @@ function Layer(gl, program, name, draw_mode,
     this.arclength = arclength || 1;
     this.vertex_range = vertex_range || [0,0];
     this.time_range = time_range || [0,1];
+    this.section_range = section_range || [0,1];
     this.brush_size = brush_size || 10.;
     this.brush_color = brush_color || [0., 0., 0., 1.];
     this.uniforms = uniforms || {};
@@ -544,17 +549,17 @@ function less_section_length(a, b)
  * Layer::section_range method calculates the range of sections to draw
  * based on the percentages passed into the range parameter
  * */
-Layer.prototype.section_range = function(range)
+Layer.prototype.section_range_of = function(range)
 {
     // calculate the arclengths that we should draw
     const s0 = this.arclength * range[0];
     const s1 = this.arclength * range[1];
 
     // begin at the lower bound of the lower arclength
-    let begin = lower_bound(this.sections, s0, less_section_length);
+    let begin = lower_bound(this.sections, s0, less_section_length, ...this.section_range);
 
     // end at the upper bound of the higher arclength
-    let end = upper_bound(this.sections, s1, less_section_length);
+    let end = upper_bound(this.sections, s1, less_section_length, ...this.section_range);
 
     if(begin >= this.sections.length || begin >= end)
         return [0, 0]; // empty range
@@ -565,7 +570,7 @@ Layer.prototype.section_range = function(range)
 Layer.prototype.draw = function(gl, range)
 {
     // calculate the range of sections we need to draw
-    let [begin, end] = this.section_range(range);
+    let [begin, end] = this.section_range_of(range);
 
     // nothing to draw!
     if(begin + 1 >= end) 
@@ -659,7 +664,8 @@ function Drawing(gl, program,
     {
         this.layers.push(
             new Layer(gl, program, name, l.draw_mode, 
-                l.arclength, l.vertex_range, l.time_range, l.brush_size, l.brush_color, 
+                l.arclength, l.vertex_range, l.time_range, l.section_range, 
+                l.brush_size, l.brush_color, 
                 l.sections, l.uniforms));
     }
 
@@ -735,7 +741,7 @@ Drawing.prototype.resize_canvas = function(gl, clientWidth, clientHeight)
 Drawing.prototype.draw = function(gl, upto)
 {
     // turn our time into a fraction of the animation
-    let u = upto / this.draw_time;
+    let u = Math.min(1., upto / this.draw_time);
 
     // initialize the canvas
     gl.clearColor(...this.clear_color);
@@ -906,6 +912,10 @@ Mesh.prototype.layers = function()
             s.cumulative_arclength = this.__exports.stroke_section_cumulative_arclength(i, j);
             l.sections.push(s);
         }
+        l.section_range = [
+            this.__exports.stroke_section_start(i),
+            this.__exports.stroke_section_end(i)
+        ];
         lays.push(l);
     }
 

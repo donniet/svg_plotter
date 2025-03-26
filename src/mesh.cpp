@@ -36,6 +36,13 @@ DrawMode::operator int() const
 {
     return _mode;
 }
+namespace std
+{
+    string to_string(DrawMode const & m)
+    {
+        return m.to_string();
+    }
+}
 
 Mesh::Mesh(DrawMode mode) : 
     _draw_mode(mode), _next_id(0) 

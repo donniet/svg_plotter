@@ -195,6 +195,15 @@ extern float stroke_arclength(uint i)
     return _strokes[i].arclength;
 }
 
+extern float stroke_section_start(uint i)
+{
+    return _strokes[i].section_range.start;
+}
+extern float stroke_section_end(uint i)
+{
+    return _strokes[i].section_range.end;
+}
+
 extern uint stroke_section_end_vertex(
     uint stroke_index, uint section_index)
 {
@@ -231,7 +240,7 @@ extern uint attribute_size(uint i)
 }
 extern uint attribute_offset(uint i)
 {
-    return _attributes[i].offset;
+    return _attributes[i].offset * 4;
 }
 
 extern uint uniform_count()
@@ -261,7 +270,7 @@ extern const float * uniform_data(uint i)
 
 extern uint stride()
 {
-    return _stride;
+    return _stride * 4;
 }
 
 extern uint buffer_size()

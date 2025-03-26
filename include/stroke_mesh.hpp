@@ -47,6 +47,7 @@ namespace std
 
 struct StrokePlot
 {
+    std::string name;
     BrushStyle brush_style;
     double brush_size;
     RGBA brush_color;
@@ -74,15 +75,17 @@ public:
 private:
     mesh_type _mesh;
     std::vector<StrokePlot> _strokes;
+    std::pair<double, double> _drawing_size;
 public:
-    MeshPlot();
+    MeshPlot(std::pair<double,double> drawing_size = {640, 816});
     /**
      * stroke method appends a triangle mesh onto _mesh by creating a path of triangles along the plot parameter
      * @param {Plot} plot
      * @param {double} brush_size
      * @param {RGBA} brush_color
      */
-    void stroke(std::vector<std::vector<Point>> plot, 
+    void stroke(std::string name,
+                std::vector<std::vector<Point>> plot, 
                 BrushStyle brush_style = BrushStyle::BrushRound,
                 double brush_size = 1., 
                 RGBA brush_color = RGBA{0,0,0,1}, 

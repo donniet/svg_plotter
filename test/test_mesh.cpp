@@ -50,7 +50,7 @@ int main(int ac, char * av[])
 
     MeshPlot meshplot;
 
-    meshplot.stroke(stroke, BrushStyle::BrushRound, 10., RGBA{0.03515625, 0.1796875, 0.1640625, 1.}, {0.,1.});
+    meshplot.stroke("outline", stroke, BrushStyle::BrushRound, 10., RGBA{0.03515625, 0.1796875, 0.1640625, 1.}, {0.,1.});
 
 
     
