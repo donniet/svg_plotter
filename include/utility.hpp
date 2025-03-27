@@ -12,11 +12,9 @@
 #include <tuple>
 #include <stdexcept>
 
-using std::iterator_traits;
-using std::is_same_v, std::enable_if_t;
-using std::pair, std::swap;
-using std::min, std::max;
-using std::vector;
+void ltrim(std::string &s);
+void rtrim(std::string &s);
+void trim(std::string &s);
 
 template<size_t Start, typename OutputArray, typename InputArray, size_t ... Is>
 void static_fill(OutputArray & out, InputArray const & in, std::index_sequence<Is...>)
@@ -66,7 +64,7 @@ void const * runtime_tuple_element(Tuple const & t, size_t i)
 template<typename Iter>
 struct PairwiseCircularAdapter
 {
-    using value_type = pair<typename Iter::value_type const &, typename Iter::value_type const &>;
+    using value_type = std::pair<typename Iter::value_type const &, typename Iter::value_type const &>;
 
     Iter _begin, _end;
     
@@ -268,10 +266,10 @@ struct NextPointRange
 
 
 template<typename RandomAccessIterator, 
-         enable_if_t< 
-            is_same_v< 
+         std::enable_if_t< 
+            std::is_same_v< 
                 Event, 
-                typename iterator_traits<RandomAccessIterator>::value_type 
+                typename std::iterator_traits<RandomAccessIterator>::value_type 
             >, bool > = true>
 double path_length(RandomAccessIterator begin, RandomAccessIterator end)
 {
@@ -282,7 +280,7 @@ double path_length(RandomAccessIterator begin, RandomAccessIterator end)
     if(count < 2)
         return 0;
 
-    vector<double> lengths(count - 1);
+    std::vector<double> lengths(count - 1);
 
     NextPointRange<RandomAccessIterator> next(begin, end);
     RandomAccessIterator fin = end;
@@ -299,17 +297,17 @@ double path_length(RandomAccessIterator begin, RandomAccessIterator end)
         return (p1 - p0).norm();
     });
 
-    double len = reduce(par_unseq, lengths.begin(), lengths.end());
+    double len = std::reduce(par_unseq, lengths.begin(), lengths.end());
 
     return len;
 }
 
 
 template<typename Iter, 
-         enable_if_t< 
-            is_same_v< 
+         std::enable_if_t< 
+            std::is_same_v< 
                 Point, 
-                typename iterator_traits<Iter>::value_type 
+                typename std::iterator_traits<Iter>::value_type 
             >, bool > = true>
 double path_length(Iter begin, Iter end)
 {
@@ -320,7 +318,7 @@ double path_length(Iter begin, Iter end)
     if(count < 2)
         return 0;
 
-    vector<double> lengths(count);
+    std::vector<double> lengths(count);
     NextPointRange next(begin, end);
 
     transform(par_unseq, 
@@ -331,7 +329,7 @@ double path_length(Iter begin, Iter end)
         return (p0 - p1).norm();
     });
 
-    double len = reduce(par_unseq, lengths.begin(), lengths.end());
+    double len = std::reduce(par_unseq, lengths.begin(), lengths.end());
 
     return len;
 }
@@ -361,7 +359,7 @@ double enclosed_area(Iter begin, Iter end)
 
     // // allocate temporary space for working in parallel
     // vector<Point> first(count), second(count);
-    vector<double> areas(count);
+    std::vector<double> areas(count);
 
     // calculate the length of the cross product of first and second which 
     // is equal to the signed area of the parallelgram spanned by 
@@ -376,7 +374,7 @@ double enclosed_area(Iter begin, Iter end)
     });
 
     // add up all the signed areas
-    double ret = reduce(par_unseq, areas.begin(), areas.end());
+    double ret = std::reduce(par_unseq, areas.begin(), areas.end());
 
     // divide by two because we want the area of the triangle formed by O-X-Y
     // and not the parallelgram formed by O-X-{X+Y}-Y

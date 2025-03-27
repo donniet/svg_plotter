@@ -1,4 +1,5 @@
 #include "point.hpp"
+#include "utility.hpp"
 
 #include <numeric>
 #include <cmath>
@@ -6,6 +7,7 @@
 #include <format>
 #include <utility>
 #include <numbers>
+#include <charconv>
 
 using std::sqrt, std::clamp, std::min, std::max;
 using std::format;
@@ -13,6 +15,7 @@ using std::string;
 using std::pair;
 using std::swap, std::tie;
 using std::numbers::pi;
+using std::from_chars;
 
 /**
  * Point class implementation
@@ -222,6 +225,37 @@ void RGBA::swap(RGBA & rgb)
 {
     RGB::swap(rgb);
     ::swap(a, rgb.a);
+}
+
+RGBA RGBA::from_hex(string const & hex)
+{
+    string h = hex;
+    trim(h);
+
+    if(h[0] == '#')
+        h.erase(0, 1);
+
+    int r, g, b, d;
+    
+    switch(h.size())
+    {
+    case 3:
+        from_chars(&h[0], &h[1], r, 0x10);
+        from_chars(&h[1], &h[2], g, 0x10);
+        from_chars(&h[2], &h[3], b, 0x10);
+        d = 16;
+        break;
+    case 6:
+        from_chars(&h[0], &h[2], r, 0x10);
+        from_chars(&h[2], &h[4], g, 0x10);
+        from_chars(&h[4], &h[6], b, 0x10);
+        d = 256;
+        break;
+    default:
+        return RGBA{};
+    }
+
+    return RGBA{(double)r/(double)d, (double)g/(double)d, (double)b/(double)d, 1.};
 }
 
 /**

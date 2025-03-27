@@ -112,6 +112,8 @@ struct RGBA :
 {
     double a;
 
+    static RGBA from_hex(std::string const &);
+
     RGBA();
     RGBA(double, double, double, double);
     RGBA(RGB const &, double);

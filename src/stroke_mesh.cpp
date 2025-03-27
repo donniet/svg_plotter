@@ -10,6 +10,7 @@ using std::string;
 using std::format;
 using std::to_string;
 using std::ostream;
+using std::max;
 
 typedef enum {
     beginning = -1,
@@ -44,14 +45,15 @@ double offset_from_point_type(point_type t)
     }
 }
 
-MeshPlot::MeshPlot(pair<double,double> drawing_size) : 
+MeshPlot::MeshPlot(pair<double,double> drawing_size, RGBA clear_color) : 
     _mesh(DrawMode::triangle_strip, 
         MeshPlot::attribute_names[0], 
         MeshPlot::attribute_names[1], 
         MeshPlot::attribute_names[2], 
         MeshPlot::attribute_names[3], 
         MeshPlot::attribute_names[4]),
-    _drawing_size(drawing_size)
+    _drawing_size(drawing_size),
+    _clear_color(clear_color)
 { }
 
 void MeshPlot::stroke(string name,
@@ -350,7 +352,7 @@ void MeshPlot::to_c(ostream & os) const
 float _drawing_width = {};
 float _drawing_height = {};
 float _draw_time = {};
-float _clear_color[4] = {{ 0., 0., 0., 0. }};
+float _clear_color[4] = {{ {}, {}, {}, {} }};
 
 uint _section_end_vertex[] = {};
 float _section_cumulative_arclength[] = {};
@@ -370,6 +372,7 @@ float const _buffer[] = {};
 uint _buffer_size = {};
     )", 
         _drawing_size.first, _drawing_size.second, max_draw_time, 
+        _clear_color.r, _clear_color.g, _clear_color.b, _clear_color.a,
         section_end_vertex_to_c(), section_arclength_to_c(),
         strokes_to_c(), _strokes.size(), 
         attributes_to_c(), _mesh.attribute_count,  

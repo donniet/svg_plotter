@@ -1,4 +1,8 @@
 add_library(point point.cpp)
+target_link_libraries(point utility)
+
+add_library(utility utility.cpp)
+target_link_libraries(utility point)
 
 add_library(cover cover.cpp)
 target_link_libraries(cover point)
@@ -29,9 +33,6 @@ target_link_libraries(plotter stroke cover)
 
 add_library(bezier bezier.cpp)
 target_link_libraries(bezier point)
-
-add_library(utility utility.cpp)
-target_link_libraries(utility point)
 
 add_library(plot_cover plot_cover.cpp)
 target_link_libraries(plot_cover cover utility plotter)

@@ -9,6 +9,7 @@
 using std::numeric_limits;
 using std::pair;
 using std::vector;
+using std::min;
 
 PlotCover::~PlotCover() { }
 

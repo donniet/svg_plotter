@@ -1,8 +1,36 @@
 #include "utility.hpp"
 
+#include <algorithm>
+#include <functional>
 #include <utility>
 
 using std::pair;
+using std::string;
+using std::find_if;
+using std::ptr_fun;
+using std::not1;
+using std::isspace;
+using std::max, std::min;
+
+// trim from start (in place)
+void ltrim(string &s) 
+{
+    s.erase(s.begin(), find_if(s.begin(), s.end(),
+        not1(ptr_fun<int, int>(isspace))));
+}
+
+// trim from end (in place)
+void rtrim(string &s) 
+{
+    s.erase(find_if(s.rbegin(), s.rend(),
+        not1(ptr_fun<int, int>(isspace))).base(), s.end());
+}
+
+void trim(string &s)
+{
+    rtrim(s);
+    ltrim(s);
+}
 
 pair<double,double> intersect_intervals(pair<double,double> a, pair<double,double> b)
 {

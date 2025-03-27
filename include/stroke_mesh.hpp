@@ -77,8 +77,9 @@ private:
     mesh_type _mesh;
     std::vector<StrokePlot> _strokes;
     std::pair<double, double> _drawing_size;
+    RGBA _clear_color;
 public:
-    MeshPlot(std::pair<double,double> drawing_size = {640, 816});
+    MeshPlot(std::pair<double,double> drawing_size = {640, 816}, RGBA clear_color = RGBA{});
     /**
      * stroke method appends a triangle mesh onto _mesh by creating a path of triangles along the plot parameter
      * @param {Plot} plot
