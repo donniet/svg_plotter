@@ -25,6 +25,7 @@ public:
     virtual double margin() const;
     virtual bool is_inside(Point const & p) const;
     virtual std::pair<bool, double> intersect_ray(Point const & origin, Vector const & direction) const;
+    virtual std::pair<Point, double> nearest(Point const &) const;
 
     Cover();
     virtual ~Cover() = default; // Add a virtual destructor
@@ -47,6 +48,7 @@ public:
     virtual std::vector<std::vector<Point>> outline() const override;
     virtual bool is_inside(Point const & p) const override;
     virtual std::pair<bool, double> intersect_ray(Point const & origin, Vector const & ray) const override;
+    virtual std::pair<Point, double> nearest(Point const &) const override;
 
     BoundingBox(Point q0, Point q1);
     BoundingBox(double x0, double y0, double x1, double y1);

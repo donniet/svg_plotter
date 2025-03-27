@@ -9,13 +9,125 @@
 #include <numbers>
 #include <charconv>
 
-using std::sqrt, std::clamp, std::min, std::max;
+using std::sqrt, std::clamp, std::min, std::max, std::sin, std::cos;
 using std::format;
 using std::string;
 using std::pair;
 using std::swap, std::tie;
 using std::numbers::pi;
 using std::from_chars;
+
+
+/**
+ * Transform class implementations
+ */
+Transform Transform::translate(double x)
+{
+    return Transform(
+        1, 0, x,
+        0, 1, 0
+    );
+}
+Transform Transform::translate(Point const & p)
+{
+    return Transform(
+        1, 0, p.x,
+        0, 1, p.y
+    );
+}
+Transform Transform::rotate(double deg)
+{
+    double rad = deg * pi / 180.;
+
+    double cosA = cos(rad);
+    double sinA = sin(rad);
+
+    return Transform(
+        cosA, -sinA, 0,
+        sinA,  cosA, 0
+    );
+}
+Transform Transform::rotate(double deg, Point const & p)
+{
+    return translate(p) * rotate(deg) * translate(-1 * p);
+}
+Transform Transform::skewX(double k)
+{
+    return Transform(
+        1, 0, k,
+        0, 1, 0
+    );
+}
+Transform Transform::skewY(double k)
+{
+    return Transform(
+        1, 0, 0,
+        0, 1, k
+    );
+}
+Transform Transform::scale(double s)
+{
+    return Transform(
+        s, 0, 0,
+        0, s, 0
+    );
+
+}
+Transform Transform::scale(Vector const & v)
+{
+    return Transform(
+        v.x,   0, 0,
+          0, v.y, 0
+    );
+}
+Transform Transform::matrix(double a, double b, double c, double d, double e, double f)
+{
+    return Transform(a,b,c,d,e,f);
+}
+Transform Transform::matrix(double a[6])
+{
+    return Transform(a[0], a[1], a[2], a[3], a[4], a[5]);
+}
+
+// identity
+Transform::Transform() :
+    mat{1,0,0,0,1,0}
+{ }
+
+Transform::Transform(double a, double b, double c, double d, double e, double f) :
+    mat{a, b, c, d, e, f}
+{ }
+
+Point Transform::operator()(Point const & p) const
+{
+    return Point{
+        mat[0] * p.x + mat[1] * p.y + mat[2],
+        mat[3] * p.x + mat[4] * p.y + mat[5]
+    };
+}   
+Transform Transform::operator()(Transform const & t) const
+{
+    return Transform(
+        mat[0] * t.mat[0] + mat[1] * t.mat[3],  mat[0] * t.mat[1] + mat[1] * t.mat[4], mat[0] * t.mat[2] + mat[1] * t.mat[5] + mat[2],
+        mat[3] * t.mat[0] + mat[4] * t.mat[3],  mat[3] * t.mat[1] + mat[4] * t.mat[4], mat[3] * t.mat[2] + mat[4] * t.mat[5] + mat[5]
+    );
+}
+
+
+Point Transform::operator*(Point const & p) const
+{
+    return Point{
+        mat[0] * p.x + mat[1] * p.y + mat[2],
+        mat[3] * p.x + mat[4] * p.y + mat[5]
+    };
+}   
+Transform Transform::operator*(Transform const & t) const
+{
+    return Transform(
+        mat[0] * t.mat[0] + mat[1] * t.mat[3],  mat[0] * t.mat[1] + mat[1] * t.mat[4], mat[0] * t.mat[2] + mat[1] * t.mat[5] + mat[2],
+        mat[3] * t.mat[0] + mat[4] * t.mat[3],  mat[3] * t.mat[1] + mat[4] * t.mat[4], mat[3] * t.mat[2] + mat[4] * t.mat[5] + mat[5]
+    );
+}
 
 /**
  * Point class implementation
@@ -285,9 +397,8 @@ double Line::nearest(Point q) const
 
     Point d = q - p;
     double lv = v.norm();
-    Point s = v / lv; // normalized;
 
-    return dot(d, s) / lv;
+    return dot(d, v) / lv / lv;
 }
 double Line::distance(Point q) const
 {
@@ -556,6 +667,13 @@ bool HalfPlane::contains(Point const & q) const
 Segment::Segment(Point const & q0, Point const & q1) :
     p0(q0), p1(q1)
 { }
+
+double Segment::nearest(Point q) const
+{
+    double t = Line{p0, p1 - p0}.nearest(q);
+
+    return min(max(t, 0.), 1.);
+}
 
 double Segment::length() const
 {

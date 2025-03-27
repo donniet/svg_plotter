@@ -14,6 +14,35 @@ struct Triangle;
 struct Circle;
 struct CircleSegment;
 
+struct Transform
+{
+    double mat[6];
+
+    static Transform translate(double);
+    static Transform translate(Point const &);
+    static Transform rotate(double);
+    static Transform rotate(double, Point const &);
+    static Transform skewX(double);
+    static Transform skewY(double);
+    static Transform scale(double);
+    static Transform scale(Vector const &);
+    static Transform matrix(double, double, double, double, double, double);
+    static Transform matrix(double[6]);
+
+    Transform();
+    Transform(Transform const &) = default;
+    Transform(Transform &&) = default;
+    Transform(double, double, double, double, double, double);
+
+    Transform & operator=(Transform const &) = default;
+    Transform & operator=(Transform &&) = default;
+
+    Point operator()(Point const &) const;
+    Transform operator()(Transform const &) const;
+
+    Point operator*(Point const &) const;
+    Transform operator*(Transform const &) const;
+};
 
 struct Point 
 {
@@ -201,6 +230,7 @@ struct Segment
     Segment(Segment const &) = default;
     Segment(Point const &, Point const &);
 
+    double nearest(Point p) const;
     double distance(Point p) const;
     double length() const;
 

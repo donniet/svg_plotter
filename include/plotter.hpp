@@ -27,16 +27,27 @@ public:
     Plotter();
     Plotter(size_t = 5000, std::pair<double,double> = {0,1}, double = 1e-5);
 
-    std::vector<std::vector<Point>> plot(Drawable const & drawing) ;
+    std::vector<std::vector<Point>> plot(Drawable const & drawing);
+    std::vector<std::vector<Point>> plot(Drawable const & drawing, 
+                                         Transform const & t, 
+                                         Cover const & clip);
 
     std::vector<std::vector<Point>> fill(Cover const & cover,                    // a 2D area to be filled
                                          Drawable const & pattern);
+
+    std::vector<std::vector<Point>> fill(Cover const & cover,                    // a 2D area to be filled
+                                         Drawable const & pattern,
+                                         Transform const & t,
+                                         Cover const & clip);
 
     size_t sample_count() const;
     std::pair<double,double> parameter_interval() const;
     double epsilon() const;
 };
 
+
+std::vector<Point> transform_path(Transform const &, std::vector<Point> const &);
+std::vector<std::vector<Point>> transform_plot(Transform const &, std::vector<std::vector<Point>> const &);
 
 std::vector<std::vector<Point>> simplify_plot(std::vector<std::vector<Point>> const &, 
                                               bool is_closed = false, 

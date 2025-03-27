@@ -10,6 +10,7 @@
 using std::vector;
 using std::swap;
 using std::min, std::max;
+using std::pair;
 
 using std::numeric_limits;
 
@@ -37,8 +38,12 @@ bool Cover::is_inside(Point const & p) const {
     return false;
 }
 
-std::pair<bool, double> Cover::intersect_ray(Point const & origin, Vector const & direction) const {
+pair<bool, double> Cover::intersect_ray(Point const & origin, Vector const & direction) const {
     return {false, 0.};
+}
+
+pair<Point,double> Cover::nearest(Point const & p) const { 
+    return { Point{}, 0. }; 
 }
 
 Cover::Cover() : _margin(-numeric_limits<double>::epsilon()) 
@@ -88,6 +93,31 @@ vector<vector<Point>> BoundingBox::outline() const {
 bool BoundingBox::is_inside(Point const & p) const {
     return p.x >= p0.x + margin() && p.x <= p1.x - margin() &&
            p.y >= p0.y + margin() && p.y <= p1.y - margin();
+}
+
+pair<Point,double> BoundingBox::nearest(Point const & p) const 
+{
+    if(is_inside(p))
+        return { p, 0. };
+
+    auto a = sides();
+    double d = numeric_limits<double>::max();
+    Point r = p;
+
+    for(Segment const & s : a)
+    {
+        double t = s.nearest(p);
+        Point rr = s(t);
+        double dd = (p - rr).norm();
+
+        if(dd >= d)
+            continue;
+
+        r = rr;
+        d = dd;
+    }
+
+    return { r, d };
 }
 
 std::pair<bool, double> BoundingBox::intersect_ray(Point const & origin, Vector const & ray) const {

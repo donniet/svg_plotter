@@ -8,9 +8,28 @@
 #include <iterator>
 
 using std::vector;
-using std::for_each;
 using std::distance;
 using std::transform, std::for_each, std::inclusive_scan;
+using std::move;
+
+
+vector<Point> transform_path(Transform const & t, vector<Point> const & path)
+{
+    vector<Point> ret(path.size());
+    transform(path.begin(), path.end(), ret.begin(), t);
+    return move(ret);
+}
+
+
+vector<vector<Point>> transform_plot(Transform const & t, vector<vector<Point>> const & plot)
+{
+    vector<vector<Point>> ret(plot.size());
+
+    for(size_t i = 0; i < plot.size(); i++)
+        ret[i] = transform_path(t, plot[i]);
+
+    return move(ret);
+}
 
 vector<Point> simplify_path(vector<Point> const & path, double eps)
 {
@@ -135,7 +154,14 @@ double Plotter::epsilon() const
     return _epsilon;
 }
 
-std::vector<std::vector<Point>> Plotter::plot(Drawable const & drawing) 
+vector<vector<Point>> Plotter::plot(Drawable const & drawing, 
+                                    Transform const & t, 
+                                    Cover const & clip)
+{
+    return sample_interval(drawing, t, clip, _sample_count, _parameter_interval);
+}
+
+vector<vector<Point>> Plotter::plot(Drawable const & drawing) 
 {
     Point p0 = drawing.at(_parameter_interval.first);
     Point p1 = drawing.at(_parameter_interval.second);
