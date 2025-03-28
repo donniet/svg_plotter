@@ -21,6 +21,45 @@ canvas {
 /* canvas { position: absolute; left: 0; right: 0; } */
 </style>
 
+<script type="x-shader/x-vertex" id="blend_vertex_shader">
+#version 300 es
+// an attribute is an input (in) to a vertex shader.
+// It will receive data from a buffer
+
+in vec2 a_position;
+in vec2 a_uv;
+
+out vec2 pos;
+out vec2 uv;
+
+void main()
+{
+    pos = a_position;
+    uv = a_uv;
+    gl_Position = vec4(a_position.xy, 0, 1.);
+}
+</script>
+
+
+<script type="x-shader/x-fragment" id="blend_fragment_shader">
+#version 300 es
+// an attribute is an input (in) to a vertex shader.
+// It will receive data from a buffer
+precision highp float;
+
+in vec2 pos;
+in vec2 uv;
+
+out vec4 fragColor;
+
+uniform sampler2D u_texture;
+
+void main()
+{
+    fragColor = texture(u_texture, uv);
+    // fragColor = vec4(1, 0, 0, 1);
+}
+</script>
 
 <script type="x-shader/x-vertex" id="vertex_shader">
 #version 300 es
@@ -61,11 +100,13 @@ void main()
     p.x = dot(u_view[0].xy, a_position.xy) + u_view[0][2];
     p.y = dot(u_view[1].xy, a_position.xy) + u_view[1][2];
 
-    // float z = clamp(a_uv[1] / u_uv_range[3], 0., 1.);
+    float z = clamp(a_uv[1] / u_uv_range[3], 0., 1.);
 
-    gl_Position = vec4(p.xy, 0., 1.);
+    gl_Position = vec4(p.xy, z, 1.);
 }
 </script>
+
+
 
 
 <script type="x-shader/x-fragment" id="fragment_shader">
@@ -232,6 +273,7 @@ const DRAW_DURATION_UNIFORM_NAME = "u_draw_time";
 const MOUSE_UNIFORM_NAME = "u_mouse";
 const MOUSE_STATE_UNIFORM_NAME = "u_mouse_state";
 const TIME_UNIFORM_NAME = "u_time";
+const BACKGROUND_TEXTURE_UNIFORM_NAME = "u_background_texture";
 
 const SECTION_ATTRIBUTE_NAME = "a_section";
 const UV_ATTRIBUTE_NAME = "a_uv";
@@ -245,7 +287,7 @@ const SHADER_TYPES = [ "vertex", "fragment" ];
 const WEBGL_CONTEXT_NAME = "webgl2";
 
 const FLOAT_BYTES = 4;
-const THROTTLE_FRAMES = false;
+const THROTTLE_FRAMES = true;
 
 
 /**
@@ -467,6 +509,15 @@ function create_program_from_scripts(gl, script_elements)
     return create_program(gl, shaders);
 }
 
+function enable_attribute(location, stride, size, offset, gl)
+{
+    // setup the vertex attribute pointer
+    gl.vertexAttribPointer(location, size, gl.FLOAT, false, stride, offset);
+
+    // enable this attribute's location
+    gl.enableVertexAttribArray(location);
+};
+
 /**
  * Layer class
  * */
@@ -486,6 +537,10 @@ function Layer(gl, program, name, draw_mode,
     this.strokelength = strokelength || this.arclength / this.brush_size;
     this.uniforms = uniforms || {};
     this.sections = sections || [];
+
+    this.render_buffer = null;
+    this.width = 0;
+    this.height = 0;
 
     // calculate the uv ranges
     this.uv_range_of = this.sections.map(function(s, i, sections) {
@@ -508,6 +563,43 @@ function Layer(gl, program, name, draw_mode,
     this.set_brush_color = create_uniform_value_setter(gl, program, BRUSH_COLOR_UNIFORM_NAME);
 }
 
+Layer.prototype.attach_render_buffer = function(gl, framebuffer_target)
+{
+    if(this.render_buffer)
+        gl.framebufferRenderbuffer(framebuffer_target, gl.COLOR_ATTACHMENT0, 
+            gl.RENDERBUFFER, this.render_buffer);
+}
+
+Layer.prototype.delete_render_buffer = function(gl)
+{
+    if(!this.render_buffer)
+        return;
+
+    gl.deleteRenderbuffer(this.render_buffer);
+    this.render_buffer = null;
+    this.width = 0;
+    this.height = 0;
+}
+
+Layer.prototype.initialize_render_buffer = function(gl, width, height, format)
+{
+    if(width != this.width || height != this.height)
+        this.delete_render_buffer(gl);
+
+    // if we have a render buffer, then the width and height must be correct, and we can simply return
+    if(this.render_buffer)
+        return;
+
+    // otherwise we need to create a new one
+    this.render_buffer = gl.createRenderbuffer();
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this.render_buffer);
+    gl.renderbufferStorage(gl.RENDERBUFFER, format || gl.RGBA8, width, height);
+
+    this.width = width;
+    this.height = height;
+
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+}
 
 Layer.prototype.vertex_range_of_section = function(section)
 {
@@ -614,6 +706,10 @@ Layer.prototype.draw = function(gl, range)
     this.set_brush_color(this.brush_color);
     this.set_brush_size([this.brush_size]);
 
+    // if we have a render buffer, attach it to the framebuffer COLOR_ATTACHMENT0
+    
+    
+
     // we draw our sections in reverse, from the last to the first
     for(let e = end; begin < e; e--)
     {    
@@ -633,12 +729,47 @@ function view_from(drawing_size)
     ]);
 }
 
-function Drawing(gl, program, 
+function Blender(gl, blend_program, clear_color, texture_unit)
+{
+    this.program = blend_program;
+    this.texture_unit = texture_unit || 0;
+
+    this.position_enable = enable_attribute.bind(this, 
+        gl.getAttribLocation(this.program, "a_position"), 16, 2, 0);
+
+    this.uv_enable = enable_attribute.bind(this, 
+        gl.getAttribLocation(this.program, "a_uv"),       16, 2, 8);
+
+    const uniform_texture_location = gl.getUniformLocation(this.program, "u_texture");
+    this.set_texture = function(texture) {
+        gl.activeTexture(gl.TEXTURE0 + this.texture_unit);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        gl.uniform1i(uniform_texture_location, this.texture_unit);
+    }.bind(this);
+}
+
+Blender.prototype.draw = function(gl, texture)
+{
+    this.position_enable(gl);
+    this.uv_enable(gl);
+    this.set_texture(texture);
+
+    // gl.enable(gl.BLEND);
+    // gl.blendFuncSeparate(gl.DST_ALPHA, gl.SRC_ALPHA, gl.ONE, gl.ONE);
+    // gl.blendEquationSeparate(gl.MAX, gl.MAX);
+
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+
+function Drawing(gl, program, blend_program,
                  vertex_data, stride, 
                  attributes, uniforms, layers, 
                  drawing_size, draw_time, clear_color)
 {
     this.program = program;
+    this.blend_program = blend_program;
+    this.blender = new Blender(gl, blend_program, clear_color, 0);
 
     // setup our vertex attribute array
     this.vao = gl.createVertexArray();
@@ -646,14 +777,34 @@ function Drawing(gl, program,
     this.buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     gl.bufferData(gl.ARRAY_BUFFER, vertex_data, gl.STATIC_DRAW);
+
+    // setup our vao for quads (blending)
+    this.quads = gl.createVertexArray();
+    gl.bindVertexArray(this.quads);
+    const quad_vertices = new Float32Array([
+        -1, -1,  0,  0,
+         1, -1,  1,  0,
+        -1,  1,  0,  1,
+         1,  1,  1,  1
+    ]);
+    this.quad_buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad_buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, quad_vertices, gl.STATIC_DRAW);
+
+    // create a framebuffer to render to
+    this.__framebuffer = gl.createFramebuffer();
+    // gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, this.__framebuffer);
+
+    // 10 FPS for now
+    this.frame_period = 1. / 10.;
     
     // calculate the number of vertices/rows
     this.rows = ( vertex_data.length / stride ) >> 0;
 
     // create functions to enable each of our attributes
     this.attribute_enablers = attributes.map(a =>
-        Drawing.prototype.enable_attribute.bind(this, 
-            gl.getAttribLocation(program, a.name), stride, a.size, a.offset)
+        enable_attribute.bind(this, gl.getAttribLocation(program, a.name), 
+            stride, a.size, a.offset)
     );
 
     // create value setters for our uniforms
@@ -678,23 +829,25 @@ function Drawing(gl, program,
     this.set_uniform_draw_duration = create_uniform_value_setter(gl, program,
         DRAW_DURATION_UNIFORM_NAME);
 
-    // extract our layer information
-    this.layers = [];
-    for(const [name, l] of Object.entries(layers))
-    {
-        this.layers.push(
-            new Layer(gl, program, name, l.draw_mode, 
-                l.arclength, l.strokelength, l.vertex_range, l.time_range, l.section_range, 
-                l.brush_size, l.brush_color, 
-                l.sections, l.uniforms));
-    }
-
     //// optional parameters
     this.drawing_size = drawing_size || [1,1];
     this.aspect_ratio = this.drawing_size[0] / this.drawing_size[1];
     this.view_matrix = view_from(this.drawing_size);
     this.draw_time = draw_time || 1.;
     this.clear_color = clear_color || [0., 0., 0., 0.];
+
+    // extract our layer information
+    this.layers = [];
+
+    for(const [name, l] of Object.entries(layers))
+    {
+        const layer = new Layer(gl, program, name, l.draw_mode, 
+            l.arclength, l.strokelength, l.vertex_range, l.time_range, l.section_range, 
+            l.brush_size, l.brush_color, 
+            l.sections, l.uniforms);
+
+        this.layers.push(layer);
+    }
 
     //// internal members
     this.__prev_time = 0;
@@ -708,6 +861,33 @@ function Drawing(gl, program,
         gl.canvas.addEventListener(`mouse${action}`, 
             Drawing.prototype.mouse_handler.bind(this, id)
         );
+}
+
+Drawing.prototype.create_render_texture = function(gl, width, height, level = 0)
+{
+    // create to render to
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    
+    // define size and format of level 0
+    const internal_format = gl.RGBA;
+    const border = 0;
+    const format = gl.RGBA;
+    const type = gl.UNSIGNED_BYTE;
+    const data = null;
+
+    gl.texImage2D(gl.TEXTURE_2D, level, internal_format,
+                  width, height, border,
+                  format, type, data);
+    
+    // set the filtering so we don't need mips
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    return tex;
 }
 
 Drawing.prototype.mouse_handler = function(mouse_action_id, event)
@@ -727,14 +907,6 @@ Drawing.prototype.read_vertex_data = function(gl, buffer_data, stride)
     gl.bufferData(gl.ARRAY_BUFFER, buffer_data, gl.STATIC_DRAW);
 };
 
-Drawing.prototype.enable_attribute = function(location, stride, size, offset, gl)
-{
-    // setup the vertex attribute pointer
-    gl.vertexAttribPointer(location, size, gl.FLOAT, false, stride, offset);
-
-    // enable this attribute's location
-    gl.enableVertexAttribArray(location);
-};
 
 Drawing.prototype.resize_canvas = function(gl, clientWidth, clientHeight)
 {
@@ -747,9 +919,17 @@ Drawing.prototype.resize_canvas = function(gl, clientWidth, clientHeight)
         let height_by_width = gl.canvas.width / this.aspect_ratio;
 
         if(gl.canvas.height > height_by_width)
-            gl.viewport(0, (gl.canvas.height - height_by_width) / 2., gl.canvas.width, height_by_width);
+        {
+            this.viewport_width = gl.canvas.width;
+            this.viewport_height = height_by_width;
+        }
+            // gl.viewport(0, (gl.canvas.height - height_by_width) / 2., gl.canvas.width, height_by_width);
         else
-            gl.viewport((gl.canvas.width - width_by_height) / 2., 0, width_by_height, gl.canvas.height);
+        {
+            this.viewport_width = width_by_height;
+            this.viewport_height = gl.canvas.height;
+        }
+            // gl.viewport((gl.canvas.width - width_by_height) / 2., 0, width_by_height, gl.canvas.height);
 
         return true;
     }
@@ -757,15 +937,31 @@ Drawing.prototype.resize_canvas = function(gl, clientWidth, clientHeight)
     return false;
 };
 
+Drawing.prototype.get_layer_texture = function(gl, layer)
+{
+    if(this.viewport_width != gl.canvas.width && this.viewport_height != gl.canvas.height)
+    {
+        if(layer.__texture)
+            gl.deleteTexture(layer.__texture);
+
+        layer.__texture = null;
+    }
+
+    if(!layer.__texture)
+        layer.__texture = this.create_render_texture(gl, this.viewport_width, this.viewport_height);
+
+    return layer.__texture;
+}
 
 Drawing.prototype.draw = function(gl, upto)
 {
     // turn our time into a fraction of the animation
     let u = Math.min(1., upto / this.draw_time);
 
+    const level = 0;
+
     // initialize the canvas
     gl.clearColor(...this.clear_color);
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER);
     gl.depthFunc(gl.ALWAYS);
     gl.disable(gl.DEPTH_TEST);
     gl.disable(gl.CULL_FACE);
@@ -774,8 +970,9 @@ Drawing.prototype.draw = function(gl, upto)
     gl.blendEquationSeparate(gl.MAX, gl.MAX);
 
     // ensure our program is being used
-
     gl.useProgram(this.program);
+    gl.bindVertexArray(this.vao);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
 
     // setup our base uniforms
     this.set_uniform_view(this.view_matrix);
@@ -790,17 +987,71 @@ Drawing.prototype.draw = function(gl, upto)
     for(const [name, value] of Object.entries(this.uniforms))
         this.set_uniform[name](value);
 
-    // ensure our vertex attribute object is bound
-    gl.bindVertexArray(this.vao);
-
     // enable our vertex attributes
     for(const enable_attribute of this.attribute_enablers)
         enable_attribute(gl);
 
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this.__framebuffer);
+
     // draw our layers
-    this.layers.forEach(l => 
-        l.draw(gl, [0., u])
-    );
+    this.layers.forEach(function(layer) 
+    { 
+        // attach this layer's render buffer
+        // layer.attach_render_buffer(gl, gl.DRAW_FRAMEBUFFER);
+        let tex = this.get_layer_texture(gl, layer);
+        gl.bindTexture(gl.TEXTURE_2D, tex);
+
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+        gl.viewport(0, 0, this.viewport_width, this.viewport_height);
+        
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+        
+        // draw this layer to the layers buffer
+        layer.draw(gl, [0., u]);
+        
+    }.bind(this));
+
+    // bind the canvas framebuffer
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // now start using the blend program
+    gl.useProgram(this.blend_program);
+    gl.bindVertexArray(this.quads);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.quad_buffer);
+
+    for(let i = 0; i < this.layers.length; i++)
+    {
+        const layer = this.layers[i];
+
+        let tex = this.get_layer_texture(gl, layer);
+        gl.viewport(0, 0, this.viewport_width, this.viewport_height);
+
+
+        this.blender.draw(gl, tex);
+
+
+        // gl.blitFramebuffer(
+        //     0, 0, // Source x, y (top left corner)
+        //     gl.canvas.clientWidth, gl.canvas.clientWidth, // Source width, height
+        //     0, 0, // Destination x, y
+        //     gl.canvas.clientWidth, gl.canvas.clientWidth, // Destination width, height
+        //     gl.COLOR_BUFFER_BIT,
+        //     gl.NEAREST // Filter (e.g., gl.NEAREST, gl.LINEAR)
+        // );
+    }
+
+    // gl.deleteTexture(tex);
+
+    // gl.blitFramebuffer(
+    //     0, 0, // Source x, y (top left corner)
+    //     gl.canvas.clientWidth, gl.canvas.clientWidth, // Source width, height
+    //     0, 0, // Destination x, y
+    //     gl.canvas.clientWidth, gl.canvas.clientWidth, // Destination width, height
+    //     gl.COLOR_BUFFER_BIT,
+    //     gl.NEAREST // Filter (e.g., gl.NEAREST, gl.LINEAR)
+    // );
+
 };
 
 Drawing.prototype.render = function(gl, time)
@@ -808,14 +1059,26 @@ Drawing.prototype.render = function(gl, time)
     let elapsed = time - this.__prev_time;
 
     // if we are a bit early just wait for the next frame
-    if(!THROTTLE_FRAMES || elapsed > this.frame_period)
+    if(this.__prev_time == 0 || !THROTTLE_FRAMES || elapsed > this.frame_period)
     {
-        this.__prev_time = time;
         const sec = time * 0.001;
 
-        this.resize_canvas(gl, document.body.clientWidth, 
-                               document.body.clientHeight);
+        // TODO: redraw on resize
+        // if(sec > this.draw_time)
+        //     return; // done drawing
+
+        let resized = this.resize_canvas(gl, 
+            document.body.clientWidth, 
+            document.body.clientHeight);
+
+        if(resized || this.__prev_time == 0)
+            this.layers.forEach(layer =>
+                layer.initialize_render_buffer(gl, document.body.clientWidth, document.body.clientHeight)
+            );
+        
         this.draw(gl, sec);
+
+        this.__prev_time = time;
     }
 
     // continue the animation
@@ -827,7 +1090,9 @@ Drawing.prototype.continue_animate = function(gl)
     requestAnimationFrame(Drawing.prototype.render.bind(this, gl));
 };
 
-/**
+
+
+/******************************************************************************
  * Mesh class proceses the wasm instance to ready it for rednering 
  * with the Drawing class
  ** */
@@ -967,7 +1232,10 @@ Mesh.prototype.clear_color = function()
 async function init()
 {
     const canvas = document.querySelector("canvas");
-    const gl = canvas.getContext(WEBGL_CONTEXT_NAME);
+    const gl = canvas.getContext(WEBGL_CONTEXT_NAME, {
+        antialias: false,
+    });
+    
 
     // TODO: lookup wasm by time
     const { instance } = await WebAssembly.instantiateStreaming(
@@ -984,8 +1252,16 @@ async function init()
     // compile and link our shader program
     const program = create_program_from_scripts(gl, [vertex_shader, fragment_shader]);
 
+    
+    // get the elements containing our vertex and fragment shaders
+    const blend_vertex_shader = document.getElementById("blend_vertex_shader");
+    const blend_fragment_shader = document.getElementById("blend_fragment_shader");
+
+    // compile and link our shader program
+    const blend_program = create_program_from_scripts(gl, [blend_vertex_shader, blend_fragment_shader]);
+
     // setup our drawing class
-    const drawing = new Drawing(gl, program,
+    const drawing = new Drawing(gl, program, blend_program,
         mesh.vertex_data(), mesh.stride(), 
         mesh.attributes(), mesh.uniforms(), mesh.layers(),
         mesh.drawing_size(), mesh.draw_time(), mesh.clear_color()
