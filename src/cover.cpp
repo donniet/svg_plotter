@@ -3,7 +3,7 @@
 // cover.cpp (Implementation file)
 
 #include "cover.hpp"
-#include "path.hpp"
+// #include "path.hpp"
 #include <limits>
 #include <vector>
 

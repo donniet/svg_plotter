@@ -287,6 +287,81 @@ void swap(Point & p0, Point & p1)
     swap(p0.x, p1.x);
     swap(p0.y, p1.y);
 }
+
+
+/**
+ * Path class
+ */
+Path::Path(vector<Point> const & p, bool closed) :
+    vector<Point>{p}, _closed{closed}
+{ }
+
+Path::Path(vector<Point> && p, bool closed) :
+    vector<Point>{move(p)}, _closed{closed}
+{ }
+
+bool Path::closed() const
+{
+    return _closed;
+}
+
+// Path Path::offset(double d) const
+// {
+//     Path const & p = *this;
+
+//     if(size() < 2)
+//         return p;
+
+//     size_t N = size();
+//     vector<Vector> normals(N);
+//     vector<Vector> tangents(N);
+//     Path r = p;
+
+//     for(size_t i = 0; i < N - 1; i++)
+//     {
+//         Vector t = (p[i+1] - p[i]).normalized();
+//         normals[i] = normal(t);
+//         tangents[i] = t;
+//     }
+    
+//     // check for intersections
+//     for(size_t i = 0; i < N - 1; i++)
+//     {
+//         auto l0 = Line{p[i], d * normals[i]};
+//         auto l1 = Line{p[i+1], d * normals[i+1]};
+
+//         auto a = l0.intersect(l1);
+
+//         if(a.first && a.second > 0 && a.second < 1.)
+//         {
+
+//         }
+//     }
+        
+    
+
+//     for(size_t i = 0; i < size(); i++)
+//     {
+//         Vector n;
+
+//         if(i == 0)
+//             n = d * normal(p[i+1] - p[i]).normalized();
+//         else if(i == size() - 1)
+//             n = d * normal(p[i] - p[i-1]).normalized();
+//         else
+//         {
+//             auto n0 = normal(p[i] - p[i-1]).normalized();
+//             auto n1 = normal(p[i+1] - p[i]).normalized();
+
+//             n = d * (n0 + n1).normalized();
+//         }
+
+//         r[i] += n;
+//     }
+
+//     return r;
+// }
+
 Vector normalize(Vector const & v)
 {
     return v.normalized();
@@ -589,6 +664,11 @@ pair<double, double> Line::intersect(CircleSegment cs) const
     return {t0, t1};
 }
 
+bool Line::operator==(Line const & l) const 
+{
+    return p == l.p && v == l.v;
+}
+
 /** 
  *  Ray class implementation
  */
@@ -757,6 +837,10 @@ pair<double,double> Segment::intersect(Triangle tri) const
     }
 
     return {t0, t1};
+}
+Line Segment::line() const
+{
+    return Line{p0, p1 - p0};
 }
 
 Point Segment::operator()(double t) const

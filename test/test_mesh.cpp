@@ -17,6 +17,7 @@
 #include "testing.hpp"
 
 using std::sqrt;
+using std::cout, std::endl;
 
 int main(int ac, char * av[])
 {
@@ -75,6 +76,14 @@ int main(int ac, char * av[])
     fill = simplify_plot(fill, false, 1e-4);
 
     MeshPlot meshplot({640, 816});
+
+    vector<Triangle> mesh;
+    vector<Triangle> uv;
+    vector<tuple<size_t, size_t, size_t>> indices;
+    meshplot.stroke_path(stroke[0], 10., mesh, uv, indices, true);
+
+    cout << STLOutput(mesh) << endl;
+    return 0;
     
 
     meshplot.stroke("foreground_outline", stroke, 

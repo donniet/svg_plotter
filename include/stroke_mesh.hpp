@@ -80,6 +80,9 @@ private:
     RGBA _clear_color;
 public:
     MeshPlot(std::pair<double,double> drawing_size = {640, 816}, RGBA clear_color = RGBA{});
+
+    static void stroke_path(std::vector<Point> const & path, double width, vector<Triangle> & vertices, vector<Triangle> & uv, vector<tuple<size_t, size_t, size_t>> & path_indices, bool closed = false);
+
     /**
      * stroke method appends a triangle mesh onto _mesh by creating a path of triangles along the plot parameter
      * @param {Plot} plot
@@ -92,6 +95,14 @@ public:
                 double brush_size = 1., 
                 RGBA brush_color = RGBA{0,0,0,1}, 
                 std::pair<double,double> time_range = {0.,1.});
+
+    // HACK: backup option as we try different algorithms
+    void stroke2(std::string name,
+        std::vector<std::vector<Point>> plot, 
+        BrushStyle brush_style = BrushStyle::BrushRound,
+        double brush_size = 1., 
+        RGBA brush_color = RGBA{0,0,0,1}, 
+        std::pair<double,double> time_range = {0.,1.});
 
     void to_c(std::ostream & os) const;
     void to_json(std::ostream & os) const;

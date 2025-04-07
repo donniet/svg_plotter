@@ -1,6 +1,7 @@
 #ifndef __POINT_HPP__
 #define __POINT_HPP__
 
+#include <vector>
 #include <string>
 #include <utility>
 
@@ -85,6 +86,32 @@ struct Point
     bool operator!=(Point const & p) const;
 };
 
+class Point3
+{
+public:
+    double x, y, z;
+
+    Point3();
+    Point3(Point3 const &) = default;
+    Point3(Point3 &&) = default;
+
+};
+
+class Path : 
+    public std::vector<Point>
+{
+public:
+    Path(Path const &) = default;
+    Path(Path &&) = default;
+    Path(vector<Point> const &, bool = false);
+    Path(vector<Point> &&, bool = false);
+
+    Path offset(double) const;
+    bool closed() const;
+private:
+    bool _closed;
+};
+
 namespace std 
 {
     template<size_t I>
@@ -165,6 +192,9 @@ struct Line
     Line(Line const &) = default;
     Line(Point const &, Vector const &);
 
+    Line & operator=(Line const &) = default;
+    Line & operator=(Line &&) = default;
+
     double nearest(Point) const;
     double distance(Point) const;
 
@@ -177,8 +207,12 @@ struct Line
     std::pair<double, double> intersect(Circle) const;
     std::pair<double, double> intersect(CircleSegment) const;
 
+    bool operator==(Line const &) const;
+
     Point operator()(double) const;
     void swap(Line &);
+
+    ~Line() = default;
 };
 
 struct Ray
@@ -233,6 +267,7 @@ struct Segment
     double nearest(Point p) const;
     double distance(Point p) const;
     double length() const;
+    Line line() const;
 
     
     std::pair<bool, double> intersect(Line) const;

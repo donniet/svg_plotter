@@ -1,7 +1,7 @@
 #ifndef __FILLS_HPP__
 #define __FILLS_HPP__
 
-#include "path.hpp"
+// #include "path.hpp"
 #include "point.hpp"
 #include "drawable.hpp"
 #include "cover.hpp"

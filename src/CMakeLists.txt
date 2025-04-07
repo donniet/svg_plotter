@@ -16,14 +16,14 @@ target_link_libraries(adapters drawable)
 add_library(mesh mesh.cpp)
 target_link_libraries(mesh point)
 
-add_library(path path.cpp)
-target_link_libraries(path drawable)
+# add_library(path path.cpp)
+# target_link_libraries(path drawable)
 
 add_library(fills fills.cpp)
-target_link_libraries(fills path)
+target_link_libraries(fills point bezier)
 
 add_library(parser parser.cpp)
-target_link_libraries(parser path bezier cover)
+target_link_libraries(parser drawable point bezier cover)
 
 add_library(stroke stroke.cpp)
 target_link_libraries(stroke point)
