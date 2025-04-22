@@ -558,8 +558,6 @@ float noise01(vec2 p)
 
 vec4 brush_stroke_color(vec4 input_color)
 {
-    return vec4(uv.xy / u_resolution.xy * u_brush_size, 0., 1.);
-
     float d = length(pos - brush) / u_brush_size;
 
     // float d = length(uv - vec2(arclength / 50., 0));
@@ -625,10 +623,10 @@ void main()
 
     // fragColor.xyzw = (0.25 - d2) * brush_color.xyzw;
 
-    // fragColor = vec4( uv.xy,0, 1);
+    fragColor = vec4( uv.xy,0, 1);
 
     
-    fragColor = brush_stroke_color(vec4(1., 1., 1., 0.));
+    // fragColor = brush_stroke_color(vec4(1., 1., 1., 0.));
     
 }
 </script>

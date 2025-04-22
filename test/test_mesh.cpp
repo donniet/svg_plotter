@@ -77,15 +77,15 @@ int main(int ac, char * av[])
 
     MeshPlot meshplot({640, 816});
 
-    vector<Triangle> mesh;
-    vector<Triangle> uv;
-    vector<std::array<size_t, 3>> indices;
-    for(auto s : stroke)
-    {
-        meshplot.stroke_path(s, 10., mesh, uv, indices, true);
-        cout << STLOutput(mesh) << endl;
-    }
-    return 0;
+    // vector<Triangle> mesh;
+    // vector<Triangle> uv;
+    // vector<std::array<size_t, 3>> indices;
+    // for(auto s : stroke)
+    // {
+    //     meshplot.stroke_path(s, 10., mesh, uv, indices, true);
+    //     cout << STLOutput(mesh) << endl;
+    // }
+    // return 0;
     
 
     meshplot.stroke("foreground_outline", stroke, 
