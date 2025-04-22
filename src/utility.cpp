@@ -11,19 +11,31 @@ using std::ptr_fun;
 using std::not1;
 using std::isspace;
 using std::max, std::min;
+using std::function;
+using std::locale;
 
 // trim from start (in place)
 void ltrim(string &s) 
 {
+    typedef int (*isspace_type)(int);
+    static isspace_type isspace = std::isspace;
+
+    static std::function<int(int)> isspace_func = isspace;
+
     s.erase(s.begin(), find_if(s.begin(), s.end(),
-        not1(ptr_fun<int, int>(isspace))));
+        not_fn(isspace_func)));
 }
 
 // trim from end (in place)
 void rtrim(string &s) 
 {
+    typedef int (*isspace_type)(int);
+    static isspace_type isspace = std::isspace;
+
+    static std::function<int(int)> isspace_func = isspace;
+
     s.erase(find_if(s.rbegin(), s.rend(),
-        not1(ptr_fun<int, int>(isspace))).base(), s.end());
+        not_fn(isspace_func)).base(), s.end());
 }
 
 void trim(string &s)

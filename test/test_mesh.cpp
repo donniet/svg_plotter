@@ -79,10 +79,12 @@ int main(int ac, char * av[])
 
     vector<Triangle> mesh;
     vector<Triangle> uv;
-    vector<tuple<size_t, size_t, size_t>> indices;
-    meshplot.stroke_path(stroke[0], 10., mesh, uv, indices, true);
-
-    cout << STLOutput(mesh) << endl;
+    vector<std::array<size_t, 3>> indices;
+    for(auto s : stroke)
+    {
+        meshplot.stroke_path(s, 10., mesh, uv, indices, true);
+        cout << STLOutput(mesh) << endl;
+    }
     return 0;
     
 

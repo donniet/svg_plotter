@@ -40,6 +40,11 @@ enum class BrushStyle {
     BrushRound,
 };
 
+enum class PointType {
+    Outside,
+    Inside
+};
+
 namespace std
 {
     string to_string(::BrushStyle const & s);
@@ -81,7 +86,7 @@ private:
 public:
     MeshPlot(std::pair<double,double> drawing_size = {640, 816}, RGBA clear_color = RGBA{});
 
-    static void stroke_path(std::vector<Point> const & path, double width, vector<Triangle> & vertices, vector<Triangle> & uv, vector<tuple<size_t, size_t, size_t>> & path_indices, bool closed = false);
+    static void stroke_path(std::vector<Point> const & path, double width, std::vector<Triangle> & vertices, std::vector<Triangle> & uv, std::vector<std::array<size_t, 3>> & path_indices, bool closed = false);
 
     /**
      * stroke method appends a triangle mesh onto _mesh by creating a path of triangles along the plot parameter

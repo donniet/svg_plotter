@@ -300,6 +300,7 @@ struct Triangle
     std::pair<bool, CircleSegment> intersect(CircleSegment) const;
 
     Point operator()(double, double) const;
+    Point const & operator[](size_t i) const;
 };
 
 struct Circle

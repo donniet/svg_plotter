@@ -9,12 +9,13 @@
 #include <limits>
 #include <list>
 #include <deque>
+#include <array>
 
 namespace ranges = std::ranges;
 
 using std::vector;
 using std::string;
-using std::format;
+using std::format, std::vformat;
 using std::to_string;
 using std::ostream;
 using std::max, std::min;
@@ -23,6 +24,7 @@ using std::numeric_limits;
 using std::list;
 using std::ranges::sort;
 using std::deque;
+using std::array;
 
 typedef enum {
     beginning = -1,
@@ -121,21 +123,38 @@ Point intersection(Line const & l, Line const & m)
     return l(i.second);
 }
 
-vector<Line> offset_path(vector<Point> const & path, double w)
+vector<Line> offset_path(vector<Point> const & path, double w, bool closed = false)
 {
-    vector<Vector> norm(path.size()), tang(path.size());
-    vector<Line> ret(path.size());
+
+    vector<Vector> norm, tang;
+    vector<Line> ret;
+
+    if(closed)
+    {
+        norm.resize(path.size());
+        tang.resize(path.size());
+        ret.resize(path.size());
+    }
+    else
+    {
+        norm.resize(path.size()-1);
+        tang.resize(path.size()-1);
+        ret.resize(path.size()-1);
+    }
 
     auto next = [&path](size_t i) -> size_t
     {
         i++;
+        // we shouldn't have to check for closed here because this function will not be called on the last
+        // element if we are non-closed
         if(i >= path.size())
             return 0;
 
         return i;
     };
 
-    for(size_t i = 0; i < path.size(); i++)
+    // the ret.size() should limit us in the non-closed case
+    for(size_t i = 0; i < ret.size(); i++)
     {
         tang[i] = path[next(i)] - path[i];
         norm[i] = normal(tang[i]);
@@ -155,6 +174,15 @@ vector<Line> offset_path(vector<Point> const & path, double w)
     return ret;
 }
 
+bool lines_intersect(Line const & a, Line const & b)
+{
+    if(&a == &b || a == b)
+        return true;
+
+    auto i = a.intersect(b);
+
+    return i.first;
+}
 
 double intersection_parameter(Line const & a, Line const & b)
 {
@@ -170,7 +198,7 @@ double intersection_parameter(Line const & a, Line const & b)
 
 void remove_reversing_segments(
     /* in  */ vector<Line> const & offset, 
-    /* out */ deque<pair<Segment, size_t>> & segs,  // should be empty
+    /* out */ vector<pair<Segment, size_t>> & segs, 
               bool closed = false)
 {
     struct T 
@@ -183,7 +211,7 @@ void remove_reversing_segments(
     // setup our list of lines and indices
     list<T> lines;
     for(size_t i = 0; i < offset.size(); i++)
-        lines.insert(lines.end(), T{&offset[i], i});
+        lines.insert(lines.end(), T{&offset[i], i, 0, 1});
 
     // helper functions
     auto prev = [closed, &lines](list<T>::iterator i) -> list<T>::iterator
@@ -229,7 +257,8 @@ void remove_reversing_segments(
             // if this is an empty line erase it
             if((*s->line).v.norm2() == 0)
             {
-                lines.erase(s);
+                auto u = s++;
+                lines.erase(u);
                 finished = false;
                 continue;
             }
@@ -237,8 +266,18 @@ void remove_reversing_segments(
             auto q = prev(s);
             auto t = next(s);
 
-            s->b = intersection_parameter(*s->line, *q->line);
-            s->e = intersection_parameter(*s->line, *t->line);
+            if(lines_intersect(*s->line, *q->line))
+                s->b = intersection_parameter(*s->line, *q->line);
+            else
+                s->b = 0;
+
+            if(lines_intersect(*s->line, *t->line))
+                s->e = intersection_parameter(*s->line, *t->line);
+            else
+                s->e = 1;
+
+            // s->b = intersection_parameter(*s->line, *q->line);
+            // s->e = intersection_parameter(*s->line, *t->line);
 
             // use > instead of >= and handle these rare, equal edge cases
             // by the default calculations
@@ -254,12 +293,14 @@ void remove_reversing_segments(
         }
     }
     
-    // return our segments
-    for(auto s = lines.begin(); s != lines.end(); s++)
+    // return our segments as a stack, so in reverse
+    for(auto s = lines.rbegin(); s != lines.rend(); s++)
         segs.emplace_back(Segment{ (*s->line)(s->b), (*s->line)(s->e) }, s->index);
 }
 
-void MeshPlot::stroke_path(vector<Point> const & path, double brush_size, vector<Triangle> & vertices, vector<Triangle> & uv, vector<tuple<size_t, size_t, size_t>> & path_indices, bool closed)
+
+
+void MeshPlot::stroke_path(vector<Point> const & path, double brush_size, vector<Triangle> & vertices, vector<Triangle> & uv, vector<array<size_t, 3>> & path_indices, bool closed)
 {
     // TODO: probably a faster way of creating triangles than this mess, but I think this will work
     double w = 0.5 * brush_size;
@@ -268,37 +309,37 @@ void MeshPlot::stroke_path(vector<Point> const & path, double brush_size, vector
         return;
 
     auto outside = offset_path(path, w);
-    deque<pair<Segment, size_t>> outside_segments;
+    vector<pair<Segment, size_t>> outside_segments;
     remove_reversing_segments(outside, outside_segments, closed);
 
     auto inside = offset_path(path, -w);
-    deque<pair<Segment, size_t>> inside_segments;
+    vector<pair<Segment, size_t>> inside_segments;
     remove_reversing_segments(inside, inside_segments, closed);
     
     // create triangles
-    size_t outside_index = outside_segments.front().second;
-    size_t inside_index = inside_segments.front().second;
+    size_t outside_index = outside_segments.back().second;
+    size_t inside_index = inside_segments.back().second;
     size_t first_index = min(outside_index, inside_index);
-    Point o = outside_segments.front().first.p0;
-    Point i = inside_segments.front().first.p0;
+    Point o = outside_segments.back().first.p0;
+    Point i = inside_segments.back().first.p0;
 
     Point path_last;
     
     if(first_index > 0) // degenerate case
         path_last = path[first_index-1];
     else if(closed)
-        path_last = path[max(outside_segments.back().second, inside_segments.back().second)];
+        path_last = path[max(outside_segments.front().second, inside_segments.front().second)];
     else
         path_last = path[first_index];
 
 
     auto next_outside_or = [&](size_t i) -> size_t
     {
-        auto j = outside_segments.begin();
-        if(j != outside_segments.end())
+        auto j = outside_segments.rbegin();
+        if(j != outside_segments.rend())
             j++;
 
-        if(j == outside_segments.end())
+        if(j == outside_segments.rend())
             return i;
 
         return j->second;
@@ -306,11 +347,11 @@ void MeshPlot::stroke_path(vector<Point> const & path, double brush_size, vector
 
     auto next_inside_or = [&](size_t i) -> size_t
     {
-        auto j = inside_segments.begin();
-        if(j != inside_segments.end())
+        auto j = inside_segments.rbegin();
+        if(j != inside_segments.rend())
             j++;
 
-        if(j == inside_segments.end())
+        if(j == inside_segments.rend())
             return i;
 
         return j->second;
@@ -325,88 +366,111 @@ void MeshPlot::stroke_path(vector<Point> const & path, double brush_size, vector
         while(!outside_segments.empty() && !inside_segments.empty()
             && outside_index == inside_index)
         {
-            Point o1 = outside_segments.front().first.p1;
-            Point i1 = inside_segments.front().first.p1;
+            Point o1 = outside_segments.back().first.p1;
+            Point i1 = inside_segments.back().first.p1;
 
-            outside_index = outside_segments.front().second;
-            inside_index = inside_segments.front().second;
+            outside_index = outside_segments.back().second;
+            inside_index = inside_segments.back().second;
 
             auto next_outside_index = next_outside_or(outside_index);
             auto next_inside_index = next_inside_or(inside_index);
 
-            double len_outside = (path[next_outside_index] - path_last).norm() / brush_size;
-            double len_inside = (path[next_inside_index] - path_last).norm() / brush_size;
+            double len_outside = (path[next_outside_index] - path_last).norm();
+            double len_inside = (path[next_inside_index] - path_last).norm();
 
             vertices.emplace_back(o, i, o1);
             vertices.emplace_back(i, o1, i1);
 
-            uv.emplace_back(Point{ 0.5, brush_distance}, Point{-0.5, brush_distance              }, Point{ 0.5, brush_distance + len_outside});
-            uv.emplace_back(Point{-0.5, brush_distance}, Point{ 0.5, brush_distance + len_outside}, Point{-0.5, brush_distance + len_inside});
+            uv.emplace_back(Point{ 0.5, 0}, Point{-0.5, 0}, Point{ 0.5, 1});
+            uv.emplace_back(Point{-0.5, 0}, Point{ 0.5, 1}, Point{-0.5, 1});
 
-            path_indices.emplace_back(outside_index, inside_index,                   next_outside_or(outside_index));
-            path_indices.emplace_back(inside_index,  next_outside_or(outside_index), next_inside_or(inside_index ));
+            path_indices.push_back({outside_index, inside_index,                   next_outside_or(outside_index)});
+            path_indices.push_back({inside_index,  next_outside_or(outside_index), next_inside_or(inside_index )});
 
             o = o1;
             i = i1;
             path_last = path[outside_index];
             brush_distance += min(len_outside, len_inside);
 
-            outside_segments.pop_front();
-            inside_segments.pop_front();
+            outside_segments.pop_back();
+            inside_segments.pop_back();
         }
 
         // I don't think we need this anymore as we set outside_index and inside_index inside the loop above
         // if(!outside_segments.empty())
-        //     outside_index = outside_segments.front().second;
+        //     outside_index = outside_segments.back().second;
 
         // if(!inside_segments.empty())
-        //     inside_index = inside_segments.front().second;
+        //     inside_index = inside_segments.back().second;
 
         // crawl along the outside until the outside index is greater or equal to the inside
         while(!outside_segments.empty() && 
-              outside_index < inside_index)
+              outside_index <= inside_index)
         {
             // our next outside point
-            Point o1 = outside_segments.front().first.p1;
+            Point o1 = outside_segments.back().first.p1;
 
             // the brush length of this segment
-            double len = (path[outside_segments.front().second] - path_last).norm() / brush_size;
+            double len = (path[outside_segments.back().second] - path_last).norm();
 
             // add a triangle using the last inside point and the outside segment
             vertices.emplace_back(o, i, o1);
-            uv.emplace_back(Point{ 0.5, brush_distance}, Point{-0.5, brush_distance      }, Point{ 0.5, brush_distance + len});
-            path_indices.emplace_back(outside_index, inside_index,                   next_outside_or(outside_index));
+            uv.emplace_back(Point{0.5, 0}, Point{-0.5, 0}, Point{0.5, 1});
+            path_indices.push_back({outside_index, inside_index, next_outside_or(outside_index)});
 
             o = o1;
             path_last = path[outside_index];
             brush_distance += len;
-            outside_index = outside_segments.front().second;
+            outside_index = outside_segments.back().second;
 
-            outside_segments.pop_front();
+            outside_segments.pop_back();
         }
 
         // then crawl along the inside until that index is greater or equal to the outside
         while(!inside_segments.empty() &&
-              inside_index < outside_index)
+              inside_index <= outside_index)
         {
-            Point i1 = inside_segments.front().first.p1;
+            Point i1 = inside_segments.back().first.p1;
 
-            double len = (path[inside_segments.front().second] - path_last).norm() / brush_size;
+            double len = (path[inside_segments.back().second] - path_last).norm();
 
             vertices.emplace_back(i, o, i1);
-            uv.emplace_back(Point{-0.5, brush_distance}, Point{ 0.5, brush_distance + len}, Point{-0.5, brush_distance + len});
-            path_indices.emplace_back(inside_index,  next_outside_or(outside_index), next_inside_or(inside_index ));
+            uv.emplace_back(Point{-0.5, 0}, Point{ 0.5, 1}, Point{-0.5, 1});
+            path_indices.push_back({inside_index,  next_outside_or(outside_index), next_inside_or(inside_index )});
 
             i = i1;
             path_last = path[inside_index];
             brush_distance += len;
-            inside_index = inside_segments.front().second;
+            inside_index = inside_segments.back().second;
 
-            inside_segments.pop_front();
+            inside_segments.pop_back();
         }
 
 
     }
+}
+
+vector<double> path_length_to_vertex(vector<Point> const & path)
+{
+    vector<double> length(path.size());
+    vector<double> length_to(path.size());
+    length[0] = 0.;
+
+    transform(// par_unseq,
+             path.begin() + 1, path.end(), 
+             length.begin() + 1,
+    [&path](Point const & p) -> double
+    {
+        size_t gid = distance(&path[0], &p);
+
+        return (path[gid] - path[gid-1]).norm();
+    });
+
+    inclusive_scan(// par_unseq,
+        length.begin(), length.end(),
+        length_to.begin());
+
+    return move(length_to);
 }
 
 vector<Triangle> stroke_path4(vector<Point> const & path, double brush_size, bool closed)
@@ -614,12 +678,15 @@ void MeshPlot::stroke(string name,
         start_vertex = _strokes.back().vertex_range.second;
     }
     size_t section = start_section;
+    size_t end_vertex = start_vertex;
 
-    
+    double s = 0;
+
     for(auto const & path : plot)
     {
         vector<Triangle> vertices, uvs;
-        vector<tuple<size_t, size_t, size_t>> indices;
+        vector<array<size_t, 3>> indices;
+        vector<double> length_to = path_length_to_vertex(path);
 
         stroke_path(path, brush_size, vertices, uvs, indices);
 
@@ -629,14 +696,27 @@ void MeshPlot::stroke(string name,
             auto const & uv = uvs[i];
             auto const & is = indices[i];
 
-            _mesh.append(tr.p0, uv.p0, path[get<0>(is)], section, uv.p0.y * brush_size);
-            _mesh.append(tr.p1, uv.p1, path[get<1>(is)], section, uv.p1.y * brush_size);
-            _mesh.append(tr.p2, uv.p2, path[get<2>(is)], section, uv.p2.y * brush_size);
+            for(size_t i = 0; i < 3; i++)
+                _mesh.append(tr[i], 
+                             Point{ uv[i].x, (s + uv[i].y * length_to[is[i]])/brush_size }, 
+                             path[is[i]], 
+                             section, 
+                             s + uv[i].y * length_to[is[i]]);
+
+            end_vertex += 3;
         }
+
+        s += length_to.back();
 
         section++;
     }
 
+    m.vertex_range = { start_vertex, end_vertex };
+    m.section_range = { start_section, section };
+    m.arclength = s;
+    m.strokelength = s / m.brush_size;
+
+    _strokes.emplace_back(m);
 }
 
 void MeshPlot::stroke2(string name,
@@ -869,7 +949,7 @@ void MeshPlot::to_c(ostream & os) const
             if(c % _mesh.stride() == 0)
                 out += "\n";
             
-            out += format("{},", *i);
+            out += format("{:.2f},", *i);
         }
         out += "\n}";
         return out;

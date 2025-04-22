@@ -38,8 +38,8 @@ vector<Point> simplify_path(vector<Point> const & path, double eps)
 
     vector<Point> ret;
 
-    ret.push_back(path.front());
-    Point p0 = ret.back();
+    Point p0 = path[0];
+    ret.push_back(p0);
 
     for(size_t i = 1; i < path.size() - 1; i++)
     {
@@ -48,14 +48,14 @@ vector<Point> simplify_path(vector<Point> const & path, double eps)
 
         double d = Segment{p0, p1}.distance(p);
 
-        if(abs(d) < eps)
+        if(std::abs(d) < eps)
             continue;
 
         ret.push_back(p);
-        p0 = ret.back();
+        p0 = p;
     }
 
-    ret.push_back(path.back());
+    ret.push_back(path[path.size()-1]);
 
     return ret;
 }
@@ -91,7 +91,7 @@ vector<Point> simplify_path_par(vector<Point> const & path, double eps)
         
         double d = Segment{path[prev], path[next]}.distance(p);
 
-        if(abs(d) < eps)
+        if(std::abs(d) < eps)
             return 0;
 
         return 1;

@@ -1,6 +1,9 @@
 #ifndef __MESH_H__
 #define __MESH_H__
 
+#define GL_GLEXT_LEGACY
+#include <GL/gl.h>
+
 typedef unsigned int uint;
 
 typedef enum {
@@ -18,7 +21,8 @@ typedef struct
 } TimeRange;
 
 typedef enum {
-    TRIANGLE_STRIP = 5
+    TRIANGLE_STRIP = GL_TRIANGLE_STRIP,
+    TRIANGLES = GL_TRIANGLES,
 } DrawMode;
 
 typedef struct

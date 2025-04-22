@@ -848,6 +848,7 @@ Point Segment::operator()(double t) const
     t = clamp(t, 0., 1.);
     return p0 + t * (p1 - p0);
 }
+
 void Segment::swap(Segment & s)
 {
     p0.swap(s.p0);
@@ -906,6 +907,20 @@ pair<bool, Segment> Triangle::intersect(Segment s) const
     
     return {true, Segment(s(t0), s(t1))};
     
+}
+
+Point const & Triangle::operator[](size_t i) const
+{
+    switch(i)
+    {
+    case 0: 
+        return p0;
+    case 1: 
+        return p1;
+    case 2: 
+    default:
+        return p2;
+    }
 }
 
 

@@ -6,10 +6,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 
 
-find_package(TBB REQUIRED)
+# find_package(TBB REQUIRED)
 
 include_directories(include)
-link_libraries(TBB::tbb)
+# link_libraries(TBB::tbb)
 
 # hide compiler warnings for now
 if ( CMAKE_COMPILER_IS_GNUCC )
