@@ -46,6 +46,8 @@ public:
     virtual Event at(double t) const override;
     virtual double length(double t0, double t1) const override;
 
+    virtual ~DrawableFromFunction() = default;
+
 protected:
     std::pair<size_t, double> segment_by_parameter(double t) const;
     double length_to(double t) const;

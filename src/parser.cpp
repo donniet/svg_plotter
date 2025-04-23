@@ -8,6 +8,8 @@
 #include <vector>
 #include <regex>
 #include <string>
+#include <stdexcept>
+#include <format>
 
 // #include <format>
 // #include <functional>
@@ -22,6 +24,8 @@ using std::lower_bound, std::upper_bound;
 using std::vector;
 using std::regex, std::sregex_iterator, std::smatch;
 using std::string;
+using std::logic_error;
+using std::format;
 
 
 Event MoveTo::at(double t) const
@@ -191,6 +195,9 @@ std::pair<bool, double> SVGPath::last_move_between(double t0, double t1) const
 
     tie(seg0, _) = segment_by_parameter(t0);
     tie(seg1, _) = segment_by_parameter(t1);
+
+    if(seg1 >= _segments.size() && seg1 > 0)
+        seg1--;
 
     for(; seg0 <= seg1; --seg1)
     {
@@ -387,6 +394,8 @@ void SVGPath::append_segments(string::value_type key, vector<double> const & coo
 
             seg = dynamic_cast<Drawable*>(new Arc(pen, radius, angle, large_arc, clockwise, to));
             len = seg->length(0, 1);
+            if(len != len)
+                throw logic_error(format("the arc defined by \"{} {} {} {} {} {} {}\" is invalid.", radius.x, radius.y, angle, large_arc, clockwise, to.x, to.y));
             _segments.emplace_back(seg);
             _lengths.push_back(len);
 

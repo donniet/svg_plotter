@@ -21,6 +21,8 @@ public:
     virtual std::pair<bool, double> last_move_between(double t0, double t1) const override;
     virtual Event at(double t) const override;
     MoveTo(Point from, Point to);
+
+    virtual ~MoveTo() = default;
 };
 
 struct LineTo :
@@ -33,6 +35,8 @@ public:
     virtual double length(double t0, double t1) const override;
     virtual Event at(double t) const override;
     LineTo(Point from, Point to);
+
+    virtual ~LineTo() = default;
 };
 
 
@@ -48,6 +52,8 @@ public:
     CubicBezier(Point from, Point c1, Point c2, Point to);
 
     Point operator()(double t) const;
+
+    virtual ~CubicBezier() = default;
 };
 
 struct QuadraticCurve : 
@@ -61,10 +67,12 @@ private:
 public:
     QuadraticCurve(Point from, Point c1, Point to);
     Point operator()(double t) const;
+
+    virtual ~QuadraticCurve() = default;
 };
 
 
-
+// TODO: this arc does not handle the large_arc parameter properly
 struct Arc :
     public DrawableFromFunction
 {
@@ -87,6 +95,8 @@ public:
     Point operator()(double t) const;
 
     Arc(Point from, Point radius, double angle, bool large_arc, bool sweep, Point to);
+
+    virtual ~Arc() = default;
 };
 
 
@@ -102,6 +112,7 @@ public:
     virtual Event at(double t) const override;
     virtual BoundingBox bounding_box() const override;
     virtual std::pair<bool, double> last_move_between(double t0, double t1) const override;
+    virtual ~SVGPath() = default;
 
 private:
     // assumes _segments.size() > 0
@@ -122,6 +133,7 @@ private:
     std::vector<double> _length_index;
     Point _from, _to;
     BoundingBox _box;
+
 };
 
 

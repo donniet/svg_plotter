@@ -101,6 +101,8 @@ public:
                 RGBA brush_color = RGBA{0,0,0,1}, 
                 std::pair<double,double> time_range = {0.,1.});
 
+    std::vector<Triangle> triangles() const;
+
     // HACK: backup option as we try different algorithms
     void stroke2(std::string name,
         std::vector<std::vector<Point>> plot, 

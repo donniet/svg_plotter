@@ -30,3 +30,7 @@ add_test(line test_line)
 add_executable(test_point test_point.cpp)
 target_link_libraries(test_point point)
 add_test(point test_point)
+
+add_executable(test_shape_output test_shape_output.cpp)
+target_link_libraries(test_shape_output mesh plotter parser fills plot_cover stroke_mesh)
+add_test(shape_output test_shape_output)

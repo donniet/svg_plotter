@@ -1,5 +1,7 @@
 #include "stroke_mesh.hpp"
 
+#include "output/stl.hpp"
+
 #include <vector>
 #include <string>
 #include <format>
@@ -880,6 +882,15 @@ void MeshPlot::stroke2(string name,
 string ts(size_t level)
 {
     return string(level * 3, ' ');
+}
+
+void MeshPlot::to_stl(ostream & os) const
+{
+    vector<Triangle> tris(_mesh.triangles_begin(), _mesh.triangles_end());
+
+    STLOutput o{tris, "mesh_plot"};
+
+    o.print_triangles(os);
 }
 
 void MeshPlot::to_c(ostream & os) const

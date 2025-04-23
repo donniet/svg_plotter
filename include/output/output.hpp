@@ -15,10 +15,6 @@ struct Outputer
     virtual void print(ostream & os) const = 0;
 };
 
-ostream & operator<<(ostream & os, Outputer const & o)
-{
-    o.print(os);
-    return os;
-}
+ostream & operator<<(ostream & os, Outputer const & o);
 
 #endif

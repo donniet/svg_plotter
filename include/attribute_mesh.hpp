@@ -485,6 +485,88 @@ public:
         }
     }
 
+    class triangle_const_iterator
+    {
+    private:
+        size_t _i;
+        AttributeMesh<Attrs...> const * _m;
+        Triangle _c;
+
+    public:
+        using value_type = Triangle;
+        using reference = Triangle const &;
+        using pointer = Triangle const *;
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = size_t;
+
+        Triangle operator*() const 
+        { 
+            return _m->triangle(_i); 
+        }
+        Triangle const * operator->() const
+        {
+            _c = _m->triangle(_i);
+            return &_c;
+        }
+        triangle_const_iterator& operator++()
+        {
+            ++_i;
+            return *this;
+        }
+        triangle_const_iterator operator++(int)
+        {
+            triangle_const_iterator r = *this;
+            ++*this;
+            return r;
+        }
+        triangle_const_iterator operator+=(size_t d) 
+        {
+            _i += d;
+            return *this;
+        }
+
+        bool operator==(triangle_const_iterator const & a) const
+        {
+            // general equality
+            if(_m == a._m && _i == a._i) 
+                return true;
+
+            // both end iterators
+            if(_m == nullptr && a._m == nullptr)
+                return true;
+            
+            if(_m == nullptr && a._i == a._m->triangle_count())
+                return true;
+
+            if(a._m == nullptr && _i == _m->triangle_count())
+                return true;
+
+            return false;
+        }
+
+        bool operator!=(triangle_const_iterator const & a) const
+        {
+            return !(*this == a);
+        }
+
+        triangle_const_iterator() : _i(0), _m(nullptr) { }
+        triangle_const_iterator(AttributeMesh<Attrs...> const & m, size_t i = 0) : _i(i), _m(&m) { }
+        triangle_const_iterator(triangle_const_iterator const &) = default;
+        triangle_const_iterator(triangle_const_iterator &&) = default;
+        triangle_const_iterator& operator=(triangle_const_iterator const &) = default;
+        triangle_const_iterator& operator=(triangle_const_iterator &&) = default;
+
+    };
+
+    triangle_const_iterator triangles_begin() const 
+    {
+        return triangle_const_iterator(*this, 0);
+    }
+    triangle_const_iterator triangles_end() const 
+    {
+        return triangle_const_iterator();
+    }
+
     bool contains(Point const & p) const
     {
         for(size_t i = 0; i < triangle_count(); ++i)
