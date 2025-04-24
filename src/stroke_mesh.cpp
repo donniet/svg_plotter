@@ -380,11 +380,12 @@ void MeshPlot::stroke_path(vector<Point> const & path, double brush_size, vector
             double len_outside = (path[next_outside_index] - path_last).norm();
             double len_inside = (path[next_inside_index] - path_last).norm();
 
-            vertices.emplace_back(o, i, o1);
-            vertices.emplace_back(i, o1, i1);
 
-            uv.emplace_back(Point{ 0.5, 0}, Point{-0.5, 0}, Point{ 0.5, 1});
-            uv.emplace_back(Point{-0.5, 0}, Point{ 0.5, 1}, Point{-0.5, 1});
+            vertices.emplace_back(o, i, o1);        // outsideA -> insideA  -> outsideB
+            vertices.emplace_back(i, o1, i1);       // insideA  -> outsideA -> insideB
+
+            uv.emplace_back(Point{ 0.5, brush_distance}, Point{-0.5, brush_distance              }, Point{ 0.5, brush_distance + len_outside});
+            uv.emplace_back(Point{-0.5, brush_distance}, Point{ 0.5, brush_distance + len_outside}, Point{-0.5, brush_distance + len_inside });
 
             path_indices.push_back({outside_index, inside_index,                   next_outside_or(outside_index)});
             path_indices.push_back({inside_index,  next_outside_or(outside_index), next_inside_or(inside_index )});
@@ -417,7 +418,7 @@ void MeshPlot::stroke_path(vector<Point> const & path, double brush_size, vector
 
             // add a triangle using the last inside point and the outside segment
             vertices.emplace_back(o, i, o1);
-            uv.emplace_back(Point{0.5, 0}, Point{-0.5, 0}, Point{0.5, 1});
+            uv.emplace_back(Point{0.5, brush_distance}, Point{-0.5, brush_distance}, Point{0.5, brush_distance + len});
             path_indices.push_back({outside_index, inside_index, next_outside_or(outside_index)});
 
             o = o1;
@@ -437,7 +438,7 @@ void MeshPlot::stroke_path(vector<Point> const & path, double brush_size, vector
             double len = (path[inside_segments.back().second] - path_last).norm();
 
             vertices.emplace_back(i, o, i1);
-            uv.emplace_back(Point{-0.5, 0}, Point{ 0.5, 1}, Point{-0.5, 1});
+            uv.emplace_back(Point{-0.5, brush_distance}, Point{ 0.5, brush_distance+len}, Point{-0.5, brush_distance+len});
             path_indices.push_back({inside_index,  next_outside_or(outside_index), next_inside_or(inside_index )});
 
             i = i1;
@@ -475,182 +476,6 @@ vector<double> path_length_to_vertex(vector<Point> const & path)
     return move(length_to);
 }
 
-vector<Triangle> stroke_path4(vector<Point> const & path, double brush_size, bool closed)
-{
-    double w = 0.5 * brush_size;
-    vector<Vector> tangents, normals;
-    coordinate_space(path, tangents, normals);
-
-    vector<Triangle> ret;
-
-    if(path.size() < 2)
-        return ret;
-
-    vector<Segment> outside, inside;
-
-    for(size_t j = 1; j < path.size(); j++)
-    {
-        Vector t = (path[j] - path[j-1]).normalized();
-        Vector n{-t.y, t.x};
-
-        outside.push_back(Segment{path[j-1] + w * n, path[j] + w * n});
-        inside.push_back(Segment{path[j-1] - w * n, path[j] - w * n});
-    }
-
-    if(closed)
-    {
-        Vector t = (path.front() - path.back()).normalized();
-        Vector n{-t.y, t.x};
-
-        outside.push_back(Segment{path.back() + w * n, path.front() + w * n});
-        inside.push_back(Segment{path.back() - w * n, path.front() - w * n});
-    }
-
-    // find the intersection points between the outside and inside lines
-    for(size_t j = 1; j < outside.size(); j++)
-    {
-        auto a = outside[j-1].line().intersect(outside[j].line());
-        auto b = inside[j-1].line().intersect(inside[j].line());
-
-        Point o1 = outside[j-1].line()(a.second);
-        Point i1 = inside[j-1].line()(b.second);
-
-        outside[j-1].p1 = outside[j].p0 = o1;
-        inside[j-1].p1 = inside[j].p0 = i1;
-    }
-
-    // make triangles
-    for(size_t j = 1; j < outside.size(); j++)
-    {
-        ret.emplace_back(outside[j-1].p0, inside[j-1].p0, outside[j].p0);
-        ret.emplace_back(inside[j-1].p0, outside[j].p0, inside[j].p0);
-    }
-
-    // // then add the last two 
-    // ret.emplace_back(o, i, outside[0](1.));
-    // ret.emplace_back(i, outside[0](1.), inside[0](1.));
-
-
-    return ret;
-}
-
-/**
- * stroke_path method turns a path into a triangular strip mesh of width brush_size
- * enclosing the path
- */
-vector<Triangle> stroke_path3(vector<Point> const & path, double brush_size)
-{
-    double w = 0.5 * brush_size;
-    vector<Vector> tangents, normals;
-    coordinate_space(path, tangents, normals);
-
-    vector<Segment> segments;
-
-    vector<Line> outers;
-    vector<pair<double,double>> op;
-    size_t o0 = 0;
-    vector<Line> inners;
-    vector<pair<double,double>> ip;
-    size_t i0 = 0;
-
-    pair<double,double> initial_range{numeric_limits<double>::min(), numeric_limits<double>::max()};
-
-    vector<Triangle> ret;
-
-    // displace the segments
-    for(size_t i = 1; i < path.size(); i++)
-    {
-        segments.emplace_back(path[i-1], path[i]);
-        Vector t = (path[i] - path[i-1]);
-        double l = t.norm();
-        t /= l;
-        Vector n{t.y, -t.x};
-
-        outers.emplace_back(path[i-1] + w * n, path[i] + w * n);
-        op.push_back(initial_range);
-        inners.emplace_back(path[i-1] - w * n, path[i] - w * n);
-        ip.push_back(initial_range);
-    }
-
-    // find the intersection points using the line parameters
-    op.front().first = 0.;
-    ip.front().first = 0.;
-
-    for(size_t i = 1; i < outers.size(); i++)
-    {
-        auto a = outers[i-1].intersect(outers[i]);
-
-        // if there is no intersection this line is parallel.  Use the standard interval
-        if(!a.first)
-            op[i] = {0,1};
-        else
-        {
-            // otherwise record the intersection parameters
-            op[i-1].second = a.second;
-            op[i].first = outers[i].intersect(outers[i-1]).second;
-        }
-
-        a = inners[i-1].intersect(inners[i]);
-
-        // if there is no intersection this line is parallel.  Use the standard interval
-        if(!a.first)
-            ip[i] = {0,1};
-        else
-        {
-            // otherwise record the intersection parameters
-            ip[i-1].second = a.second;
-            ip[i].first = inners[i].intersect(inners[i-1]).second;
-        }
-    }
-
-    op.back().second = 1.;
-    ip.back().second = 1.;
-
-
-    Point in = inners.front()(0),
-          out = outers.front()(0);
-
-    size_t j = 0, k = 0;
-
-    // go through our parameters, and if any line segment goes backwards, skip it
-    for(;;)
-    {
-        auto o = outers[j];
-        auto i = inners[k];
-
-        // do both segments go backwrds?
-        if(op[j].first > op[j].second && ip[k].first > ip[k].second)
-        {
-
-        }
-        // just the outer one goes backwards
-        else if(op[j].first > op[j].second)
-        {
-            // we create one triangle using the inner segment for one side
-            // and intersect the 
-        }
-        // just the inner one goes backwards
-        else if(ip[k].first > ip[k].second)
-        {
-
-        }
-        // neither go backwards
-        else
-        {
-            ret.emplace_back(out, in, o(op[j].second));
-            ret.emplace_back(in, o(op[j].second), i(ip[k].second));
-
-            out = o(op[j].second);
-            in = i(ip[k].second);
-
-            j++;
-            k++;
-        }
-    }
-
-    return ret;
-}
-
 void MeshPlot::stroke(string name,     
                       vector<vector<Point>> plot, 
                       BrushStyle brush_style,
@@ -682,7 +507,7 @@ void MeshPlot::stroke(string name,
     size_t section = start_section;
     size_t end_vertex = start_vertex;
 
-    double s = 0;
+    double s = 0.;
 
     for(auto const & path : plot)
     {
@@ -700,10 +525,10 @@ void MeshPlot::stroke(string name,
 
             for(size_t i = 0; i < 3; i++)
                 _mesh.append(tr[i], 
-                             Point{ uv[i].x, (s + uv[i].y * length_to[is[i]])/brush_size }, 
+                             Point{ uv[i].x, length_to[is[i]] / brush_size }, 
                              path[is[i]], 
                              section, 
-                             s + uv[i].y * length_to[is[i]]);
+                             length_to[is[i]] );
 
             end_vertex += 3;
         }
@@ -960,7 +785,7 @@ void MeshPlot::to_c(ostream & os) const
             if(c % _mesh.stride() == 0)
                 out += "\n";
             
-            out += format("{:.2f},", *i);
+            out += format("{:9.2f},", *i);
         }
         out += "\n}";
         return out;

@@ -25,15 +25,17 @@ int main(int ac, char * av[])
     Plotter plotter(5000, {0,1}, 0.5);
     MeshPlot mesher(drawing_size);
 
-    SVGPath p("M 50 408 A 290 290 0 1 1 590 408");
+    SVGPath p("M 50 408 A 145 145 0 1 1 340 408 A 145 145 0 0 0 590 408");
 
     auto s = plotter.plot(p);
     s = simplify_plot(s, false, 0.01);
 
     mesher.stroke("stroke", s, BrushStyle::BrushRound, 45., brush_color, {0., 10.});
 
-    // mesher.to_stl(std::cout);
-    mesher.to_c(std::cout);
+    if(ac > 1 && string(av[1]) == "stl")
+        mesher.to_stl(std::cout);
+    else
+        mesher.to_c(std::cout);
 
     return 0;
 }
