@@ -311,9 +311,9 @@ void main()
 
     // fragColor.xyzw = (0.25 - d2) * brush_color.xyzw;
 
-    // fragColor = vec4( uv.xy,0, 1);
+    fragColor = vec4( uv.xy,0, 1);
 
-    fragColor = vec4(1., 0., 0., 1.);
+    // fragColor = vec4(1., 1., 0., 1.);
 
     
     // fragColor = brush_stroke_color(vec4(1., 1., 1., 0.));
