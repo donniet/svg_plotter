@@ -111,7 +111,7 @@ function set_uniform_value(gl, uniform_name, uniform_location, value)
     case 2:
         gl.uniform2fv(uniform_location, value); break;
     case 3: 
-        gl.uniform2fv(uniform_location, value); break;
+        gl.uniform3fv(uniform_location, value); break;
     case 4:
         gl.uniform4fv(uniform_location, value); break;
     default:
@@ -783,7 +783,7 @@ Drawing.prototype.draw_layers = function(gl, upto)
     // setup our base uniforms
     this.set_uniform_view(this.view_matrix);
     this.set_uniform_range([0, u]);
-    this.set_uniform_resolution(this.drawing_size);
+    this.set_uniform_resolution([this.viewport_dimensions[2], this.viewport_dimensions[3]]);
     this.set_uniform_mouse(this.__mouse);
     this.set_uniform_mouse_state([this.__mouse_state]);
     this.set_uniform_time([upto]);

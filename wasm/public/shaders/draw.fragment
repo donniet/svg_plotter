@@ -13,7 +13,9 @@ uniform sampler2D mixbox_lut;
 uniform float u_brush_size;
 uniform vec4 u_brush_color;
 uniform vec2 u_stroke_range;
+uniform float u_stroke_length;
 uniform vec2 u_resolution;
+uniform vec3 u_mouse;
 uniform vec4 u_uv_range;
 
 out vec4 fragColor;
@@ -311,9 +313,14 @@ void main()
 
     // fragColor.xyzw = (0.25 - d2) * brush_color.xyzw;
 
+
+    float p = u_mouse.x / u_resolution.x * u_stroke_length;
+    // float p = u_mouse.x;
+
     float g = 1.;
-    if(uv.y > u_uv_range[3])
+    if(uv.y > p)
         g = 0.;
+
 
 
     // fragColor = vec4( 1. - uv.x * uv.x / 0.25, uv.y / u_uv_range[3], 0, 1);
