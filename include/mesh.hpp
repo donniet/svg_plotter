@@ -2,6 +2,7 @@
 #define __MESH_HPP__
 
 #include "point.hpp"
+#include "cover.hpp"
 
 #include <vector>
 #include <ranges>
@@ -139,8 +140,13 @@ public:
     Triangles() = default;
     Triangles(Triangles &&) = default;
     Triangles(Triangles const &) = default;
+    Triangles(std::vector<Triangle> const & tris);
 
     Triangle operator[](size_t) const;
+
+
+    // TODO: make this work from general covers
+    static Triangles from_cover(MeshCover const &);
 };
 
 class Strip : 

@@ -186,6 +186,19 @@ vector<Point> const & UVMesh::uvs() const
     return _uv;
 }
 
+Triangles::Triangles(std::vector<Triangle> const & tris) :
+    Mesh(DrawMode::triangles)
+{
+    size_t id = 0;
+    for(Triangle const & t : tris)
+    {
+        append(t.p0, id + 0);
+        append(t.p1, id + 1);
+        append(t.p2, id + 2);
+        id += 3;
+    }
+}
+
 Triangles::Triangles(std::vector<Point> && points, size_t first) :
     Mesh(DrawMode::triangles)
 { 
@@ -214,6 +227,10 @@ Triangle Triangles::operator[](size_t i) const
     );
 }
 
+Triangles Triangles::from_cover(MeshCover const & c)
+{
+    return Triangles{c.triangles()};
+}
 
 
 Strip::Strip(vector<Point> && points, size_t first) :

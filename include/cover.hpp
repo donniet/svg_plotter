@@ -55,6 +55,8 @@ public:
     virtual std::pair<bool, double> intersect_ray(Point const & origin, Vector const & ray) const override;
     virtual std::pair<Point, double> nearest(Point const &) const override;
 
+    std::vector<Triangle> const & triangles() const;
+
     virtual ~MeshCover() = default;
 };
 

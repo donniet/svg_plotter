@@ -24,7 +24,7 @@ target_link_libraries(test_mesh mesh plotter parser fills plot_cover stroke_mesh
 add_test(mesh test_mesh)
 
 add_executable(test_mesh_cover test_mesh_cover.cpp)
-target_link_libraries(test_mesh_cover cover)
+target_link_libraries(test_mesh_cover cover output)
 add_test(mesh_cover test_mesh_cover)
 
 add_executable(test_line test_line.cpp)

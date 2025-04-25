@@ -8,6 +8,7 @@
 #include <vector>
 #include <list>
 #include <stdexcept>
+#include <cmath>
 
 using std::vector;
 using std::list;
@@ -178,18 +179,21 @@ vector<Triangle> MeshCover::ear_clip(vector<Point> const & outline)
     // create a cyclic list of all the points
     for(size_t i = 1; i < outline.size(); i++)
     {
-        List * n = new List{ outline[i], head, head->prev };
-        n->prev->next = n;
-        n->next->prev = n;
+        List * n = head;
+        List * p = head->prev;
+
+        List * l = new List{ outline[i], n, p};
+        n->prev = l;
+        p->next = l;
     }
 
     // remove any points that are straight (not triangles)
     for(size_t i = 0, N = remaining; i < N; i++)
     {
         Vector v0{head->prev->p - head->p};
-        Vector v1{head->p - head->next->p};
+        Vector v1{head->next->p - head->p};
 
-        if(abs(cross(v0, v1)) < 1e-4)
+        if(std::abs(cross(v0, v1)) < 1e-4)
         {
             List * n = head->next;
             unlink(head);
@@ -236,6 +240,11 @@ vector<Triangle> MeshCover::ear_clip(vector<Point> const & outline)
     delete head;
 
     return move(ret);
+}
+
+vector<Triangle> const & MeshCover::triangles() const
+{
+    return _tris;
 }
 
 
