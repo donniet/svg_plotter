@@ -6,8 +6,11 @@
 // #include "path.hpp"
 #include <limits>
 #include <vector>
+#include <list>
+#include <stdexcept>
 
 using std::vector;
+using std::list;
 using std::swap;
 using std::min, std::max;
 using std::pair;
@@ -48,6 +51,192 @@ pair<Point,double> Cover::nearest(Point const & p) const {
 
 Cover::Cover() : _margin(-numeric_limits<double>::epsilon()) 
 { }
+
+
+MeshCover::MeshCover() : _tris() 
+{ }
+
+MeshCover::MeshCover(std::vector<Point> const & outline) : 
+    _tris(move(ear_clip(outline))), _outline(outline)
+{ }
+
+double MeshCover::area() const 
+{
+    double area = 0.;
+    for(Triangle const & tri : _tris)
+        area += tri.area();
+
+    return area;
+}
+
+double MeshCover::perimeter() const 
+{
+    double p = 0.;
+    for(size_t i = 1; i < _outline.size(); i++)
+        p += (_outline[i] - _outline[i-1]).norm();
+
+    return p;
+}
+
+vector<vector<Point>> MeshCover::outline() const
+{
+    return vector<vector<Point>>{_outline};
+}
+
+bool MeshCover::is_inside(Point const & p) const
+{
+    for(Triangle const & t : _tris)
+        if(t.contains(p))
+            return true;
+
+    return false;
+}
+
+pair<bool, double> MeshCover::intersect_ray(Point const & origin, Vector const & v) const
+{
+    if(is_inside(origin))
+        return {true, 0.};
+    
+    Ray ray{origin, v};
+
+    double s = numeric_limits<double>::max();
+    for(Triangle const & t : _tris)
+    {
+        auto i = ray.intersect(t);
+
+        if(i.first <= i.second)
+            s = i.second;
+    }
+
+    if(s < numeric_limits<double>::max())
+        return {true, s};
+
+    return {false, 0.};
+}
+
+pair<Point, double> MeshCover::nearest(Point const & p) const
+{
+    throw std::logic_error("nearest point to a meshcover is not implemented");
+}
+
+vector<Triangle> MeshCover::ear_clip(vector<Point> const & outline)
+{
+    vector<Triangle> ret;
+
+    // less than three points is not a mesh
+    if(outline.size() < 3)
+        return ret;
+
+    size_t remaining = outline.size();
+
+    struct List
+    {
+        Point p;
+        List * next, * prev;
+    };
+
+    auto unlink = [&remaining](List * l)
+    {
+        // are we the last element?
+        if(l->next == l)
+        {
+            l->next = nullptr;
+            l->prev = nullptr;
+            return;
+        }
+
+        List * n = l->next;
+        List * p = l->prev;
+
+        n->prev = p;
+        p->next = n;
+        l->next = l->prev = nullptr;
+        remaining--;
+    };
+
+    auto is_ear = [](List * n) -> bool
+    {
+        List * l = n->next->next;
+        
+        if(n->next == n || l == n) 
+            throw std::logic_error("is_ear detected less than 3 points in the outline");
+
+        Triangle ear{n->prev->p, n->p, n->next->p};
+
+        // loop through until we hit prev
+        for(; l != n->prev; l = l->next)
+            if(ear.contains(l->p))
+                return false;
+
+        // no interior points found
+        return true;
+    };
+
+    List * head = new List{outline[0], nullptr, nullptr};
+    head->prev = head->next = head;
+
+    // create a cyclic list of all the points
+    for(size_t i = 1; i < outline.size(); i++)
+    {
+        List * n = new List{ outline[i], head, head->prev };
+        n->prev->next = n;
+        n->next->prev = n;
+    }
+
+    // remove any points that are straight (not triangles)
+    for(size_t i = 0, N = remaining; i < N; i++)
+    {
+        Vector v0{head->prev->p - head->p};
+        Vector v1{head->p - head->next->p};
+
+        if(abs(cross(v0, v1)) < 1e-4)
+        {
+            List * n = head->next;
+            unlink(head);
+            delete head;
+            head = n;
+
+            if(remaining < 3)
+                throw std::logic_error("ear_clip: less than 3 remaining non-linear vertices");
+        }
+        else 
+        {
+            head = head->next;
+        }
+    }
+ 
+    // check each for ears
+    while(head->next->next != head->prev)
+    {
+        List * n = head;
+
+        for(; !is_ear(n); n = n->next)
+            if(n->next == head)
+                throw std::logic_error("no ears found");
+
+        // create an ear an unlink
+        ret.emplace_back(n->prev->p, n->p, n->next->p);
+        head = n->next;
+        unlink(n);
+        delete n;
+    }
+
+    // add the last one
+    ret.emplace_back(head->prev->p, head->p, head->next->p);
+
+    // cleanup
+    List * t = head->next;
+    unlink(t);
+    delete t;
+
+    t = head->prev;
+    unlink(t);
+    delete t;
+
+    delete head;
+
+    return move(ret);
+}
 
 
 double BoundingBox::area() const {

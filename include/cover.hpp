@@ -31,7 +31,32 @@ public:
     virtual ~Cover() = default; // Add a virtual destructor
 };
 
+class MeshCover :
+    public Cover
+{
+private:
+    std::vector<Triangle> _tris;
+    std::vector<Point> _outline;
+protected:
+    static std::vector<Triangle> ear_clip(std::vector<Point> const & outline);
+public:
+    MeshCover();
+    MeshCover(std::vector<Point> const & outline);
+    MeshCover(MeshCover const &) = default;
+    MeshCover(MeshCover &&) = default;
 
+    MeshCover& operator=(MeshCover const &) = default;
+    MeshCover& operator=(MeshCover &&) = default;
+
+    virtual double area() const override;
+    virtual double perimeter() const override;
+    virtual std::vector<std::vector<Point>> outline() const override;
+    virtual bool is_inside(Point const & p) const override;
+    virtual std::pair<bool, double> intersect_ray(Point const & origin, Vector const & ray) const override;
+    virtual std::pair<Point, double> nearest(Point const &) const override;
+
+    virtual ~MeshCover() = default;
+};
 
 class BoundingBox : 
     public Cover

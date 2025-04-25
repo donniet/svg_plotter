@@ -246,9 +246,10 @@ float noise01(vec2 p)
     return clamp((noise(p)+.5)*.5, 0.,1.);
 }
 
-vec4 brush_stroke_color(vec4 input_color)
+vec4 brush_stroke_color(vec4 input_color, vec2 v_range)
 {
-    float d = length(pos - brush) / u_brush_size;
+    // float d = length(pos - brush) / u_brush_size;
+    float d = abs(uv.x);
 
     // float d = length(uv - vec2(arclength / 50., 0));
     // float d = uv_range.y - uv.y;
@@ -256,11 +257,11 @@ vec4 brush_stroke_color(vec4 input_color)
 
     // return vec4(u_brush_color.xyz, d);
 
-    if(uv.y > u_uv_range[3])
-        d = length(uv.xy - vec2(0, u_uv_range[3]));
+    if(uv.y > v_range[1])
+        d = length(uv.xy - vec2(0, v_range[1]));
 
-    if(uv.y < u_uv_range[1])
-        d = length(uv.xy - vec2(0, u_uv_range[1]));
+    if(uv.y < v_range[0])
+        d = length(uv.xy - vec2(0, v_range[0]));
 
     //if(d > 0.5)
     //    return vec4(input_color.xyz, 0.);
@@ -273,24 +274,30 @@ vec4 brush_stroke_color(vec4 input_color)
         + noise01(uv.xy * vec2(44., 1.))
     );
 
-    tex *= abs(uv.x);
+    // tex *= abs(uv.x);
     tex = max(0.008, tex);
 
     float alpha = pow(tex, max(0., d));
 
-    const float alpha_boost = 1.19;
+    // const float alpha_boost = 1.19;
 
-    alpha = alpha_boost * max(0., alpha - pow(2. * d, 0.5));
+    // alpha = alpha_boost * max(0., alpha - pow(2. * d, 0.5));
     alpha = smoothf(alpha);
 
-    
+    vec3 c = u_brush_color.xyz;
+
+    c.xy *= uv.y / u_stroke_length;
 //     return mix(input_color, brush_color, alpha);
-    return vec4(u_brush_color.xyz, alpha);
+    return vec4(c, alpha);
 }
 
 
 void main()
 {
+
+    float p = u_mouse.x / u_resolution.x * u_stroke_length;
+
+
     // uv.x == arclength of brushstroke
     // uv.y == distance from centerline
     // brush diameter is 1
@@ -313,22 +320,18 @@ void main()
 
     // fragColor.xyzw = (0.25 - d2) * brush_color.xyzw;
 
-
-    float p = u_mouse.x / u_resolution.x * u_stroke_length;
-    // float p = u_mouse.x;
-
-    float g = 1.;
-    if(uv.y > p)
-        g = 0.;
+    // float g = 1.;
+    // if(uv.y > p)
+    //     g = 0.;
 
 
 
     // fragColor = vec4( 1. - uv.x * uv.x / 0.25, uv.y / u_uv_range[3], 0, 1);
-    fragColor = vec4( 1., g, 0, 1);
+    // fragColor = vec4( 1., g, 0, 1);
 
     // fragColor = vec4(1., 1., 0., 1.);
 
     
-    // fragColor = brush_stroke_color(vec4(1., 1., 1., 0.));
+    fragColor = brush_stroke_color(vec4(1., 1., 1., 0.), vec2(0, p));
     
 }

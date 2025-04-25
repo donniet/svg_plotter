@@ -30,7 +30,7 @@ int main(int ac, char * av[])
     auto s = plotter.plot(p);
     s = simplify_plot(s, false, 0.01);
 
-    mesher.stroke("stroke", s, BrushStyle::BrushRound, 45., brush_color, {0., 10.});
+    mesher.stroke("stroke", s, BrushStyle::BrushRound, 150., brush_color, {0., 10.});
 
     if(ac > 1 && string(av[1]) == "stl")
         mesher.to_stl(std::cout);

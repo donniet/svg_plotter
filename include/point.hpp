@@ -233,7 +233,7 @@ struct Ray
     std::pair<bool, double> intersect(Segment) const;
     std::pair<bool, double> intersect(HalfPlane) const;
 
-    std::pair<double, double> intersect(Triangle) const;
+    std::pair<double, double> intersect(Triangle const &) const;
     std::pair<double, double> intersect(Circle) const;
     std::pair<double, double> intersect(CircleSegment) const;
 
@@ -298,6 +298,8 @@ struct Triangle
     std::pair<bool, Segment> intersect(Segment) const;
     std::pair<bool, CircleSegment> intersect(Circle) const;
     std::pair<bool, CircleSegment> intersect(CircleSegment) const;
+
+    double area() const;
 
     Point operator()(double, double) const;
     Point const & operator[](size_t i) const;

@@ -727,9 +727,25 @@ pair<bool, double> Ray::intersect(Segment s) const
     return { false, i.second };
 }
 
+pair<double, double> Ray::intersect(Triangle const & t) const 
+{
+    Line l{p, p + v};
+
+    auto i = l.intersect(t);
+
+    // no intersection with the line
+    if(i.first > i.second)
+        return i;
+
+    // intersection occurs before the origin of the ray
+    if(i.second < 0.)
+        return { 1., 0. };
+
+    return { max(i.first, 0.), i.second };
+}
+
 /// UNIMPLEMENTED
 // pair<bool, double> Ray::intersect(HalfPlane) const {}
-// pair<double, double> Ray::intersect(Triangle) const {}
 // pair<double, double> Ray::intersect(Circle) const {}
 // pair<double, double> Ray::intersect(CircleSegment) const {} 
 
@@ -880,6 +896,14 @@ bool Triangle::contains(Point const & p) const
 
     // Check if point is in triangle
     return (u >= 0) && (v >= 0) && (u + v <= 1);
+}
+
+double Triangle::area() const
+{
+    Vector v0 = p2 - p0;
+    Vector v1 = p1 - p0;
+
+    return cross(v0, v1) * 0.5;
 }
 
 pair<bool, Segment> Triangle::intersect(Line l) const 
