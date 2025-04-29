@@ -8,8 +8,8 @@
 #include <type_traits>
 #include <iterator>
 
-using std::enable_if_t, std::is_same_v;
-using std::iterator_traits;
+// using std::enable_if_t, std::is_same_v;
+// using std::iterator_traits;
 
 
 #include <algorithm>
@@ -17,10 +17,10 @@ using std::iterator_traits;
 #include <iterator>
 #include <utility>
 
-using std::for_each, std::transform, std::inclusive_scan;
-using std::execution::par_unseq;
-using std::distance;
-using std::pair;
+// using std::for_each, std::transform, std::inclusive_scan;
+// using std::execution::par_unseq;
+// using std::distance;
+// using std::pair;
 
 enum class LineJoin {
     Bevel,
@@ -56,10 +56,11 @@ struct StrokePlot
     BrushStyle brush_style;
     double brush_size;
     RGBA brush_color;
-    std::pair<double, double> time_range;
-    DrawMode draw_mode;
     double arclength;
     double strokelength;
+
+    std::pair<double, double> time_range;
+    DrawMode draw_mode;
     std::pair<size_t, size_t> vertex_range;
     std::pair<size_t, size_t> section_range;
 };
@@ -95,7 +96,7 @@ public:
      * @param {RGBA} brush_color
      */
     void stroke(std::string name,
-                std::vector<std::vector<Point>> plot, 
+                std::vector<std::vector<Point>> const & plot, 
                 BrushStyle brush_style = BrushStyle::BrushRound,
                 double brush_size = 1., 
                 RGBA brush_color = RGBA{0,0,0,1}, 

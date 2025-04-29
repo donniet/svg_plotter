@@ -27,6 +27,7 @@ using std::list;
 using std::ranges::sort;
 using std::deque;
 using std::array;
+using std::distance;
 
 typedef enum {
     beginning = -1,
@@ -477,7 +478,7 @@ vector<double> path_length_to_vertex(vector<Point> const & path)
 }
 
 void MeshPlot::stroke(string name,     
-                      vector<vector<Point>> plot, 
+                      vector<vector<Point>> const & plot, 
                       BrushStyle brush_style,
                       double brush_size, 
                       RGBA brush_color, 

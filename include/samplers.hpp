@@ -70,7 +70,7 @@ vector<vector<Point>> sample_interval(
             ret.emplace_back(0);
     }
 
-    return move(ret);
+    return std::move(ret);
 }
 
 vector<vector<Point>> sample_interval(Drawable const & d, size_t sample_count = 10000, pair<double,double> interval = {0., 1.})
@@ -107,7 +107,7 @@ vector<vector<Point>> sample_interval(Drawable const & d, size_t sample_count = 
             ret.emplace_back(0);
     }
 
-    return move(ret);
+    return std::move(ret);
 }
 
 template<typename Iter>

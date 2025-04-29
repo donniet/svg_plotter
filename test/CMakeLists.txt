@@ -24,7 +24,7 @@ target_link_libraries(test_mesh mesh plotter parser fills plot_cover stroke_mesh
 add_test(mesh test_mesh)
 
 add_executable(test_mesh_cover test_mesh_cover.cpp)
-target_link_libraries(test_mesh_cover cover output)
+target_link_libraries(test_mesh_cover cover output parser plotter)
 add_test(mesh_cover test_mesh_cover)
 
 add_executable(test_line test_line.cpp)
@@ -38,3 +38,7 @@ add_test(point test_point)
 add_executable(test_shape_output test_shape_output.cpp)
 target_link_libraries(test_shape_output mesh plotter parser fills plot_cover stroke_mesh)
 add_test(shape_output test_shape_output)
+
+add_executable(stl_converter stl_converter.cpp)
+target_link_libraries(stl_converter mesh)
+

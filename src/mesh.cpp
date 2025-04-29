@@ -49,7 +49,7 @@ Mesh::Mesh(DrawMode mode) :
 { }
 
 Mesh::Mesh(DrawMode mode, std::vector<Point> && points, size_t first) :
-    _draw_mode(mode), _vertices(move(points)), 
+    _draw_mode(mode), _vertices(points), 
     _id(points.size()), _next_id(first)
 {
     if(_vertices.size() == 0)
@@ -67,7 +67,7 @@ Mesh::Mesh(DrawMode mode, std::vector<Point> && points, size_t first) :
     _next_id = _id.back() + 1;
 }
 Mesh::Mesh(DrawMode mode, std::vector<Point> && points, std::vector<size_t> ids) :
-    _draw_mode(mode), _vertices(move(points)), _id(move(ids)), _next_id(0)
+    _draw_mode(mode), _vertices(points), _id(ids), _next_id(0)
 {
     if(_id.size() == 0)
         return;
@@ -150,14 +150,14 @@ UVMesh::UVMesh(DrawMode mode) :
 { }
 
 UVMesh::UVMesh(DrawMode mode, std::vector<Point> && points, std::vector<Point> && uv) :
-    Mesh(mode, move(points)), _uv(move(uv))
+    Mesh(mode, std::move(points)), _uv(uv)
 { }
 
 UVMesh::UVMesh(DrawMode mode,
                std::vector<Point> && points, 
                std::vector<Point> && uv, 
                std::vector<size_t> ids) :
-    Mesh(mode, move(points), move(ids)), _uv(move(uv))
+    Mesh(mode, std::move(points), std::move(ids)), _uv(uv)
 { }
 
 Point & UVMesh::uv(size_t i)
@@ -214,7 +214,7 @@ Triangles::Triangles(std::vector<Point> && points, size_t first) :
 }
 
 Triangles::Triangles(std::vector<Point> && points, std::vector<size_t> && id) :
-    Mesh(DrawMode::triangles, move(points), move(id))
+    Mesh(DrawMode::triangles, std::move(points), std::move(id))
 { }
 
 
@@ -234,7 +234,7 @@ Triangles Triangles::from_cover(MeshCover const & c)
 
 
 Strip::Strip(vector<Point> && points, size_t first) :
-    Mesh(DrawMode::triangle_strip, move(points))
+    Mesh(DrawMode::triangle_strip, std::move(points))
 { 
     using std::execution::par_unseq;
 
@@ -249,7 +249,7 @@ Strip::Strip(vector<Point> && points, size_t first) :
 
 
 Strip::Strip(vector<Point> && points, vector<size_t> && id) :
-    Mesh(DrawMode::triangle_strip, move(points), move(id))
+    Mesh(DrawMode::triangle_strip, std::move(points), std::move(id))
 { }
 
 
@@ -277,7 +277,7 @@ Triangles Strip::to_triangles() const
         id[gid] = _id[point_index];
     });
 
-    return Triangles(move(v), move(id));
+    return Triangles(std::move(v), std::move(id));
 }
 
 Triangle Strip::operator[](size_t i) const

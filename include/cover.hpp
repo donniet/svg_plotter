@@ -35,13 +35,15 @@ class MeshCover :
     public Cover
 {
 private:
+    std::vector<std::vector<Point>> _outline;
     std::vector<Triangle> _tris;
-    std::vector<Point> _outline;
 protected:
-    static std::vector<Triangle> ear_clip(std::vector<Point> const & outline);
+    static std::vector<Triangle> ear_clip(std::vector<std::vector<Point>> const & outlines);
+    
 public:
     MeshCover();
     MeshCover(std::vector<Point> const & outline);
+    MeshCover(std::vector<std::vector<Point>> const & outlines);
     MeshCover(MeshCover const &) = default;
     MeshCover(MeshCover &&) = default;
 

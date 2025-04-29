@@ -384,7 +384,8 @@ double enclosed_area(Iter begin, Iter end)
 std::pair<double,double> intersect_intervals(std::pair<double,double> a, std::pair<double,double> b);
 std::pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin, double epsilon = 1e-5);
 std::pair<bool,double> segment_intersects_vertical_ray(Point p0, Point p1, Point ray_origin, double eps);
-
+Point from_poly_index(std::vector<std::vector<Point>> const & poly, size_t index);
+std::pair<size_t, size_t> parse_poly_index(std::vector<std::vector<Point>> const & poly, size_t index);
 
 
 #endif

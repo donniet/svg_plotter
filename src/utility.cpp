@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <functional>
 #include <utility>
+#include <vector>
 
 using std::pair;
 using std::string;
@@ -13,6 +14,7 @@ using std::isspace;
 using std::max, std::min;
 using std::function;
 using std::locale;
+using std::vector;
 
 // trim from start (in place)
 void ltrim(string &s) 
@@ -74,9 +76,9 @@ pair<bool,double> segment_intersects_vertical_ray(Point p0, Point p1, Point ray_
 
     double det = p0.x - p1.x;
 
-    if(abs(det) < eps)
+    if(std::abs(det) < eps)
     {
-        if(abs(p0.x - ray_origin.x) > eps || max(p0.y, p1.y) <= ray_origin.y - eps)
+        if(std::abs(p0.x - ray_origin.x) > eps || max(p0.y, p1.y) <= ray_origin.y - eps)
             return { false, 0. };
         
         if(p0.y > ray_origin.y- eps && p1.y > ray_origin.y - eps)
@@ -100,6 +102,37 @@ pair<bool,double> segment_intersects_vertical_ray(Point p0, Point p1, Point ray_
 
     return { false, 0. };
 }
+
+
+Point from_poly_index(vector<vector<Point>> const & poly, size_t index)
+{
+    for(vector<Point> const & points : poly)
+    {
+        if(index < points.size())
+            return points[index];
+
+        index -= points.size();
+    }
+
+    return Point{};
+}
+
+
+pair<size_t, size_t> parse_poly_index(vector<vector<Point>> const & poly, size_t index)
+{
+    size_t poly_index = 0;
+    for(; poly_index < poly.size(); poly_index++)
+    {
+        auto points = poly[poly_index];
+        if(index < points.size())
+            break;
+
+        index -= points.size();
+    }
+
+    return { poly_index, index };
+}
+
 
 pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ray_origin, double eps)
 {
@@ -128,9 +161,9 @@ pair<bool,double> segment_intersects_horizontal_ray(Point p0, Point p1, Point ra
 
     double det = p1.y - p0.y;
 
-    if(abs(det) < eps)
+    if(std::abs(det) < eps)
     {
-        if(abs(p0.y - ray_origin.y) > eps || max(p0.x, p1.x) < ray_origin.x - eps)
+        if(std::abs(p0.y - ray_origin.y) > eps || max(p0.x, p1.x) < ray_origin.x - eps)
             return { false, 0. };
         
         if(p0.x > ray_origin.x - eps && p1.x > ray_origin.x - eps)

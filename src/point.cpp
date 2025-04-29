@@ -224,7 +224,7 @@ bool Point::is_parallel(Point v, double epsilon) const
     v = v.normalized();
     Point u = normalized();
 
-    if(1.0 - abs(v.dot(u)) < epsilon)
+    if(1.0 - std::abs(v.dot(u)) < epsilon)
         return true;
     
     return false;
@@ -297,7 +297,7 @@ Path::Path(vector<Point> const & p, bool closed) :
 { }
 
 Path::Path(vector<Point> && p, bool closed) :
-    vector<Point>{move(p)}, _closed{closed}
+    vector<Point>{std::move(p)}, _closed{closed}
 { }
 
 bool Path::closed() const
@@ -504,7 +504,7 @@ pair<bool, double> Line::intersect(Line l1) const
      */
 
     double det = -v.x * l1.v.y + l1.v.x * v.y;
-    if (abs(det) < 1e-9)
+    if (std::abs(det) < 1e-9)
     {
         // Check for coincidence:
         double cross_product = (p.x - l1.p.x) * v.y - (p.y - l1.p.y) * v.x;
@@ -875,7 +875,7 @@ Triangle::Triangle(Point const & q0, Point const & q1, Point const & q2) :
     p0(q0), p1(q1), p2(q2)
 { }
 
-bool Triangle::contains(Point const & p) const
+Point Triangle::uv(Point const & p) const
 {
     // Calculate vectors
     Point v0 = p2 - p0;
@@ -894,8 +894,23 @@ bool Triangle::contains(Point const & p) const
     double u = (dot11 * dot02 - dot01 * dot12) * invDenom;
     double v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
+    return Point{u, v};
+}
+
+bool Triangle::contains(Point const & p) const
+{
+    Point q = uv(p);
+
     // Check if point is in triangle
-    return (u >= 0) && (v >= 0) && (u + v <= 1);
+    return (q.x >= 0) && (q.y >= 0) && (q.x + q.y <= 1);
+}
+
+bool Triangle::contains_exclusive(Point const & p) const
+{
+    Point q = uv(p);
+
+    // Check if point is in triangle
+    return (q.x > 0) && (q.y > 0) && (q.x + q.y < 1);
 }
 
 double Triangle::area() const

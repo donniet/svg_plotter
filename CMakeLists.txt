@@ -9,6 +9,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 # find_package(TBB REQUIRED)
 
 include_directories(include)
+include_directories(/home/donniet/src/stl_reader)
 # link_libraries(TBB::tbb)
 
 # hide compiler warnings for now

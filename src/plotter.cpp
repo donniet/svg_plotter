@@ -17,7 +17,7 @@ vector<Point> transform_path(Transform const & t, vector<Point> const & path)
 {
     vector<Point> ret(path.size());
     transform(path.begin(), path.end(), ret.begin(), t);
-    return move(ret);
+    return std::move(ret);
 }
 
 
@@ -28,7 +28,7 @@ vector<vector<Point>> transform_plot(Transform const & t, vector<vector<Point>> 
     for(size_t i = 0; i < plot.size(); i++)
         ret[i] = transform_path(t, plot[i]);
 
-    return move(ret);
+    return std::move(ret);
 }
 
 vector<Point> simplify_path(vector<Point> const & path, double eps)
@@ -117,7 +117,7 @@ vector<Point> simplify_path_par(vector<Point> const & path, double eps)
         simplified[scanned[gid]-1] = p;
     });
 
-    return move(simplified);
+    return std::move(simplified);
 }
 
 vector<vector<Point>> simplify_plot(vector<vector<Point>> const & plot, bool is_closed, double eps)
@@ -207,15 +207,15 @@ std::vector<std::vector<Point>> Plotter::fill(Cover const & cover,              
             else 
             {
                 if(q.size() >= 2)
-                    ret.emplace_back(move(q));
+                    ret.emplace_back(std::move(q));
                 
                 q.clear();
             }
         }
 
         if(q.size() >= 2)
-            ret.emplace_back(move(q));
+            ret.emplace_back(std::move(q));
     }
 
-    return move(ret); // turn this into a stroke and return it
+    return std::move(ret); // turn this into a stroke and return it
 }

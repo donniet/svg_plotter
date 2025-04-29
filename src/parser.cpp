@@ -188,6 +188,33 @@ BoundingBox SVGPath::bounding_box() const
     return _box;
 }
 
+vector<vector<Point>> SVGPath::line_segments() const
+{
+    vector<vector<Point>> ret;
+
+    vector<Point> cur;
+    cur.emplace_back(_from);
+
+    for(auto const & d : _segments)
+    {
+        if(d->at(0) == cur.back()) 
+        {
+            cur.emplace_back(d->at(1));
+        }
+        else
+        {
+            if(cur.size() > 1)
+                ret.emplace_back(cur);
+
+            cur.clear();
+            cur.emplace_back(d->at(0));
+        }
+    }
+
+    ret.emplace_back(cur);
+    return ret;
+}
+
 std::pair<bool, double> SVGPath::last_move_between(double t0, double t1) const
 {
     size_t seg0, seg1;
@@ -231,6 +258,58 @@ pair<double, double> SVGPath::parameter_range(size_t i) const
     double l = length(0., 1.);
 
     return { l0 / l, l1 / l };
+}
+
+vector<vector<Point>> SVGPath::plot(size_t count, double t0, double t1) const
+{
+    vector<vector<Point>> ret;
+    vector<Point> cur;
+
+    double dt = (t1 - t0) / (double)count;
+
+    for(size_t i = 0; i < count; i++)
+    {
+        double t = t0 + dt * (double)i;
+        auto d = segment_by_parameter(t);
+
+        if(i == 0)
+        {
+            cur.push_back(_segments[d.first]->at(d.second));
+            continue;
+        }
+
+        double tp = t0 + dt * (double)(i - 1);
+        auto dp = segment_by_parameter(tp);
+
+        if(d.first != dp.first)
+        {
+            cur.push_back(_segments[dp.first]->at(1));
+
+            for(; dp.first < d.first; dp.first++)
+            {
+                auto a = _segments[dp.first]->last_move_between(0., 1.);
+                auto b = a;
+                for(auto c = b; c.first; b = c, c = _segments[dp.first]->last_move_between(0., c.second))
+                    continue;
+
+                if(a.first && cur.size() > 0)
+                {
+                    Point p0 = _segments[dp.first]->at(0.);
+                    Point p1 = _segments[dp.first]->at(b.second);
+                    cur.push_back(p0);
+                    if(p0 != p1)
+                        cur.push_back(p1);
+                }
+            }
+                    
+            ret.emplace_back(std::move(cur));
+            // cur.clear();
+            cur.push_back(_segments[d.first]->at(0));
+        }
+    }
+
+    ret.emplace_back(std::move(cur));
+    return ret;
 }
 
 // assumes _segments.size() > 0

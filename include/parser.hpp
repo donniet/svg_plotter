@@ -11,6 +11,8 @@
 
 struct PathSegment;
 
+
+
 struct MoveTo :
     public Drawable
 {
@@ -112,6 +114,10 @@ public:
     virtual Event at(double t) const override;
     virtual BoundingBox bounding_box() const override;
     virtual std::pair<bool, double> last_move_between(double t0, double t1) const override;
+
+    std::vector<std::vector<Point>> line_segments() const;
+    std::vector<std::vector<Point>> plot(size_t count, double t0 = 0, double t1 = 1) const;
+
     virtual ~SVGPath() = default;
 
 private:
@@ -126,6 +132,7 @@ private:
 
     void append_segments(std::string::value_type key, std::vector<double> const & coords, Point & pen, Vector & dir);
     void parsePath(const std::string& pathData);
+
 
 
     std::vector<std::unique_ptr<Drawable>> _segments;

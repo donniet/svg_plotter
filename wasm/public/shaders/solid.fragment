@@ -1,0 +1,22 @@
+#version 300 es
+
+precision highp float;
+
+uniform float u_brush_size;
+uniform vec4 u_brush_color;
+uniform vec2 u_stroke_range;
+uniform float u_stroke_length;
+uniform vec2 u_resolution;
+uniform vec3 u_mouse;
+uniform vec4 u_uv_range;
+
+out vec4 fragColor;
+
+void main()
+{
+
+
+    fragColor = vec4(0.7, 0.7, 0.7, 1.);
+
+    
+}

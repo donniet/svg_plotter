@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 
+#include "earcut.hpp"
+
 class Point;
 using Vector = Point;
 struct Line;
@@ -86,6 +88,8 @@ struct Point
     bool operator!=(Point const & p) const;
 };
 
+
+
 class Point3
 {
 public:
@@ -112,33 +116,53 @@ private:
     bool _closed;
 };
 
+namespace mapbox {
+    namespace util {
+        template <>
+        struct nth<0, Point> {
+            inline static auto get(const Point &t) {
+                return t.x;
+            };
+        };
+        template <>
+        struct nth<1, Point> {
+            inline static auto get(const Point &t) {
+                return t.y;
+            };
+        };
+        
+    }
+}
 namespace std 
 {
-    template<size_t I>
-    double & get(Point & p)
-    {
-        switch(I)
-        {
-        case 0: 
-            return p.x;
-        case 1:
-        default:
-            return p.y;
-        }
-    }
+    // template<size_t I>
+    // auto get(Point const & p);
 
-    template<size_t I>
-    double const & get(Point const & p)
+    template<>
+    struct tuple_element<0, Point>
     {
-        switch(I)
-        {
-        case 0: 
-            return p.x;
-        case 1:
-        default:
-            return p.y;
-        }
-    }
+        using type = double;
+    };
+
+    template<>
+    struct tuple_element<1, Point>
+    {
+        using type = double;
+    };
+
+
+
+    // template<>
+    // double const & get<0, Point const>(Point const & p)
+    // {
+    //     return p.x;
+    // }
+
+    // template<>
+    // double const & get<1, Point const>(Point const & p)
+    // {
+    //     return p.y;
+    // }
 }
 
 void swap(Point & p0, Point & p1);
@@ -292,7 +316,12 @@ struct Triangle
     Triangle(Triangle const &) = default;
     Triangle(Point const &, Point const &, Point const &);
 
+    // natural uv coordinates of the given point in (or out) of this triangle
+    Point uv(Point const &) const;
+
     bool contains(Point const &) const;
+    // does not count the boundary
+    bool contains_exclusive(Point const &) const;
     std::pair<bool, Segment> intersect(Line) const;
     std::pair<bool, Segment> intersect(Ray) const;
     std::pair<bool, Segment> intersect(Segment) const;

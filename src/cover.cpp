@@ -3,6 +3,8 @@
 // cover.cpp (Implementation file)
 
 #include "cover.hpp"
+#include "earcut.hpp"
+#include "utility.hpp"
 // #include "path.hpp"
 #include <limits>
 #include <vector>
@@ -57,8 +59,12 @@ Cover::Cover() : _margin(-numeric_limits<double>::epsilon())
 MeshCover::MeshCover() : _tris() 
 { }
 
-MeshCover::MeshCover(std::vector<Point> const & outline) : 
-    _tris(move(ear_clip(outline))), _outline(outline)
+MeshCover::MeshCover(vector<Point> const & outline) : 
+    _outline({outline}), _tris(ear_clip({outline}))
+{ }
+
+MeshCover::MeshCover(vector<vector<Point>> const & outlines) : 
+    _outline(outlines), _tris(ear_clip(outlines))
 { }
 
 double MeshCover::area() const 
@@ -73,15 +79,16 @@ double MeshCover::area() const
 double MeshCover::perimeter() const 
 {
     double p = 0.;
-    for(size_t i = 1; i < _outline.size(); i++)
-        p += (_outline[i] - _outline[i-1]).norm();
+    for(vector<Point> const & o : _outline)
+        for(size_t i = 1; i < o.size(); i++)
+            p += (o[i] - o[i-1]).norm();
 
     return p;
 }
 
 vector<vector<Point>> MeshCover::outline() const
 {
-    return vector<vector<Point>>{_outline};
+    return _outline;
 }
 
 bool MeshCover::is_inside(Point const & p) const
@@ -120,126 +127,23 @@ pair<Point, double> MeshCover::nearest(Point const & p) const
     throw std::logic_error("nearest point to a meshcover is not implemented");
 }
 
-vector<Triangle> MeshCover::ear_clip(vector<Point> const & outline)
+
+vector<Triangle> MeshCover::ear_clip(vector<vector<Point>> const & poly)
 {
+    vector<size_t> indices = mapbox::earcut<size_t>(poly);
+
     vector<Triangle> ret;
 
-    // less than three points is not a mesh
-    if(outline.size() < 3)
-        return ret;
-
-    size_t remaining = outline.size();
-
-    struct List
+    for(size_t i = 0; i < indices.size(); i += 3)
     {
-        Point p;
-        List * next, * prev;
-    };
-
-    auto unlink = [&remaining](List * l)
-    {
-        // are we the last element?
-        if(l->next == l)
-        {
-            l->next = nullptr;
-            l->prev = nullptr;
-            return;
-        }
-
-        List * n = l->next;
-        List * p = l->prev;
-
-        n->prev = p;
-        p->next = n;
-        l->next = l->prev = nullptr;
-        remaining--;
-    };
-
-    auto is_ear = [](List * n) -> bool
-    {
-        List * l = n->next->next;
-        
-        if(n->next == n || l == n) 
-            throw std::logic_error("is_ear detected less than 3 points in the outline");
-
-        Triangle ear{n->prev->p, n->p, n->next->p};
-
-        // loop through until we hit prev
-        for(; l != n->prev; l = l->next)
-            if(ear.contains(l->p))
-                return false;
-
-        // no interior points found
-        return true;
-    };
-
-    List * head = new List{outline[0], nullptr, nullptr};
-    head->prev = head->next = head;
-
-    // create a cyclic list of all the points
-    for(size_t i = 1; i < outline.size(); i++)
-    {
-        List * n = head;
-        List * p = head->prev;
-
-        List * l = new List{ outline[i], n, p};
-        n->prev = l;
-        p->next = l;
+        ret.emplace_back(
+            from_poly_index(poly, indices[i + 0]),
+            from_poly_index(poly, indices[i + 1]),
+            from_poly_index(poly, indices[i + 2])
+        );
     }
 
-    // remove any points that are straight (not triangles)
-    for(size_t i = 0, N = remaining; i < N; i++)
-    {
-        Vector v0{head->prev->p - head->p};
-        Vector v1{head->next->p - head->p};
-
-        if(std::abs(cross(v0, v1)) < 1e-4)
-        {
-            List * n = head->next;
-            unlink(head);
-            delete head;
-            head = n;
-
-            if(remaining < 3)
-                throw std::logic_error("ear_clip: less than 3 remaining non-linear vertices");
-        }
-        else 
-        {
-            head = head->next;
-        }
-    }
- 
-    // check each for ears
-    while(head->next->next != head->prev)
-    {
-        List * n = head;
-
-        for(; !is_ear(n); n = n->next)
-            if(n->next == head)
-                throw std::logic_error("no ears found");
-
-        // create an ear an unlink
-        ret.emplace_back(n->prev->p, n->p, n->next->p);
-        head = n->next;
-        unlink(n);
-        delete n;
-    }
-
-    // add the last one
-    ret.emplace_back(head->prev->p, head->p, head->next->p);
-
-    // cleanup
-    List * t = head->next;
-    unlink(t);
-    delete t;
-
-    t = head->prev;
-    unlink(t);
-    delete t;
-
-    delete head;
-
-    return move(ret);
+    return ret;
 }
 
 vector<Triangle> const & MeshCover::triangles() const
