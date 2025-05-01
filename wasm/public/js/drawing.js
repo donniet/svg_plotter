@@ -183,7 +183,9 @@ SolidsRenderer.prototype.continue_animate = function(gl)
 
 
 
-
+/**
+ * Drawing class
+ */
 function Drawing(gl, program, blend_program,
                  vertex_data, stride, 
                  attributes, uniforms, layers, 

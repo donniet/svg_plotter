@@ -14,10 +14,10 @@ async function init()
     // const { instance } = await WebAssembly.instantiateStreaming(
     //     fetch(DEFAULT_DRAWING), imports
     // );
-
     const solid_wasm = await WebAssembly.instantiateStreaming(
         fetch(DEFAULT_SOLID), imports
     );
+
 
     const lut = new Image();
     lut.src = MIXING_LOOKUP_TABLE;
@@ -69,11 +69,25 @@ async function init()
     {
         const solids = new Solids(solid_wasm.instance);
 
-        const solid_vertex_source = await fetch_text(SOLID_VERTEX_SHADER);
-        const solid_fragment_source = await fetch_text(SOLID_FRAGMENT_SHADER);
+        // const solid_vertex_source = await fetch_text(SOLID_VERTEX_SHADER);
+        // const solid_fragment_source = await fetch_text(SOLID_FRAGMENT_SHADER);
 
-        const solid_renderer = new SolidsRenderer(gl, [solid_vertex_source, solid_fragment_source], solids);
+        // const solid_renderer = new SolidsRenderer(gl, [solid_vertex_source, solid_fragment_source], solids);
 
-        solid_renderer.continue_animate(gl);
+        // solid_renderer.continue_animate(gl);
+
+        const painter = new Painter(gl, [640, 816]);
+
+        const layer_promises = [];
+
+        solids.each(solid => {
+            const layer_promise = painter.add_layer(gl, solid);
+
+            layer_promises.push(layer_promise);
+        });
+
+        await Promise.all(layer_promises);
+
+        painter.continue_animate(gl);
     }
 }   

@@ -276,11 +276,11 @@ function create_program_from_scripts(gl, script_elements)
 
 function enable_attribute(location, stride, size, offset, gl)
 {
+    // enable this attribute's location in the vao
+    gl.enableVertexAttribArray(location);
+
     // setup the vertex attribute pointer
     gl.vertexAttribPointer(location, size, gl.FLOAT, false, stride, offset);
-
-    // enable this attribute's location
-    gl.enableVertexAttribArray(location);
 };
 
 function view_from(drawing_size)
@@ -290,4 +290,140 @@ function view_from(drawing_size)
         0., 2./ drawing_size[1],  -1,
         0.,                   0.,  1.  
     ]);
+}
+
+function string_from_buffer(buf, ptr, len)
+{
+    let dat = new Uint8Array(buf, ptr, len);
+    return new TextDecoder().decode(dat);
+};
+function float32_array_from_buffer(buf, ptr, len)
+{
+    return new Float32Array(buf, ptr, len);
+};
+
+async function create_shader(gl, shader_name, uniforms)
+{
+    const program = await create_program_from_shader_name(gl, shader_name);
+
+    return new Shader(gl, program, uniforms);
+}
+
+function Uniform(gl, uniform_name, location)
+{   
+    this.name = uniform_name;
+    this.location = location;
+
+    this.integer = function(v) {
+        set_uniform_integer(gl, uniform_name, location, v);
+        return this;
+    }.bind(this);
+
+    this.float = function(v) {
+        set_uniform_value(gl, uniform_name, location, v);
+        return this;
+    }.bind(this);
+
+    this.matrix = function(v, normalized) {
+        set_uniform_matrix(gl, uniform_name, location, v, normalized);
+        return this;
+    }.bind(this);
+
+    this.exists = function(v) {
+        return location >= 0;
+    };
+}
+
+function make_setter_getter(this_object, name, default_value)
+{
+    let value = default_value;
+
+    this_object[name] = function(v) {
+        if(typeof v === "undefined")
+            return value;
+
+        value = v;
+        return this_object;
+    };
+}
+
+function Attribute(attribute_name, size, type, stride, offset, normalized)
+{
+    this._name = attribute_name;
+    this._size = size;
+    this._type = type;
+    this._type = type;
+    this._stride = stride;
+    this._offset = offset;
+    this._normalized = !!normalized;
+}
+Attribute.prototype.name = function() 
+{
+    return this._name;
+};
+Attribute.prototype.size = function()
+{
+    return this._size;
+};
+Attribute.prototype.type = function()
+{
+    return this._type;
+};
+Attribute.prototype.stride = function()
+{
+    return this._stride;
+};
+Attribute.prototype.offset = function()
+{
+    return this._offset;
+};
+Attribute.prototype.normalized = function()
+{
+    return this._normalized;
+};
+
+
+
+
+function Shader(gl, program, uniforms)
+{ 
+    this._program = program
+    this._uniforms = {}
+
+    this.uniform = function(uniform_name)
+    {
+        let u = this._uniforms[uniform_name];
+
+        if(typeof u !== "undefined")
+            return u;
+    
+        const location = gl.getUniformLocation(this._program, uniform_name);
+
+        if(location < 0)
+            console.log(`uniform ${uniform_name} is not available in program ${this._program}`);
+    
+        u = this._uniforms[uniform_name] = new Uniform(gl, uniform_name, location);
+
+        return u;
+    }.bind(this);
+    
+
+    this._attributes = {};
+    this._attribute_locations = {};
+}
+Shader.prototype.use = function(gl)
+{
+    gl.useProgram(this._program);
+}
+Shader.prototype.enable_attribute = function(gl, attribute)
+{
+    const location = gl.getAttribLocation(this._program, attribute.name());
+    
+    // enable this attribute's location in the vao
+    gl.enableVertexAttribArray(location);
+
+    // setup the vertex attribute pointer
+    gl.vertexAttribPointer(location, 
+        attribute.size(), attribute.type() || gl.FLOAT, attribute.normalized(), 
+        attribute.stride(), attribute.offset());
 }

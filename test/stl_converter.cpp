@@ -21,6 +21,7 @@ using std::noskipws;
 
 #define DEFAULT_TIME_START (0.)
 #define DEFAULT_TIME_END (1.)
+#define POSITION_ATTRIBUTE_NAME "a_position"
 
 template<typename T>
 bool parse(string const & s, T & value)
@@ -58,10 +59,10 @@ struct Solid
 {
     string name;
     string shader;
+    size_t index;
     pair<size_t, size_t> vertex_range;
     pair<double,double> time_range;
 };
-
 
 
 // ./stl_converter ../../examples/mesh/itsfive.stl
@@ -77,7 +78,7 @@ int main(int ac, char * av[])
     vector<Solid> solids;
     size_t total_vertices = 0;
 
-    for(int i = 1; i < ac; i += 3)
+    for(int i = 1; i < ac; i++)
     {
         int n = 1;
 
@@ -107,6 +108,7 @@ int main(int ac, char * av[])
         if(i + n < ac && parse(av[i+n], time_end))
             n++;
 
+        i += n;
 
         for(size_t isolid = 0; isolid < mesh.num_solids(); ++isolid)
         {
@@ -125,6 +127,7 @@ int main(int ac, char * av[])
             solids.push_back({
                 .name = name,
                 .shader = shader,
+                .index = isolid,
                 .vertex_range = { vertex_start, total_vertices },
                 .time_range = { time_start, time_end },
             });
@@ -138,14 +141,25 @@ int main(int ac, char * av[])
     {
         cout << "\t{\n"
              << "\t\t.name = \"" << solid.name << "\",\n"
+             << "\t\t.index = " << solid.index << ",\n"
              << "\t\t.mode = TRIANGLES,\n"
              << "\t\t.vertex_range = {" << solid.vertex_range.first << ", " << solid.vertex_range.second << "},\n"
              << "\t\t.time_range = {" << solid.time_range.first << ", " << solid.time_range.second << "},\n"
-             << "\t\t.shader = \"" << solid.name << "\",\n"
+             << "\t\t.shader = \"" << solid.shader << "\",\n"
              << "\t},\n";
     }
     cout << "};\n";
     cout << "const uint solid_count = " << solids.size() << ";\n\n";
+
+    cout << "Attribute const _attributes[] = {\n"
+         << "\t{\n"
+         << "\t\t.name = \"" << POSITION_ATTRIBUTE_NAME << "\",\n"
+         << "\t\t.size = 2,\n"
+         << "\t\t.offset = 0,\n"
+         << "\t},\n"
+         << "};\n";
+    
+    cout << "uint _attribute_count = 1;\n\n";
 
     cout << "const float solid_buffer[] = {\n";
     for(auto const & p : vertices)

@@ -9,10 +9,11 @@
 typedef struct
 {
     const char * name;
+    uint index;
     const char * shader;
     DrawMode mode;
     IndexRange vertex_range;
-    TimeRange time_range;
+    TimeRange time_range;   
 } Solid;
 
 Solid solids[];
