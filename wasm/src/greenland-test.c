@@ -65,7 +65,7 @@ float _background_color[] = { 0.1, 0.2, 0.3, 1. };
 Uniform const _uniforms[] = { 
     {
         .name = "u_background",
-        .size = 4,
+        .base_type = "vec4",
         .data = _background_color,
     }
 };

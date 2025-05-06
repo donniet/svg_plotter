@@ -4,6 +4,8 @@
 #define GL_GLEXT_LEGACY
 #include <GL/gl.h>
 
+#define MAX_UNIFORM_SIZE 16
+
 typedef unsigned int uint;
 
 typedef enum {
@@ -54,8 +56,16 @@ typedef struct
 typedef struct
 {
     const char * name;
-    uint size;
+    const char * value;
+} Define;
+
+typedef struct
+{
+    const char * name;
+    const char * base_type;
     const float * data;
+    const int * idata;
+    uint data_length;
 } Uniform;
 
 // extern char buffer[255];
@@ -271,13 +281,13 @@ extern uint uniform_name_length(uint i)
     return string_length(s);
 }
 
-extern uint uniform_size(uint i)
-{
-    return _uniforms[i].size;
-}
 extern const float * uniform_data(uint i)
 {
     return _uniforms[i].data;
+}
+extern const int * uniform_idata(uint i)
+{
+    return _uniforms[i].idata;
 }
 
 extern uint stride()

@@ -9,14 +9,11 @@ uniform float u_stroke_length;
 uniform vec2 u_resolution;
 uniform vec3 u_mouse;
 uniform vec4 u_uv_range;
+uniform vec4 u_fill_color;
 
 out vec4 fragColor;
 
 void main()
 {
-
-
-    fragColor = vec4(0.7, 0.7, 0., 1.);
-
-    
+    fragColor = u_fill_color;
 }

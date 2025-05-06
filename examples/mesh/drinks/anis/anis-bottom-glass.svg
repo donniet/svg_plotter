@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="svg1228599"
+   xml:space="preserve"
+   enable-background="new 0 0 640 816"
+   viewBox="0 0 640.00004 816.00004"
+   height="215.90001mm"
+   width="169.33334mm"
+   y="0px"
+   x="0px"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs1228603" />
+
+<g
+   id="drinkAnis">
+	<g
+   display="inline"
+   id="g1228596">
+		<linearGradient
+   id="SVGID_157_"
+   gradientUnits="userSpaceOnUse"
+   x1="320.49561"
+   y1="409.78131"
+   x2="320.49561"
+   y2="591.54462">
+			<stop
+   offset="0.3212"
+   style="stop-color:#FFFFFF;stop-opacity:0.4"
+   id="stop1228554" />
+			<stop
+   offset="0.7697"
+   style="stop-color:#FFFFFF;stop-opacity:0"
+   id="stop1228556" />
+		</linearGradient>
+		
+		
+		
+		<linearGradient
+   id="SVGID_158_"
+   gradientUnits="userSpaceOnUse"
+   x1="320.49661"
+   y1="461.88181"
+   x2="320.49661"
+   y2="420.68188">
+			<stop
+   offset="0.2788"
+   style="stop-color:#D1D1D1;stop-opacity:0.1"
+   id="stop1228573" />
+			<stop
+   offset="1"
+   style="stop-color:#D1D1D1"
+   id="stop1228575" />
+		</linearGradient>
+		
+		<linearGradient
+   id="SVGID_159_"
+   gradientUnits="userSpaceOnUse"
+   x1="320.49509"
+   y1="462.6123"
+   x2="320.49509"
+   y2="514.28601">
+			<stop
+   offset="0.0061"
+   style="stop-color:#E8F7FC"
+   id="stop1228580" />
+			<stop
+   offset="0.4606"
+   style="stop-color:#90B8B4;stop-opacity:0.06"
+   id="stop1228582" />
+			<stop
+   offset="1"
+   style="stop-color:#E8F7FC;stop-opacity:0.51"
+   id="stop1228584" />
+		</linearGradient>
+		<path
+   fill="url(#SVGID_159_)"
+   d="m 262.325,478.45 0.294,3.554 0.862,3.451 1.403,3.331 1.913,3.194 2.397,3.038 2.85,2.866 3.276,2.676 3.673,2.468 4.041,2.243 4.381,2.001 4.692,1.74 4.975,1.464 5.228,1.169 5.454,0.856 5.651,0.527 5.818,0.179 h 2.526 l 5.819,-0.179 5.65,-0.527 5.454,-0.856 5.229,-1.169 4.974,-1.464 4.692,-1.74 4.381,-2.001 4.041,-2.243 3.673,-2.468 3.276,-2.676 2.85,-2.866 2.396,-3.038 1.914,-3.194 1.402,-3.331 0.862,-3.451 0.294,-3.554 -0.091,-2.179 -0.267,-2.165 -0.432,-2.143 -0.583,-2.111 -1.582,-4.097 -2.057,-3.873 H 267.339 l -2.058,3.873 -1.582,4.097 -0.584,2.111 -0.432,2.143 -0.267,2.165 z"
+   id="path1229837"
+   style="fill:url(#SVGID_159_)" />
+		<linearGradient
+   id="SVGID_160_"
+   gradientUnits="userSpaceOnUse"
+   x1="291.0513"
+   y1="430.96091"
+   x2="291.0513"
+   y2="497.62689">
+			<stop
+   offset="0"
+   style="stop-color:#FFFFFF;stop-opacity:0.79"
+   id="stop1228589" />
+			<stop
+   offset="1"
+   style="stop-color:#FFFFFF;stop-opacity:0.4"
+   id="stop1228591" />
+		</linearGradient>
+		
+	</g>
+</g>
+
+</svg>

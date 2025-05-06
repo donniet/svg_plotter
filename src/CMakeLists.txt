@@ -45,6 +45,9 @@ target_link_libraries(stroke_mesh stroke mesh output)
 add_library(fill_mesh fill_mesh.cpp)
 target_link_libraries(fill_mesh stroke mesh output utility)
 
+add_library(svg_path svg_path.cpp)
+target_link_libraries(svg_path )
+
 set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 

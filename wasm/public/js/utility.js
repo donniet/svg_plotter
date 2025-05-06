@@ -301,38 +301,117 @@ function float32_array_from_buffer(buf, ptr, len)
 {
     return new Float32Array(buf, ptr, len);
 };
+function int32_array_from_buffer(buf, ptr, len)
+{
+    return new Int32Array(buf, ptr, len);
+};
 
 async function create_shader(gl, shader_name, uniforms)
 {
-    const program = await create_program_from_shader_name(gl, shader_name);
-
-    return new Shader(gl, program, uniforms);
+    const vert = await fetch_text(`shaders/${shader_name}.vertex`);
+    const frag = await fetch_text(`shaders/${shader_name}.fragment`);
+    
+    return new Shader(gl, [vert, frag], uniforms);
 }
 
-function Uniform(gl, uniform_name, location)
+function uniform_method_for(base_type)
+{
+    const type_parser = /^(?:(bool|int|uint|float|double)|(([biud]?)(vec)([234]))|((mat)([234])(x[234])?))$/
+
+    const r = type_parser.exec(base_type);
+    
+    if(!r)
+        return null;
+
+    if(r[7] == "mat")
+        return `uniformMatrix${r[8]}fv`;
+
+    if(r[4] == "vec")
+        switch(r[3])
+        {
+        case 'b':
+        case 'i':
+        case 'u':
+            return `uniform${r[5]}iv`;
+        case 'd':
+        default:
+            return `uniform${r[5]}fv`;
+        }
+
+    if(r[1]) 
+        switch(r[1])
+        {
+        case 'bool':
+        case 'int':
+        case 'uint':
+            return `uniform1iv`;
+        case 'float':
+        case 'double':
+            return `uniform1fv`;
+        }
+
+    return null;
+}
+
+function uniform_setter_for(base_type)
+{
+    const method = uniform_method_for(base_type);
+
+    if(method.includes("Matrix"))
+        return  function(gl, location, array) {
+                    gl[method](location, false, array);
+                };
+    else
+        return  function(gl, location, array) {
+                    gl[method](location, array);
+                };
+
+    
+}
+
+/**
+ * Uniform class stores the meta-data of a uniform variable to a shader
+ * @param gl : WebGL2Context
+ * @param uniform_name : String
+ * @param location : int is the location id of this uniform in the shader
+ * @param size : int is the vector size of this uniform (ie: 4 for vec4)
+ */
+function Uniform(gl, uniform_name, location, base_type = "float")
 {   
     this.name = uniform_name;
-    this.location = location;
+    this.location = location; 
+    this.base_type = base_type;
 
-    this.integer = function(v) {
-        set_uniform_integer(gl, uniform_name, location, v);
-        return this;
-    }.bind(this);
-
-    this.float = function(v) {
-        set_uniform_value(gl, uniform_name, location, v);
-        return this;
-    }.bind(this);
-
-    this.matrix = function(v, normalized) {
-        set_uniform_matrix(gl, uniform_name, location, v, normalized);
-        return this;
-    }.bind(this);
-
-    this.exists = function(v) {
-        return location >= 0;
-    };
+    this.__uniform_setter = uniform_setter_for(base_type)
+        .bind(this, gl, location);
+    
 }
+
+Uniform.prototype.set = function(v) {
+    if(typeof v === "undefined")
+        return;
+
+    if(!this.exists())
+        return;
+    
+    if(typeof v === "number")
+    {
+        this.__uniform_setter([v]);
+        return;
+    }
+    
+    if(typeof v === "object" && typeof v.length === "number")
+    {
+        this.__uniform_setter(v);
+        return;
+    }
+
+    console.log(`unknown uniform type for '${this.name}' for value '${v}'`)
+};
+
+Uniform.prototype.exists = function(v) {
+    return !!this.location;
+};
 
 function make_setter_getter(this_object, name, default_value)
 {
@@ -385,34 +464,68 @@ Attribute.prototype.normalized = function()
 
 
 
-function Shader(gl, program, uniforms)
+function Shader(gl, sources, uniforms)
 { 
-    this._program = program
-    this._uniforms = {}
-
-    this.uniform = function(uniform_name)
-    {
-        let u = this._uniforms[uniform_name];
-
-        if(typeof u !== "undefined")
-            return u;
-    
-        const location = gl.getUniformLocation(this._program, uniform_name);
-
-        if(location < 0)
-            console.log(`uniform ${uniform_name} is not available in program ${this._program}`);
-    
-        u = this._uniforms[uniform_name] = new Uniform(gl, uniform_name, location);
-
-        return u;
-    }.bind(this);
+    this._sources = sources;
+    this._program = null;
+    this._defines = {};
+    this._uniforms = {};
+    this.__gl = gl;
     
 
     this._attributes = {};
     this._attribute_locations = {};
 }
+Shader.prototype.define = function(name, value)
+{
+    this._defines[name] = value;
+};
+Shader.prototype.uniform = function(uniform_name, base_type = "float")
+{
+    let u = this._uniforms[uniform_name];
+
+    if(typeof u !== "undefined")
+        return u;
+
+    const location = this.__gl.getUniformLocation(this._program, uniform_name);
+
+    if(!location)
+        console.log(`uniform ${uniform_name} is not available in program ${this._program}`);
+
+    u = this._uniforms[uniform_name] = new Uniform(this.__gl, uniform_name, location, base_type);
+
+    return u;
+};
+Shader.prototype.insert_defines = function(source) 
+{
+    let defs = ""
+    for(const [name, value] of Object.entries(this._defines))
+        defs += `#define ${name} ${value}\n`;
+
+    const version_regex = /^(#version\s.*)\n/g;
+
+    return source.replace(version_regex, `$1\n\n${defs}\n`);
+}
+Shader.prototype.compile = function(gl)
+{
+    const shader_types = [ gl.VERTEX_SHADER, gl.FRAGMENT_SHADER ];
+
+    const compiled_shaders = [];
+
+    for(let i = 0; i < 2; i++)
+    {
+        const with_defines = this.insert_defines(this._sources[i]);
+
+        compiled_shaders.push(compile_shader(gl, shader_types[i], with_defines));
+    }
+
+    this._program = create_program(gl, compiled_shaders);
+};
 Shader.prototype.use = function(gl)
 {
+    if(!this._program)
+        this.compile(gl);
+
     gl.useProgram(this._program);
 }
 Shader.prototype.enable_attribute = function(gl, attribute)

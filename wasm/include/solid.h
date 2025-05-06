@@ -6,14 +6,21 @@
 
 #include "mesh.h"
 
+#define MAX_UNIFORMS 10
+#define MAX_DEFINES 10
+
 typedef struct
 {
     const char * name;
     uint index;
     const char * shader;
+    Define defines[MAX_DEFINES];
+    uint define_count;
     DrawMode mode;
     IndexRange vertex_range;
     TimeRange time_range;   
+    Uniform uniforms[MAX_UNIFORMS];
+    uint uniform_count;
 } Solid;
 
 Solid solids[];
@@ -74,6 +81,60 @@ extern uint get_solid_vertex_count(uint i)
 extern GLuint get_solid_draw_mode(uint i)
 {
     return solids[i].mode;
+}
+extern GLuint get_solid_uniform_count(uint i)
+{
+    return solids[i].uniform_count;
+}
+
+extern uint get_solid_define_count(uint i)
+{
+    return solids[i].define_count;
+}
+extern const char * get_solid_define_name_ptr(uint i, uint j)
+{
+    return solids[i].defines[j].name;
+}
+extern uint get_solid_define_name_length(uint i, uint j)
+{
+    return string_length(solids[i].defines[j].name);
+}
+extern const char * get_solid_define_value_ptr(uint i, uint j)
+{
+    return solids[i].defines[j].value;
+}
+extern uint get_solid_define_value_length(uint i, uint j)
+{
+    return string_length(solids[i].defines[j].value);
+}
+
+extern const char * get_solid_uniform_name_ptr(uint i, uint j)
+{
+    return solids[i].uniforms[j].name;
+}
+extern uint get_solid_uniform_name_length(uint i, uint j)
+{
+    return string_length(solids[i].uniforms[j].name);
+}
+extern const char * get_solid_uniform_base_type_ptr(uint i, uint j)
+{
+    return solids[i].uniforms[j].base_type;
+}
+extern uint get_solid_uniform_base_type_length(uint i, uint j)
+{
+    return string_length(solids[i].uniforms[j].base_type);
+}
+extern float const * get_solid_uniform_data_ptr(uint i, uint j)
+{
+    return solids[i].uniforms[j].data;
+}
+extern int const * get_solid_uniform_idata_ptr(uint i, uint j)
+{
+    return solids[i].uniforms[j].idata;
+}
+extern uint get_solid_uniform_data_length(uint i, uint j)
+{
+    return solids[i].uniforms[j].data_length; // float size
 }
 extern uint get_solid_stride()
 {

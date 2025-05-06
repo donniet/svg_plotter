@@ -53,63 +53,22 @@ function Painter(gl, drawing_size)
     }
 }
 
-Painter.prototype.load_buffer = function(gl, buffer_data)
-{
-    // check to see if we already loaded this buffer
-    for(let i = 0; i < this.buffers.length; i++)
-        if(this.buffers[i].data() === buffer_data)
-            return this.buffers[i];
-
-    // otherwise create a new buffer
-    const b = new Buffer(gl.createBuffer(), buffer_data);
-
-    b.load(gl)
-
-    this.buffers.push(b);
-
-    return b;
-};
 
 /**
  * add_layer method adds a layer to the top of the layer stack
  * the `layer` must parameter must have the following methods
  * 
- * layer.shader_name() : String
+ * layer.compile_shader(gl) : String
+ * layer.shader() : Shader
  * layer.draw(gl : WebGL2RenderingContext, time : Number)
- * layer.attributes() : [Attribute]
- * layer.vertex_data() : Float32Array
+ * layer.vertex_attribute_object() : WebGL2VertexAttriuteObject
  * 
  */
 Painter.prototype.add_layer = async function(gl, layer)
 { 
-    // setup this layer's shader
-    const shader_name = layer.shader_name();
-
-    // see if we have this shader
-    if(typeof this.shaders[shader_name] === "undefined")
-    {
-        const s = await create_shader(gl, shader_name);
-        // this.set_shader(s);  
-        this.shaders[shader_name] = s;
-    }
-
-    const shader = this.shaders[shader_name];
-    const buf = this.load_buffer(gl, layer.vertex_data());
-
-    // use the shader for future location calls
-    shader.use(gl);
-
-    // setting up a vertex attribute array
-    // const vao = gl.createVertexArray();
-
-    // gl.bindVertexArray(vao);
-    // buf.bind(gl);
-    // for(const attribute of layer.attributes())
-    //     shader.enable_attribute(gl, attribute);
-    // gl.bindVertexArray(null);
-
     this.layers.push(layer);
-    // this.vaos.push(vao);
+
+    await layer.compile_shader(gl);
 
     return this;
 }
@@ -124,33 +83,25 @@ Painter.prototype.render = function(gl, time)
     // if(resized)
     gl.viewport(...this.viewport_dimensions);
 
-
+    gl.clearColor(0.8, 0.8, 0.8, 1.);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
     this.layers.forEach((layer, layer_index) => {
-        const shader = this.shaders[layer.shader_name()];
-        // const vao = this.vaos[layer_index];
-
-        layer.set_shader(shader);
-
-        gl.clearColor(0.3, 0.3, 0.3, 1.);
-        gl.clear(gl.COLOR_BUFFER_BIT);
+        const shader = layer.shader();
 
         // use this program
         shader.use(gl);
 
         // bind the vao
+        // DT: moved to the layer objects
         // gl.bindVertexArray(vao);
-        const buf = this.load_buffer(gl, layer.vertex_data());
-        buf.bind(gl);
-        for(const attribute of layer.attributes())
-            shader.enable_attribute(gl, attribute);
 
         // set the values of our basic uniforms
-        shader.uniform(VIEW_UNIFORM_NAME).matrix(this.view_matrix);
-        shader.uniform(RESOLUTION_UNIFORM_NAME).float([this.viewport_dimensions[2], this.viewport_dimensions[3]]);
-        shader.uniform(MOUSE_UNIFORM_NAME).float(this.__mouse);
-        shader.uniform(MOUSE_STATE_UNIFORM_NAME).integer([this.__mouse_state]);
-        shader.uniform(TIME_UNIFORM_NAME).float([time]);
+        shader.uniform(VIEW_UNIFORM_NAME, "mat3").set(this.view_matrix);
+        shader.uniform(RESOLUTION_UNIFORM_NAME, "vec2").set([this.viewport_dimensions[2], this.viewport_dimensions[3]]);
+        shader.uniform(MOUSE_UNIFORM_NAME, "vec3").set(this.__mouse);
+        shader.uniform(MOUSE_STATE_UNIFORM_NAME, "uint").set([this.__mouse_state]);
+        shader.uniform(TIME_UNIFORM_NAME, "float").set([time]);
 
         // ask the layer to draw
         layer.draw(gl, time);
