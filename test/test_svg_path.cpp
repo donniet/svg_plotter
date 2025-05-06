@@ -1,9 +1,12 @@
 #include "svg_path.hpp"
 
+#include "point.hpp"
 
 #include <iostream>
+#include <algorithm>
 
 using std::cout, std::cerr, std::endl;
+using std::for_each;
 
 struct Outputer : public PathVisitor
 {
@@ -33,12 +36,22 @@ struct Outputer : public PathVisitor
 int main(int ac, char * av[])
 {
     Outputer visitor;
+    Plotter<Point> plotter;
 
-    PathParser parser(visitor);
+    PathParser parser(plotter);
 
 
-    parser.parse("M 10 20, 20 10 c 40 30 40 40 30 40 Z");
+    parser.parse("M 10 20, 20 10 C 40 30 40 40 30 40 Z");
 
+    auto plot = plotter.plot();
+
+    cout << "x, y" << endl;
+    for_each(plot.begin(), plot.end(), [](auto const & path) {
+        for_each(path.begin(), path.end(), [](auto const & p) {
+            cout << p.x << ", " << p.y << endl;
+        });
+    });
+    
 
     return 0;
 }

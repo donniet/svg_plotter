@@ -8,6 +8,7 @@
 #include <utility>
 #include <numbers>
 #include <charconv>
+#include <stdexcept>
 
 using std::sqrt, std::clamp, std::min, std::max, std::sin, std::cos;
 using std::format;
@@ -280,6 +281,24 @@ bool Point::operator==(Point const & p) const
 bool Point::operator!=(Point const & p) const 
 {
     return !operator==(p);
+}
+double   Point::operator[](int i) const
+{
+    switch(i) {
+    case 0: return x;
+    case 1: return y;
+    }
+
+    throw std::logic_error("index out of bounds");
+}
+double & Point::operator[](int i)
+{
+    switch(i) {
+    case 0: return x;
+    case 1: return y;
+    }
+
+    throw std::logic_error("index out of bounds");
 }
 
 void swap(Point & p0, Point & p1)

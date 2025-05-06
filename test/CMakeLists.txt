@@ -43,5 +43,5 @@ add_executable(stl_converter stl_converter.cpp)
 target_link_libraries(stl_converter mesh)
 
 add_executable(test_svg_path test_svg_path.cpp)
-target_link_libraries(test_svg_path svg_path)
+target_link_libraries(test_svg_path svg_path point)
 

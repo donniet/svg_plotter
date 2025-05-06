@@ -86,6 +86,9 @@ struct Point
 
     bool operator==(Point const & p) const;
     bool operator!=(Point const & p) const;
+
+    double   operator[](int i) const;
+    double & operator[](int i);
 };
 
 
@@ -153,13 +156,13 @@ namespace std
 
 
     // template<>
-    // double const & get<0, Point const>(Point const & p)
+    // double get<0, Point const>(Point const & p)
     // {
     //     return p.x;
     // }
 
     // template<>
-    // double const & get<1, Point const>(Point const & p)
+    // double get<1, Point const>(Point const & p)
     // {
     //     return p.y;
     // }

@@ -409,3 +409,4 @@ PathParser::PathParser(PathVisitor & visitor) :
 PathParser::ParseError::ParseError(istream::pos_type pos, string const & msg) :
     logic_error(format("[{}] {}", (long)pos, msg))
 { }
+
