@@ -161,7 +161,7 @@ PathParser::Part PathParser::expect_command(istream & is)
     string s;
     is >> s;
 
-    if(is.eof() || s.size() == 0)
+    if(is.eof() && s == "")
         return EndOfFile;
 
     Part p = part_from(s[0]);
@@ -282,16 +282,23 @@ void PathParser::do_parse(istream & is)
 
                 if(next & Continuation)
                 {
-                    // TODO: ensure that this handles absolute and relative properly
-                    // if(is_absolute()) { ... }
                     x1 = v.x;
                     y1 = v.y;
+
+                    // if the command is absolute then we need to change from a relative
+                    // vector to absolute coordinates by adding the pen position
+                    if(next & Absolute)
+                    {
+                        x1 += p.x;
+                        y1 += p.y;
+                    }
                 }
                 else 
                 {
                     x1 = expect_number(is);
                     y1 = expect_number(is);
                 }
+
                 x2 = expect_number(is);
                 y2 = expect_number(is);
                 x = expect_number(is);
@@ -309,19 +316,27 @@ void PathParser::do_parse(istream & is)
         case Quadratic:
             do {
                 p = pen();
+                v = direction(); 
 
                 if(next & Continuation)
                 {
-                    // TODO: ensure that this handles absolute and relative properly
-                    // if(is_absolute()) { ... }
-                    x1 = direction().x;
-                    y1 = direction().y;
+                    x1 = v.x;
+                    y1 = v.y;
+
+                    // if the command is absolute then we need to change from a relative
+                    // vector to absolute coordinates by adding the pen position
+                    if(next & Absolute)
+                    {
+                        x1 += p.x;
+                        y1 += p.y;
+                    }
                 }
                 else 
                 {
                     x1 = expect_number(is);
                     y1 = expect_number(is);
                 }
+
                 x = expect_number(is);
                 y = expect_number(is);
 
@@ -344,8 +359,6 @@ void PathParser::do_parse(istream & is)
             break;
         }
     }
-
-    _visitor->end();
 }
 
 PathParser::Point PathParser::pen() 
@@ -365,28 +378,37 @@ PathParser::Point PathParser::path_start_point()
 
 void PathParser::line_to(double x, double y)
 {
-    _visitor->line(pen().x, pen().y, x, y);
+    _visitor->line(_pen.x, _pen.y, x, y);
+    _pen = Point{x,y};
 }
 void PathParser::arc_to(double rx, double ry, double angle, bool large_arc, bool sweep, double x, double y)
 {
-    _visitor->arc(pen().x, pen().y, rx, ry, angle, large_arc, sweep, x, y);
+    PathArc<Point> a(_pen.x, _pen.y, rx, ry, angle, large_arc, sweep, x, y);
+
+    _visitor->arc(_pen.x, _pen.y, rx, ry, angle, large_arc, sweep, x, y);
+    _pen = Point{x,y};
+    _direction = a.dv(1.);
 }
 void PathParser::bezier_to(double x1, double y1, double x2, double y2, double x, double y)
 {
-    _direction = Vector{-x2, -y2};
-    _visitor->bezier(pen().x, pen().y, x1, y1, x2, y2, x, y);
+    _visitor->bezier(_pen.x, _pen.y, x1, y1, x2, y2, x, y);
+
+    _direction = Vector{x - x2, x - y2};
+    _pen = Point{x,y};
 }
 void PathParser::quadratic_to(double x1, double y1, double x, double y)
 {
-    _direction = Vector{-x1, -y1};
-    _visitor->quadratic(pen().x, pen().y, x1, y1, x, y);
+    _visitor->quadratic(_pen.x, _pen.y, x1, y1, x, y);
+    _direction = Vector{x - x1, x - y1};
+    _pen = Point{x,y};
 }
 void PathParser::begin_path(double x, double y)
 {
-    _pen = Point{x,y};
-    _direction = Vector{0,0};
+    _visitor->begin(_pen.x, _pen.y);
 
-    _visitor->begin(pen().x, pen().y);
+    _path_start = Point{x, y};
+    _pen = Point{x,y};
+    _direction = Vector{0, 0};
 }
 
 void PathParser::end_path() 
@@ -409,4 +431,26 @@ PathParser::PathParser(PathVisitor & visitor) :
 PathParser::ParseError::ParseError(istream::pos_type pos, string const & msg) :
     logic_error(format("[{}] {}", (long)pos, msg))
 { }
+
+PathParser::Point::Point(double x, double y) : x(x), y(y) { }
+
+constexpr double & PathParser::Point::operator[](int i) 
+{
+    switch(i) {
+    case 0: return x;
+    case 1: return y;
+    }
+
+    throw std::logic_error("index out of bounds");
+}
+
+constexpr double const & PathParser::Point::operator[](int i) const
+{
+    switch(i) {
+    case 0: return x;
+    case 1: return y;
+    }
+
+    throw std::logic_error("index out of bounds");
+}
 

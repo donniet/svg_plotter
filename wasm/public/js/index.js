@@ -11,9 +11,9 @@ async function init()
     };
 
     // TODO: lookup wasm by time
-    // const { instance } = await WebAssembly.instantiateStreaming(
-    //     fetch(DEFAULT_DRAWING), imports
-    // );
+    const { instance } = await WebAssembly.instantiateStreaming(
+        fetch(DEFAULT_DRAWING), imports
+    );
     const solid_wasm = await WebAssembly.instantiateStreaming(
         fetch(DEFAULT_SOLID), imports
     );

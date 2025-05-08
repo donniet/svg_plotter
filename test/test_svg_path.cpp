@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <algorithm>
+#include <array>
 
 using std::cout, std::cerr, std::endl;
 using std::for_each;
@@ -41,7 +42,12 @@ int main(int ac, char * av[])
     PathParser parser(plotter);
 
 
-    parser.parse("M 10 20, 20 10 C 40 30 40 40 30 40 Z");
+    // parser.parse("m 10 20, 20 10 C 40 30 40 40 30 40 Z");
+    parser.parse(R"(M 10,30
+       A 20,20 0,0,1 50,30
+       A 20,20 0,0,1 90,30
+       Q 90,60 50,90
+       Q 10,60 10,30 z)");
 
     auto plot = plotter.plot();
 

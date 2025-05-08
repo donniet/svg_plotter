@@ -143,6 +143,11 @@ Point::Point() :
     Point(0, 0)
 { }
 
+size_t Point::size() const
+{
+    return 2;
+}
+
 Point & Point::operator=(Point const & r)
 {
     x = r.x;

@@ -59,6 +59,8 @@ struct Point
     Point & operator=(Point const & r);
     Point & operator=(Point && r);
 
+    size_t size() const;
+
     void swap(Point & p1);
 
     double norm2() const;
