@@ -53,29 +53,29 @@ class PathParser :
 private:
     typedef enum 
     {
-        Unknown                 =  0x0000,
+        Unknown                 =  0x000000,
 
-        Number                  =  0x0001,
+        Number                  =  0x000001,
 
-        MoveTo                  =  0x0002,
-        LineTo                  =  0x0004,
-        Horizontal              =  0x0008,
-        Vertical                =  0x000B,
-        Arc                     =  0x0010,
-        Bezier                  =  0x0020,
-        Quadratic               =  0x0040,
-        Close                   =  0x0080,
-        Command                 =  0x00FF,
+        MoveTo                  =  0x000002,
+        LineTo                  =  0x000004,
+        Horizontal              =  0x000008,
+        Vertical                =  0x000010,
+        Arc                     =  0x000020,
+        Bezier                  =  0x000040,
+        Quadratic               =  0x000080,
+        Close                   =  0x000100,
+        Command                 =  0x000FFE,
 
-        Absolute                =  0x0100,
-        Relative                =  0x0200,
-        Relativity              =  0x0F00,
+        Absolute                =  0x001000,
+        Relative                =  0x002000,
+        Relativity              =  0x00F000,
 
-        Distinct                =  0x1000,
-        Continuation            =  0x2000,
-        Continuity              =  0xF000,
+        Distinct                =  0x010000,
+        Continuation            =  0x020000,
+        Continuity              =  0x0F0000,
 
-        EndOfFile               =  0xFFFF,
+        EndOfFile               =  0x100000,
     } Part;
 
 
@@ -518,6 +518,11 @@ public:
     std::vector<Point> const & operator[](size_t path) const
     {
         return _paths[path];
+    }
+
+    std::vector<std::vector<Point>> const & paths() const
+    {
+        return _paths;
     }
 };
 

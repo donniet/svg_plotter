@@ -175,7 +175,7 @@ PathParser::Part PathParser::expect_command(istream & is)
 PathParser::Part PathParser::peek(istream & is)
 {
     if(!is)
-        throw ParseError(is.tellg(), "peek on a closed input stream");
+        return EndOfFile;
     
     eat_spaces(is);
 
@@ -199,20 +199,20 @@ void PathParser::do_parse(istream & is)
 
         switch(next & Command) {
         case MoveTo:
-            do {
-                p = pen();
+            p = pen();
 
-                x = expect_number(is);
-                y = expect_number(is);
+            x = expect_number(is);
+            y = expect_number(is);
 
-                if(next & Absolute)
-                    begin_path(x, y);
-                else
-                    begin_path(p.x + x, p.y + y);
+            if(next & Absolute)
+                begin_path(x, y);
+            else
+                begin_path(p.x + x, p.y + y);
 
-            } while(peek(is) & Number);
+            // any further numbers are lines
+            if(!(peek(is) & Number))
+                break;
 
-            break;
         case LineTo:
             do {
                 p = pen();
@@ -404,7 +404,7 @@ void PathParser::quadratic_to(double x1, double y1, double x, double y)
 }
 void PathParser::begin_path(double x, double y)
 {
-    _visitor->begin(_pen.x, _pen.y);
+    _visitor->begin(x, y);
 
     _path_start = Point{x, y};
     _pen = Point{x,y};
