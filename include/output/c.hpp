@@ -14,6 +14,10 @@ private:
     std::string _name;
 
 public:
+    void add_solid(Cover const &, Style const &);
+    void add_stroke(Path const &, Style const &);
+
+public:
     COutputer(std::vector<Triangle> const & tris, std::string name = "stencil") :
         _triangles(&tris), _name(name)
     { }

@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+<style type="text/css">
+canvas {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+</style>
+<script type="text/javascript">
+const UNIFORM_RANGE            = "u_range";
+const UNIFORM_MOUSE            = "u_mouse";
+const UNIFORM_TIME             = "u_time";
+const UNIFORM_VIEW             = "u_view";
+
+const CONTEXT_NAME             = "webgl2";
+
+const IMPORT                   = "drinks.wasm";
+
+</script>
+<script type="text/javascript" src="js/v2/drawing.js"></script>
+</head>
+<body onload="load()">
+    <canvas width="768" height="1440"></canvas>
+</body>
+</html>

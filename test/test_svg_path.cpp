@@ -1,6 +1,8 @@
 #include "svg_path.hpp"
 
 #include "point.hpp"
+#include "cover.hpp"
+#include "output/stl.hpp"
 
 #include <iostream>
 #include <algorithm>
@@ -9,7 +11,7 @@
 using std::cout, std::cerr, std::endl;
 using std::for_each;
 
-struct Outputer : public PathVisitor
+struct OutputVisitor : public PathVisitor
 {
     virtual void begin(double x, double y) { 
         cout << "begin_path(" << x << " " << y << ");\n"; 
@@ -36,7 +38,7 @@ struct Outputer : public PathVisitor
 
 int main(int ac, char * av[])
 {
-    Outputer visitor;
+    OutputVisitor visitor;
     Plotter<Point> plotter;
 
     PathParser parser(plotter);
@@ -59,13 +61,26 @@ int main(int ac, char * av[])
 
     auto plot = plotter.plot();
 
-    cout << "x, y" << endl;
-    for_each(plot.begin(), plot.end(), [](auto const & path) {
-        for_each(path.begin(), path.end(), [](auto const & p) {
-            cout << p.x << ", " << p.y << endl;
-        });
-    });
+    // cout << "x, y" << endl;
+    // for_each(plot.begin(), plot.end(), [](auto const & path) {
+    //     for_each(path.begin(), path.end(), [](auto const & p) {
+    //         cout << p.x << ", " << p.y << endl;
+    //     });
+    // });
     
+    // auto triangles = mapbox::earcut(plot);
+
+    MeshCover c(plot.paths());
+
+    for(Triangle const & c : c.triangles())
+    {
+        cout << c.p0.x << ", " << c.p0.y << ",\n"
+             << c.p1.x << ", " << c.p1.y << ",\n"
+             << c.p2.x << ", " << c.p2.y << ",\n";
+    }
+
+    // cout << STLOutput(c.triangles()) << endl;
+
 
     return 0;
 }

@@ -11,12 +11,14 @@
 #include <list>
 #include <stdexcept>
 #include <cmath>
+#include <iostream>
 
 using std::vector;
 using std::list;
 using std::swap;
 using std::min, std::max;
 using std::pair;
+using std::ostream;
 
 using std::numeric_limits;
 
@@ -145,6 +147,7 @@ vector<Triangle> MeshCover::ear_clip(vector<vector<Point>> const & poly)
 
     return ret;
 }
+
 
 vector<Triangle> const & MeshCover::triangles() const
 {

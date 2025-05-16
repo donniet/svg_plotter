@@ -24,7 +24,7 @@ target_link_libraries(test_mesh mesh plotter parser fills plot_cover stroke_mesh
 add_test(mesh test_mesh)
 
 add_executable(test_mesh_cover test_mesh_cover.cpp)
-target_link_libraries(test_mesh_cover cover output parser plotter)
+target_link_libraries(test_mesh_cover cover output svg_path)
 add_test(mesh_cover test_mesh_cover)
 
 add_executable(test_line test_line.cpp)
@@ -43,5 +43,5 @@ add_executable(stl_converter stl_converter.cpp)
 target_link_libraries(stl_converter mesh)
 
 add_executable(test_svg_path test_svg_path.cpp)
-target_link_libraries(test_svg_path svg_path point)
+target_link_libraries(test_svg_path svg_path point cover output)
 

@@ -27,8 +27,10 @@ SolidRenderer.prototype.draw = function(gl, time)
         t = 1.;
 
     if(ENABLE_BLEND_PROGRAM)
+    {
         gl.clearColor(...this.clear_color);
         gl.clear(gl.COLOR_BUFFER_BIT);
+    }
 
     const animation_range = [0, t];
 

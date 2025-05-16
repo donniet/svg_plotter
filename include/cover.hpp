@@ -59,6 +59,8 @@ public:
 
     std::vector<Triangle> const & triangles() const;
 
+    void to_c(std::ostream & os) const;
+
     virtual ~MeshCover() = default;
 };
 
