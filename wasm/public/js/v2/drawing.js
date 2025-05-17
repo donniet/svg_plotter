@@ -346,7 +346,7 @@ App.prototype.uniform_at = function(u)
     const data = exports.uniform_data(u);
     const data_size = exports.uniform_data_size(u);
 
-    const array_type = exports.array_type_name(exports.uniform_gl_type(u));
+    const array_type = this.string(exports.array_type_name(exports.uniform_gl_type(u)));
 
     const v = new window[array_type](exports.memory.buffer,
         data, data_size);
@@ -494,10 +494,10 @@ Uniform.prototype.set = function(gl, value, transpose)
         if(this.is_matrix)
             gl[this.gl_setter](this.location, transpose || false, this.data);
         else
-            gl[this.gl_setter](this.location, transpose || false, this.data);
+            gl[this.gl_setter](this.location, this.data);
     else if(typeof transpose === "undefined")
         if(this.is_matrix)
-            gl[this.gl_setter](this.location, value);
+            gl[this.gl_setter](this.location, transpose || false, value);
         else
             gl[this.gl_setter](this.location, value);
     else
@@ -557,6 +557,7 @@ AttributeDef.prototype.enable = function(gl, offset = 0, stride = 0, normalized 
 
 function Shader(app, shader_ptr)
 {
+    this.app = app;
     const exports = app.exports;
 
     this.shader_ptr = shader_ptr;
@@ -589,9 +590,7 @@ function Shader(app, shader_ptr)
     for(let i = 0; i < N; i++)
     {
         const u = exports.shader_uniform(shader_ptr, i);
-        const uniform = new Uniform(
-            app.string(exports.uniform_name(u)),
-            app.string(exports.uniform_gl_setter(u)));
+        const uniform = this.app.uniform_at(u);
             
         this.uniforms.set(uniform.name, uniform);
     }
@@ -728,6 +727,8 @@ Shader.prototype.use = function(gl)
         this.compile(gl);
 
     gl.useProgram(this.program);
+
+    this.uniforms.forEach(u => u.set(gl));
 };
 
 

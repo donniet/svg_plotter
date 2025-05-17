@@ -37,19 +37,19 @@ const Shader shaders[MAX_SHADERS] = {
         .uniforms = {
             {
                 .name = "u_stop_colors",
-                .type = "vec4",
+                .type = GL_FLOAT_VEC4,
                 .data = anis_gradient_colors,
                 .data_size = sizeof(anis_gradient_colors) / sizeof(float),
             },
             {
                 .name = "u_stop_offsets",
-                .type = "float",
+                .type = GL_FLOAT,
                 .data = anis_gradient_offsets,
                 .data_size = sizeof(anis_gradient_offsets) / sizeof(float),
             },
             {
                 .name = "u_linear_gradient",
-                .type = "vec2",
+                .type = GL_FLOAT_VEC2,
                 .data = anis_gradient_linear,
                 .data_size = sizeof(anis_gradient_linear) / sizeof(float),
             },
