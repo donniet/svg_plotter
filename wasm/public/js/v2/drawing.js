@@ -27,14 +27,9 @@ function Layer(app, layer_ptr)
     for(let i = 0; i < uniform_count; i++)
     {
         const u = exports.layer_uniform(layer_ptr, i);
-        const name = app.string(exports.uniform_name(u));
-        const gl_setter = app.string(exports.uniform_gl_setter(u));
-        const data = exports.uniform_data(u);
-        const data_size = exports.uniform_data_size(u);
+        const uni = this.app.uniform_at(u);
 
-        const uni = new Uniform(name, gl_setter);
-        uni.
-        this.uniforms.set(name, )
+        this.uniforms.set(u.name, u);
     }
 
     this.draw_offset = exports.layer_draw_offset(layer_ptr);
@@ -48,6 +43,22 @@ function Layer(app, layer_ptr)
     this.vertex_array = null;
     this.element_array = null;
     this.vao = null;
+}
+
+Layer.prototype.uniform = function(name, type, value)
+{
+    if(!this.uniforms.has(name)) 
+    {
+        const u = new Uniform(name, type, value);
+        if(this.shader != null)
+            u.load_from(this.shader);
+        this.uniforms.set(name, u);
+        return u;
+    }
+
+    const u = this.uniforms.get(name);
+    u.data = value;
+    return u;
 }
 
 Layer.prototype.vertex_array_object = function()
@@ -65,6 +76,7 @@ Layer.prototype.load = function(gl)
 
     // lookup our attributes
     this.attributes.forEach(att => att.load_from(this.shader));
+    this.uniforms.forEach(uni => uni.load_from(this.shader));
 
     // create vertex_array_object
     this.vao = gl.createVertexArray();
@@ -80,6 +92,9 @@ Layer.prototype.load = function(gl)
 
 Layer.prototype.draw = function(gl, range)
 {
+    // set our app uniforms
+    this.uniforms.forEach(uniform => uniform.set(gl));
+
     // decide whether we draw arrays or elements
     gl.drawArrays(this.draw_mode, 
         this.draw_offset, this.draw_count);
@@ -119,6 +134,19 @@ function Drawing(app, drawing_ptr)
     this.clear_bits = exports.drawing_clear_bits(drawing_ptr);
 }
 
+Drawing.prototype.uniform = function(name, type, value)
+{
+    if(!this.uniforms.has(name))
+    {
+        const u = new Uniform(name, type, value);
+        this.uniforms.set(name, u);
+        return u;
+    }
+
+    const u = this.uniforms.get(name);
+    u.data = value;
+    return u;
+}
 
 Drawing.prototype.clear = function(gl)
 {
@@ -127,16 +155,6 @@ Drawing.prototype.clear = function(gl)
 
     gl.clearColor(...this.clear_color);
     gl.clear(this.clear_bits);
-};
-
-Drawing.prototype.uniform = function(name, type)
-{
-    if(this.uniforms.has(name))
-        return this.uniforms.get(name);
-
-    const u = new Uniform(name, gl_uniform_method_for(type));
-    this.uniforms.set(name, u);
-    return u;
 };
 
 Drawing.prototype.load = function(gl)
@@ -154,13 +172,13 @@ Drawing.prototype.draw = function(gl, range)
         // the drawing controls the use of programs to allow for optimization later
         const vao = layer.vertex_array_object(gl);
 
+        this.uniforms.forEach(u => 
+            layer.uniform(u.name, u.type, u.data));
+
         layer.shader.use(gl);
 
         gl.bindVertexArray(vao);
-        
-        // set our app uniforms
-        this.uniforms.forEach(uniform => uniform.set(gl));
-
+    
         layer.draw(gl, range);
     });
 };
@@ -186,11 +204,9 @@ Drink.prototype.viewport = function(x0, y0, x1, y1)
 };
 Drink.prototype.draw = function(gl, range)
 {
+    this.drawing.uniform(UNIFORM_DRINK_POSITION, "vec2", this.position);
+
     this.drawing.draw(gl, range);
-};
-Drink.prototype.uniform = function(name, type) 
-{
-    return this.drawing.uniform(name, type);
 };
 Drink.prototype.set_position = function(pos)
 {
@@ -213,6 +229,7 @@ function App()
     };
 }
 
+
 App.prototype.draw = function(range)
 {
     let resized = this.resize_canvas(this.gl, 
@@ -222,9 +239,6 @@ App.prototype.draw = function(range)
     this.drinks.forEach(drink => {
         if(resized)
             drink.viewport(...this.viewport_dimensions);
-
-        drink.uniform(UNIFORM_VIEW, 'mat3').set(
-            view_from(this.canvas_size, drink.position));
 
         drink.draw(this.gl, range);
     });
@@ -251,6 +265,8 @@ App.prototype.init = async function(mod)
     // helper function for extracting strings
     this.string = s => 
         string_from_wasm(exports, s, exports.string_length(s));
+
+    
 
     this.shaders = new Map();
     const shader_count = exports.shader_count();
@@ -312,9 +328,31 @@ App.prototype.init = async function(mod)
     this.arrays.forEach(arr => arr.load(this.gl));
 
     console.log(`loading drawings...`);
-    this.drinks.forEach(drink => drink.load(this.gl));
-    this.locations.forEach(location => location.load(this.gl));
+    this.drinks.forEach(drink => {
+        drink.drawing.uniform(UNIFORM_VIEW, "mat3", view_from(this.canvas_size));
+        drink.load(this.gl);
+    });
+    this.locations.forEach(location => {
+        location.drawing.uniform(UNIFORM_VIEW, "mat3", view_from(this.canvas_size));
+        location.load(this.gl);
+    });
 };
+
+App.prototype.uniform_at = function(u)
+{
+    const exports = this.exports;
+    const name = this.string(exports.uniform_name(u));
+    const type = this.string(exports.uniform_type(u));
+    const data = exports.uniform_data(u);
+    const data_size = exports.uniform_data_size(u);
+
+    const array_type = exports.array_type_name(exports.uniform_gl_type(u));
+
+    const v = new window[array_type](exports.memory.buffer,
+        data, data_size);
+
+    return new Uniform(name, type, v);
+}
 
 App.prototype.shader = function(name)
 {
@@ -416,13 +454,20 @@ DataArray.prototype.bind = function(gl)
     gl.bindBuffer(this.target, this.buffer);
 }
 
-function Uniform(name, type)
+
+function Uniform(name, type, data = null, location = null)
 {
     this.name = name;
     this.type = type;
     this.gl_setter = gl_uniform_method_for(type);
-    this.data = null;
-    this.location = null;
+    this.data = data;
+    this.location = location;
+    this.is_matrix = gl_uniform_is_matrix(type);
+}
+
+Uniform.prototype.load_from = function(shader)
+{
+    this.location = shader.uniform_location(this.name);
 }
 
 Uniform.prototype.set = function(gl, value, transpose) 
@@ -439,10 +484,22 @@ Uniform.prototype.set = function(gl, value, transpose)
         return;
     }
 
+    if(typeof value === "undefined" && this.data == null)
+    {
+        console.log(`no value set for uniform "${this.name}"`);
+        return;
+    }
+
     if(typeof value === "undefined")
-        gl[this.gl_setter](this.location, this.data);
+        if(this.is_matrix)
+            gl[this.gl_setter](this.location, transpose || false, this.data);
+        else
+            gl[this.gl_setter](this.location, transpose || false, this.data);
     else if(typeof transpose === "undefined")
-        gl[this.gl_setter](this.location, value);
+        if(this.is_matrix)
+            gl[this.gl_setter](this.location, value);
+        else
+            gl[this.gl_setter](this.location, value);
     else
         gl[this.gl_setter](this.location, transpose, value);
 }
@@ -551,6 +608,7 @@ function Shader(app, shader_ptr)
         this.attributes.set(att.name, att);
     }
     this.program = null;
+    this.gl = null;
 }
 
 Shader.prototype.attribute_definition = function(name)
@@ -564,7 +622,7 @@ Shader.prototype.uniform = function(uniform_name, base_type = "float")
 
     if(typeof u == "undefined")    
     {
-        u = new Uniform(uniform_name, gl_uniform_method_for(base_type));
+        u = new Uniform(uniform_name, base_type);
         if(this.program != null)
             this.gl.getUniformLocation(this.program, uniform_name);
 
@@ -572,6 +630,11 @@ Shader.prototype.uniform = function(uniform_name, base_type = "float")
     }
 
     return u;
+}
+
+Shader.prototype.uniform_location = function(uniform_name)
+{
+    return this.gl.getUniformLocation(this.program, uniform_name);
 }
 
 Shader.prototype.insert_defines = function(source) 
@@ -815,6 +878,11 @@ function view_from(drawing_size, position)
     ]);
 }
 
+
+function gl_uniform_is_matrix(base_type)
+{
+    return base_type.startsWith("mat");
+}
 
 function gl_uniform_method_for(base_type)
 {

@@ -9,11 +9,8 @@
 // this include does not work due to the lack of libc
 // #include <GL/glext.h>
 /* glext defines */
-#define GL_FRAGMENT_SHADER                0x8B30
-#define GL_VERTEX_SHADER                  0x8B31
-#define GL_ARRAY_BUFFER                   0x8892
-#define GL_ELEMENT_ARRAY_BUFFER           0x8893
 
+#include "glext.h"
 
 #define NULL (0x0)
 
@@ -39,23 +36,11 @@ typedef unsigned int uint;
 typedef unsigned int uint32;
 typedef unsigned short uint16;
 
-typedef enum {
-    Bool, Int, Uint, Float, Double,
-    Bvec2, Bvec3, Bvec4,
-    Ivec2, Ivec3, Ivec4,
-    Uvec2, Uvec3, Uvec4,
-    Vec2, Vec3, Vec4,
-    Dvec2, Dvec3, Dvec4,
-    Mat2, Mat2x2, Mat2x3, Mat2x4,
-    Mat3, Mat3x2, Mat3x3, Mat3x4,
-    Mat4, Mat4x2, Mat4x3, Mat4x4,
-} VariableType;
-
 extern uint string_length(const char *);
 extern int string_compare(const char *, const char *);
 
-extern const char * variable_type_name(VariableType);
-extern VariableType variable_type_from(const char *);
+extern const char * variable_type_name(GLenum);
+extern GLenum variable_type_from(const char *);
 
 extern const char *     array_type_name(GLenum);
 
@@ -104,17 +89,18 @@ extern const void *     attribute_offset(const Attribute *);
  */
 typedef struct {
     const char * name;
-    const char * type;
+    GLenum type;
     const void * data;
     const uint data_size;
 } Uniform;
 
 extern const char *     uniform_name(const Uniform *);
 extern const char *     uniform_type(const Uniform *);
+extern GLenum           uniform_gl_type(const Uniform *);
 extern const char *     uniform_gl_setter(const Uniform *);
 extern const void *     uniform_data(const Uniform *);
 extern uint             uniform_data_size(const Uniform *);
-extern const char *     uniform_setter_from_type(const char *);
+extern const char *     uniform_setter_from_type(GLenum);
 
 /**
  * Define structure

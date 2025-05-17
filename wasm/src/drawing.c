@@ -43,222 +43,209 @@ int string_compare(const char * a, const char * b)
     return 0;
 }
 
-const char * variable_type_name(VariableType t)
+const char * variable_type_name(GLenum t)
 {
     switch(t) 
     {
-    case Bool:      return "bool";
-    case Int:       return "int";
-    case Uint:      return "uint";
-    case Float:     return "float";
-    case Double:    return "double";
+    case GL_INT:                return "int";
+    case GL_UNSIGNED_INT:       return "uint";
+    case GL_FLOAT:              return "float";
+    case GL_DOUBLE:             return "double";
     
-    case Bvec2:     return "bvec2";
-    case Bvec3:     return "bvec3";
-    case Bvec4:     return "bvec4";
+    case GL_INT_VEC2:     return "ivec2";
+    case GL_INT_VEC3:     return "ivec3";
+    case GL_INT_VEC4:     return "ivec4";
     
-    case Ivec2:     return "ivec2";
-    case Ivec3:     return "ivec3";
-    case Ivec4:     return "ivec4";
+    case GL_UNSIGNED_INT_VEC2:     return "uvec2";
+    case GL_UNSIGNED_INT_VEC3:     return "uvec3";
+    case GL_UNSIGNED_INT_VEC4:     return "uvec4";
     
-    case Uvec2:     return "uvec2";
-    case Uvec3:     return "uvec3";
-    case Uvec4:     return "uvec4";
+    case GL_FLOAT_VEC2:      return "vec2";
+    case GL_FLOAT_VEC3:      return "vec3";
+    case GL_FLOAT_VEC4:      return "vec4";
     
-    case Vec2:      return "vec2";
-    case Vec3:      return "vec3";
-    case Vec4:      return "vec4";
+    case GL_DOUBLE_VEC2:     return "dvec2";
+    case GL_DOUBLE_VEC3:     return "dvec3";
+    case GL_DOUBLE_VEC4:     return "dvec4";
     
-    case Dvec2:     return "dvec2";
-    case Dvec3:     return "dvec3";
-    case Dvec4:     return "dvec4";
+    case GL_FLOAT_MAT2:      return "mat2";
+    case GL_FLOAT_MAT2x3:    return "mat2x3";
+    case GL_FLOAT_MAT2x4:    return "mat2x4";
     
-    case Mat2:      return "mat2";
-    case Mat2x2:    return "mat2x2";
-    case Mat2x3:    return "mat2x3";
-    case Mat2x4:    return "mat2x4";
+    case GL_FLOAT_MAT3:      return "mat3";
+    case GL_FLOAT_MAT3x2:    return "mat3x2";
+    case GL_FLOAT_MAT3x4:    return "mat3x4";
     
-    case Mat3:      return "mat3";
-    case Mat3x2:    return "mat3x2";
-    case Mat3x3:    return "mat3x3";
-    case Mat3x4:    return "mat3x4";
-    
-    case Mat4:      return "mat4";
-    case Mat4x2:    return "mat4x2";
-    case Mat4x3:    return "mat4x3";
-    case Mat4x4:    return "mat4x4";
+    case GL_FLOAT_MAT4:      return "mat4";
+    case GL_FLOAT_MAT4x2:    return "mat4x2";
+    case GL_FLOAT_MAT4x3:    return "mat4x3";
     }
 
     return NULL;
 }
-VariableType variable_type_from(const char * s)
+
+GLenum variable_type_from(const char * s)
 {
     uint l = string_length(s);
     
-    VariableType el = Float;
+    GLenum el = GL_FLOAT;
     int size1 = 1;
     int size2 = 1;
 
     switch(s[0]) {
-    case 'b': el = Bool; break;
-    case 'i': el = Int; break;
-    case 'u': el = Uint; break;
-    case 'd': el = Double; break;
+    case 'b': el = GL_BOOL; break;
+    case 'i': el = GL_INT; break;
+    case 'u': el = GL_UNSIGNED_INT; break;
+    case 'd': el = GL_DOUBLE; break;
     case 'f':
     default:
-        el = Float; 
+        el = GL_FLOAT; 
         break;
     }
 
     switch(el) {
-    case Bool: 
+    case GL_BOOL: 
         if(s[1] == 'o') 
-            return Bool;
+            return GL_BOOL;
 
         switch(s[4]) {
-        case '2': return Bvec2;
-        case '3': return Bvec3;
-        case '4': return Bvec4;
+        case '2': return GL_BOOL_VEC2;
+        case '3': return GL_BOOL_VEC3;
+        case '4': return GL_BOOL_VEC4;
         }
         break;
-    case Int:
+    case GL_INT:
         if(s[1] == 'n')
-            return Int;
+            return GL_INT;
 
         switch(s[4]) {
-        case '2': return Ivec2;
-        case '3': return Ivec3;
-        case '4': return Ivec4;
+        case '2': return GL_INT_VEC2;
+        case '3': return GL_INT_VEC3;
+        case '4': return GL_INT_VEC4;
         }
         break;
-    case Uint:
+    case GL_UNSIGNED_INT:
         if(s[1] == 'i')
-            return Uint;
+            return GL_UNSIGNED_INT;
 
         switch(s[4]) {
-        case '2': return Uvec2;
-        case '3': return Uvec3;
-        case '4': return Uvec4;
+        case '2': return GL_UNSIGNED_INT_VEC2;
+        case '3': return GL_UNSIGNED_INT_VEC3;
+        case '4': return GL_UNSIGNED_INT_VEC4;
         }
         break;
-    case Double:
+    case GL_DOUBLE:
         if(s[1] == 'o')
-            return Double;
+            return GL_DOUBLE;
 
         switch(s[4]) {
-        case '2': return Dvec2;
-        case '3': return Dvec3;
-        case '4': return Dvec4;
+        case '2': return GL_DOUBLE_VEC2;
+        case '3': return GL_DOUBLE_VEC3;
+        case '4': return GL_DOUBLE_VEC4;
         }
         break;
-    case Float:
+    case GL_FLOAT:
         switch(s[0]) {
         case 'm':
             switch(s[3]) {
             case '2': 
                 if(l == 4)
-                    return Mat2;
+                    return GL_FLOAT_MAT2;
                 
                 switch(s[5]) {
-                case '2': return Mat2x2;
-                case '3': return Mat2x3;
-                case '4': return Mat2x4;
+                case '2': return GL_FLOAT_MAT2;
+                case '3': return GL_FLOAT_MAT2x3;
+                case '4': return GL_FLOAT_MAT2x4;
                 }
                 break;
             case '3':
                 if(l == 4)
-                    return Mat3;
+                    return GL_FLOAT_MAT3;
                 
                 switch(s[5]) {
-                case '2': return Mat3x2;
-                case '3': return Mat3x3;
-                case '4': return Mat3x4;
+                case '2': return GL_FLOAT_MAT3x2;
+                case '3': return GL_FLOAT_MAT3;
+                case '4': return GL_FLOAT_MAT3x4;
                 }
                 break;
             case '4':
                 if(l == 4)
-                    return Mat4;
+                    return GL_FLOAT_MAT4;
                 
                 switch(s[5]) {
-                case '2': return Mat4x2;
-                case '3': return Mat4x3;
-                case '4': return Mat4x4;
+                case '2': return GL_FLOAT_MAT4x2;
+                case '3': return GL_FLOAT_MAT4x3;
+                case '4': return GL_FLOAT_MAT4;
                 }
                 break;
             }
             break;
         case 'v':
             switch(s[3]) {
-            case '2': return Vec2;
-            case '3': return Vec3;
-            case '4': return Vec4;
+            case '2': return GL_FLOAT_VEC2;
+            case '3': return GL_FLOAT_VEC3;
+            case '4': return GL_FLOAT_VEC4;
             }
             break;
         } 
     }
-    return Float;
+    return GL_FLOAT;
 }
 
-const char * uniform_setter_from_type(const char * t)
+const char * uniform_setter_from_type(GLenum v)
 {
-    VariableType v = variable_type_from(t);
-
     switch(v) {
-    case Bool:
-    case Int:
+    case GL_BOOL:
+    case GL_INT:
         return "uniform1iv";
-    case Uint:
+    case GL_UNSIGNED_INT:
         return "uniform1uv";
-    case Float:
-    case Double:
+    case GL_HALF_FLOAT:
+    case GL_FLOAT:
+    case GL_DOUBLE:
         return "uniform1fv";
-    case Bvec2:
-    case Ivec2:
+    case GL_BOOL_VEC2:
+    case GL_INT_VEC2:
         return "uniform2iv";
-    case Uvec2:
+    case GL_UNSIGNED_INT_VEC2:
         return "uniform2uv";
-    case Vec2:
-    case Dvec2:
+    case GL_FLOAT_VEC2:
+    case GL_DOUBLE_VEC2:
         return "uniform2fv";
-    case Bvec3:
-    case Ivec3:
+    case GL_BOOL_VEC3:
+    case GL_INT_VEC3:
         return "uniform3iv";
-    case Uvec3:
+    case GL_UNSIGNED_INT_VEC3:
         return "uniform3uv";
-    case Vec3:
-    case Dvec3:
+    case GL_FLOAT_VEC3:
+    case GL_DOUBLE_VEC3:
         return "uniform3fv";
-    case Bvec4:
-    case Ivec4:
+    case GL_BOOL_VEC4:
+    case GL_INT_VEC4:
         return "uniform4iv";
-    case Uvec4:
+    case GL_UNSIGNED_INT_VEC4:
         return "uniform4uv";
-    case Vec4:
-    case Dvec4:
+    case GL_FLOAT_VEC4:
+    case GL_DOUBLE_VEC4:
         return "uniform4fv";
-    case Mat2:
-    case Mat2x2:
+    case GL_FLOAT_MAT2:
         return "uniformMatrix2fv";
-    case Mat3:
+    case GL_FLOAT_MAT3:
         return "uniformMatrix3fv";
-    case Mat4:
+    case GL_FLOAT_MAT4:
         return "uniformMatrix4fv";
-    case Mat2x3:
+    case GL_FLOAT_MAT2x3:
         return "uniformMatrix2x3fv";
-    case Mat2x4:
+    case GL_FLOAT_MAT2x4:
         return "uniformMatrix2x4fv";
-    case Mat3x2:
+    case GL_FLOAT_MAT3x2:
         return "uniformMatrix3x2fv";
-    case Mat3x3:
-        return "uniformMatrix3x3fv";
-    case Mat3x4:
+    case GL_FLOAT_MAT3x4:
         return "uniformMatrix3x4fv";
-    case Mat4x2:
+    case GL_FLOAT_MAT4x2:
         return "uniformMatrix4x2fv";
-    case Mat4x3:
+    case GL_FLOAT_MAT4x3:
         return "uniformMatrix4x3fv";
-    case Mat4x4:
-        return "uniformMatrix4x4fv";
     }
 
     return "uniform1fv";
@@ -269,20 +256,50 @@ const char * array_type_name(GLenum array_type)
     switch(array_type)
     {
     case GL_DOUBLE:
+    case GL_DOUBLE_VEC2:
+    case GL_DOUBLE_VEC3:
+    case GL_DOUBLE_VEC4:
+    case GL_DOUBLE_MAT2:
+    case GL_DOUBLE_MAT2x3:
+    case GL_DOUBLE_MAT2x4:
+    case GL_DOUBLE_MAT3x2:
+    case GL_DOUBLE_MAT3:
+    case GL_DOUBLE_MAT3x4:
+    case GL_DOUBLE_MAT4x2:
+    case GL_DOUBLE_MAT4x3:
+    case GL_DOUBLE_MAT4:
         return "Float64Array";
     case GL_FLOAT:
+    case GL_FLOAT_VEC2:
+    case GL_FLOAT_VEC3:
+    case GL_FLOAT_VEC4:
+    case GL_FLOAT_MAT2:
+    case GL_FLOAT_MAT2x3:
+    case GL_FLOAT_MAT2x4:
+    case GL_FLOAT_MAT3x2:
+    case GL_FLOAT_MAT3:
+    case GL_FLOAT_MAT3x4:
+    case GL_FLOAT_MAT4x2:
+    case GL_FLOAT_MAT4x3:
+    case GL_FLOAT_MAT4:
         return "Float32Array";
     #ifdef GL_HALF_FLOAT
     case GL_HALF_FLOAT:
         return "Float16Array";
     #endif
     case GL_INT:
+    case GL_INT_VEC2:
+    case GL_INT_VEC3:
+    case GL_INT_VEC4:
         return "Int32Array";
     case GL_SHORT:
         return "Int16Array";
     case GL_BYTE:
         return "Int8Array";
     case GL_UNSIGNED_INT:
+    case GL_UNSIGNED_INT_VEC2:
+    case GL_UNSIGNED_INT_VEC3:
+    case GL_UNSIGNED_INT_VEC4:
         return "Uint32Array";
     case GL_UNSIGNED_SHORT:
         return "Uint16Array";
@@ -359,6 +376,10 @@ const char * uniform_name(const Uniform * u)
     return u->name;
 }
 const char * uniform_type(const Uniform * u)
+{
+    return variable_type_name(u->type);
+}
+GLenum uniform_gl_type(const Uniform * u)
 {
     return u->type;
 }
