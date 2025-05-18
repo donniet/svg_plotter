@@ -21,6 +21,20 @@ const float anis_gradient_linear[] = {
 	0, 514.28601, // 400, 
 };
 
+const float anis_top_gradient_colors_hsl[] = {
+	  0. / 360,   0. / 100,  82. / 100,  10. / 100,
+	  0. / 360,   0. / 100,  82. / 100, 100. / 100,
+};
+
+const float anis_top_gradient_offsets[] = {
+	0.2788, 1.,
+};
+
+const float anis_top_gradient_linear[] = {
+	0, 461.88181, 
+	0, 420.68188, 
+};
+
 const Blend anis_blend = {
     .color = { 0., 0., 0., 0. },
     .equation_alpha = GL_FUNC_ADD,
@@ -57,10 +71,37 @@ const Shader shaders[MAX_SHADERS] = {
                 .type = GL_FLOAT,
             }
         },
+    },
+    {
+        .name = "solid_gradient_2", 
+        .shader_files = {
+            {
+                .path = "solid_gradient.vertex",
+                .shader_type = GL_VERTEX_SHADER,
+            },
+            {
+                .path = "solid_gradient.fragment",
+                .shader_type = GL_FRAGMENT_SHADER,
+            }
+        },
+        .defines = {
+            {
+                .name = "STOPS",
+                .value = "2",
+            }
+        },
+        .attributes = {
+            {
+                .name = "a_position",
+                .size = 2,
+                .type = GL_FLOAT,
+            }
+        },
     }
 };
 
 const float anis_vertex_data[] = {
+    // <drink_bottom>
     262.416, 476.271,
     262.683, 474.106,
     263.115, 471.963,
@@ -192,7 +233,43 @@ const float anis_vertex_data[] = {
     302.31, 511.645,
     262.416, 476.271,
     302.31, 511.645,
-    262.325, 478.45,      
+    262.325, 478.45,
+    // </drink_bottom>
+    // <drink_top>
+    344.499, 419.93,
+    355.535, 435.764,
+    355.535, 435.764,
+    355.535, 435.764,
+    371.832, 459.111,
+    373.654, 461.882,
+    373.654, 461.882,
+    267.339, 461.882,
+    269.16, 459.111,
+    274.655, 451.374,
+    280.054, 443.566,
+    285.458, 435.764,
+    292.819, 425.21,
+    296.494, 419.93,
+    344.499, 419.93,
+    344.499, 419.93,
+    355.535, 435.764,
+    373.654, 461.882,
+    373.654, 461.882,
+    269.16, 459.111,
+    274.655, 451.374,
+    274.655, 451.374,
+    285.458, 435.764,
+    289.142, 430.489,
+    289.142, 430.489,
+    292.819, 425.21,
+    344.499, 419.93,
+    344.499, 419.93,
+    373.654, 461.882,
+    274.655, 451.374,
+    274.655, 451.374,
+    289.142, 430.489,
+    344.499, 419.93, 
+    // </drink_top>
 };
 
 const Array arrays[MAX_ARRAYS] = {
@@ -247,6 +324,41 @@ const Drink drinks[] = {
                             .data_size = sizeof(anis_gradient_linear) / sizeof(float),
                         },
                     },
+                },
+                {
+                    .shader_name = "solid_gradient_2",
+                    .vertex_array_name = "anis_drink_background_vertex",
+                    .element_array_name = NULL,
+                    .draw_mode = GL_TRIANGLES,
+                    .range = { 132, 165 },
+                    .attributes = {
+                        {
+                            .name = "a_position",
+                            .normalized = GL_FALSE,
+                            .stride = 2 * 4,
+                            .offset = 0,
+                        }
+                    },
+                    .uniforms = {
+                        {
+                            .name = "u_stop_colors",
+                            .type = GL_FLOAT_VEC4,
+                            .data = anis_top_gradient_colors_hsl,
+                            .data_size = sizeof(anis_top_gradient_colors_hsl) / sizeof(float),
+                        },
+                        {
+                            .name = "u_stop_offsets",
+                            .type = GL_FLOAT,
+                            .data = anis_top_gradient_offsets,
+                            .data_size = sizeof(anis_top_gradient_offsets) / sizeof(float),
+                        },
+                        {
+                            .name = "u_linear_gradient",
+                            .type = GL_FLOAT_VEC2,
+                            .data = anis_top_gradient_linear,
+                            .data_size = sizeof(anis_top_gradient_linear) / sizeof(float),
+                        },
+                    }
                 }
             },
             .blend = &anis_blend,

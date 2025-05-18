@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <execution>
 #include <cmath>
+#include <list>
 
 namespace detail 
 {
@@ -288,9 +289,10 @@ public:
 
 template<typename Point, typename Func>
 std::vector<Point> plot_with_curvature_limit(Func && f, 
-                                            double max_curvature = 0.02, 
+                                            double min_curvature = 0.1,
+                                            double max_curvature = 0.8, 
                                             double t0 = 0., double t1 = 1., 
-                                            size_t minimum_points = 2,
+                                            size_t minimum_points = 16,
                                             size_t maximum_points = 1UL << 15)
 {
     using std::for_each;
@@ -299,41 +301,70 @@ std::vector<Point> plot_with_curvature_limit(Func && f,
 
     using std::sqrt, std::abs;
 
-    std::vector<Point> ret;
-    std::vector<double> curv;
+    std::list<Point> ret;
+    std::list<double> curv;
 
     for(size_t N = minimum_points; N < maximum_points; N <<= 1)
     {
         ret.resize(N);
-        for_each(ret.begin(), ret.end(), [&f, &ret, t0, t1, N](Point & p) 
+        size_t gid = 0;
+        for(auto i = ret.begin(); i != ret.end(); i++, gid++)
         {
-            size_t gid = std::distance(&ret[0], &p);
-
-            p = f(t0 + (double)gid / (double)(N-1) * (t1 - t0));
-        });
+            *i = f(t0 + (double)gid / (double)(N-1) * (t1 - t0));
+        }
         
         curv.resize(N);
-        curv[0] = 0.;
-        transform(ret.begin() + 1, ret.end(), curv.begin() + 1, [ret](Point const & p) -> double
+        *curv.begin() = 0.;
+
+        auto prev = ret.begin();
+        auto i = prev; ++i;
+        auto j = curv.begin(); ++j;
+
+        gid = 1;
+        for(; gid < N - 1; gid++, i++, j++) 
         {
-            size_t gid = std::distance(&ret[0], &p);
+            Point p0 = *prev;
+            Point p1 = *i;
 
-            Point p0 = ret[gid - 1];
+            auto k = i;
+            k++;
+            Point p2 = *k;
 
-            double l0 = sqrt(p0[0] * p0[0] + p0[1] * p0[1]);
-            double l = sqrt(p[0] * p[0] + p[1] * p[1]);
-            
-            // take the cross product
-            return abs(p0[0] * p[1] - p0[1] * p[0]) / l0 / l;
-        });
+            Point v0 = p1 - p0;
+            Point v1 = p2 - p1;
 
-        auto i = max_element(curv.begin(), curv.end());
+            double l0 = sqrt(v0[0]*v0[0] + v0[1]*v0[1]);
+            double l1 = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
 
-        if(*i <= max_curvature)
+            // cross product;
+            *j = abs(v0[0] * v1[1] - v0[1] * v1[0]) / l0 / l1;
+        }
+        *j = 0.;
+    
+        j = max_element(curv.begin(), curv.end());
+
+        if(*j <= max_curvature)
             break;
     }
 
-    return ret;
+    // remove points with low curvature
+    auto i = ret.begin();
+    auto j = curv.begin();
+    i++; j++; // start at the second point
+              // and skip the last point
+    for(size_t k = 1; k < ret.size() - 1; k++)
+    {
+        auto ii = i++;
+        auto jj = j++;
+
+        if(*jj < min_curvature) 
+        {
+            ret.erase(ii);
+            curv.erase(jj);
+        }
+    }
+
+    return std::vector<Point>(ret.begin(), ret.end());
 }
 
 template<detail::Vector Point>
