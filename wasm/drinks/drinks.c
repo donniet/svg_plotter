@@ -17,14 +17,14 @@ const float anis_gradient_linear[] = {
 
 const Shader shaders[MAX_SHADERS] = {
     {
-        .name = "anis_solid_gradient", 
+        .name = "solid_gradient_3", 
         .shader_files = {
             {
-                .path = "shaders/solid_gradient.vertex",
+                .path = "solid_gradient.vertex",
                 .shader_type = GL_VERTEX_SHADER,
             },
             {
-                .path = "shaders/solid_gradient.fragment",
+                .path = "solid_gradient.fragment",
                 .shader_type = GL_FRAGMENT_SHADER,
             }
         },
@@ -33,26 +33,6 @@ const Shader shaders[MAX_SHADERS] = {
                 .name = "STOPS",
                 .value = "3",
             }
-        },
-        .uniforms = {
-            {
-                .name = "u_stop_colors",
-                .type = GL_FLOAT_VEC4,
-                .data = anis_gradient_colors,
-                .data_size = sizeof(anis_gradient_colors) / sizeof(float),
-            },
-            {
-                .name = "u_stop_offsets",
-                .type = GL_FLOAT,
-                .data = anis_gradient_offsets,
-                .data_size = sizeof(anis_gradient_offsets) / sizeof(float),
-            },
-            {
-                .name = "u_linear_gradient",
-                .type = GL_FLOAT_VEC2,
-                .data = anis_gradient_linear,
-                .data_size = sizeof(anis_gradient_linear) / sizeof(float),
-            },
         },
         .attributes = {
             {
@@ -218,7 +198,7 @@ const Drink drinks[] = {
             .layers = {
                 {
                     // glass
-                    .shader_name = "anis_solid_gradient",
+                    .shader_name = "solid_gradient_3",
                     .vertex_array_name = "anis_drink_background_vertex",
                     .element_array_name = NULL,
                     .draw_mode = GL_TRIANGLES,
@@ -230,6 +210,26 @@ const Drink drinks[] = {
                             .stride = 2 * 4,
                             .offset = 0,
                         }
+                    },
+                    .uniforms = {
+                        {
+                            .name = "u_stop_colors",
+                            .type = GL_FLOAT_VEC4,
+                            .data = anis_gradient_colors,
+                            .data_size = sizeof(anis_gradient_colors) / sizeof(float),
+                        },
+                        {
+                            .name = "u_stop_offsets",
+                            .type = GL_FLOAT,
+                            .data = anis_gradient_offsets,
+                            .data_size = sizeof(anis_gradient_offsets) / sizeof(float),
+                        },
+                        {
+                            .name = "u_linear_gradient",
+                            .type = GL_FLOAT_VEC2,
+                            .data = anis_gradient_linear,
+                            .data_size = sizeof(anis_gradient_linear) / sizeof(float),
+                        },
                     },
                 }
             },

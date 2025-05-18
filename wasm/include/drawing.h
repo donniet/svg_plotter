@@ -36,11 +36,11 @@ typedef unsigned int uint;
 typedef unsigned int uint32;
 typedef unsigned short uint16;
 
-extern uint string_length(const char *);
-extern int string_compare(const char *, const char *);
+extern uint             string_length(const char *);
+extern int              string_compare(const char *, const char *);
 
-extern const char * variable_type_name(GLenum);
-extern GLenum variable_type_from(const char *);
+extern const char *     variable_type_name(GLenum);
+extern GLenum           variable_type_from(const char *);
 
 extern const char *     array_type_name(GLenum);
 

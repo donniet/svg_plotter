@@ -1,90 +1,49 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-    <head>
-        <meta charset='UTF-8' />
-        <meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0' />
-        <meta http-equiv='X-UA-Compatible' content='ie=edge' />
-        <title>Drawing</title>
-
+<head>
+<meta charset='UTF-8' />
+<meta name='viewport' content='width=device-width, height=device-height, initial-scale=1.0' />
+<meta http-equiv='X-UA-Compatible' content='ie=edge' />
+<title>Drawing</title>
 <style type="text/css">
 body {
     margin: 0;
     padding: 0;
     background-color: rgba(0.1, 0.1, 0.1, 1.);
 }
-
 canvas {
     margin: 0;
+    padding: 0;
     width: 100vw;
     height: 100vh;
 }
-
-/* canvas { position: absolute; left: 0; right: 0; } */
 </style>
-
 <script type="text/javascript">
+const UNIFORM_RANGE            = "u_range";
+const UNIFORM_MOUSE            = "u_mouse";
+const UNIFORM_TIME             = "u_time";
+const UNIFORM_VIEW             = "u_view";
+const UNIFORM_DRINK_POSITION   = "u_drink_position";
 
-  const UV_RANGE_UNIFORM_NAME               = "u_uv_range";
-  const STROKE_LENGTH_UNIFORM_NAME          = "u_stroke_length";
-  const RANGE_UNIFORM_NAME                  = "u_range";
-  const VIEW_UNIFORM_NAME                   = "u_view";
-  const RESOLUTION_UNIFORM_NAME             = "u_resolution";
-  const BRUSH_SIZE_UNIFORM_NAME             = "u_brush_size";
-  const BRUSH_COLOR_UNIFORM_NAME            = "u_brush_color";
-  const DRAW_DURATION_UNIFORM_NAME          = "u_draw_time";
-  const MOUSE_UNIFORM_NAME                  = "u_mouse";
-  const MOUSE_STATE_UNIFORM_NAME            = "u_mouse_state";
-  const TIME_UNIFORM_NAME                   = "u_time";
-  const BACKGROUND_TEXTURE_UNIFORM_NAME     = "u_background_texture";
-  const MIXBOX_LUT_UNIFORM_NAME             = "mixbox_lut";
+const CONTEXT_NAME             = "webgl2";
 
-  const POSITION_ATTRIBUTE_NAME             = "a_position";
-  const SECTION_ATTRIBUTE_NAME              = "a_section";
-  const UV_ATTRIBUTE_NAME                   = "a_uv";
+const IMPORT                   = "drinks.wasm";
 
-  const DEFAULT_DRAWING_SIZE                = [ 640, 816 ];
-  const DEFAULT_DRAW_MODE                   = "triangle_strip";
-  const DEFAULT_LAYER_NAME                  = "layer";
-  const DEFAULT_BRUSH_SIZE                  = 25.;
-  const DEFAULT_MOUSE_ACTIONS               = [ "move", "down", "up", "over", "leave", "wheel", "enter" ];
-  const SHADER_TYPES                        = [ "VERTEX_SHADER", "FRAGMENT_SHADER" ];
-  const WEBGL_CONTEXT_NAME                  = "webgl2";
-
-  const FLOAT_BYTES                         = 4;
-  const THROTTLE_FRAMES                     = true;
-
-  const RENDER_DRAWING                      = true;
-  const RENDER_SOLIDS                       = false;
-
-  const DEFAULT_DRAWING                     = "arc.wasm";
-//   const DEFAULT_SOLID                       = "background.wasm";
-  const DEFAULT_SOLID                       = "drinks.wasm";
-
-  const MIXING_LOOKUP_TABLE                 = "./mixbox_lut.png";
-
-  const DRAWING_VERTEX_SHADER               = "./shaders/draw.vertex";
-  const DRAWING_FRAGMENT_SHADER             = "./shaders/draw.fragment";
-
-  const SOLID_VERTEX_SHADER                 = "./shaders/solid.vertex";
-  const SOLID_FRAGMENT_SHADER               = "./shaders/solid.fragment";
-
-
-  const ENABLE_BLEND_PROGRAM                = false;
-  const BLEND_VERTEX_SHADER                 = "./shaders/blend.vertex";
-  const BLEND_FRAGMENT_SHADER               = "./shaders/blend.fragment";
+const SHADER_PREFIX            = "shaders/";
 
 </script>
 <script type="text/javascript" src="js/utility.js"></script>
-<script type="text/javascript" src="js/blender.js"></script>
-<script type="text/javascript" src="js/layer.js"></script>
-<script type="text/javascript" src="js/painter.js"></script>
+<script type="text/javascript" src="js/dataarray.js"></script>
+<script type="text/javascript" src="js/uniform.js"></script>
+<script type="text/javascript" src="js/attribute.js"></script>
+<script type="text/javascript" src="js/shader.js"></script>
 <script type="text/javascript" src="js/drawing.js"></script>
-<script type="text/javascript" src="js/stroke.js"></script>
-<script type="text/javascript" src="js/solid.js"></script>
-<script type="text/javascript" src="js/index.js"></script>
-
-    </head>
-    <body onload="init()">
-        <canvas width="768" height="1440"></canvas>
-    </body>
+<script type="text/javascript" src="js/layer.js"></script>
+<script type="text/javascript" src="js/blend.js"></script>
+<script type="text/javascript" src="js/drink.js"></script>
+<script type="text/javascript" src="js/app.js"></script>
+</head>
+<body onload="App.on_body_load(IMPORT)">
+    <canvas width="768" height="1440"></canvas>
+</body>
 </html>
