@@ -2,19 +2,73 @@
 
 precision highp float;
 
+#include "hsl.glsl"
 
 in vec2 pos;
 in vec4 col;
 
 uniform vec2 u_resolution;
 uniform vec3 u_mouse;
-uniform vec4 u_fill_color;
-
 
 out vec4 fragColor;
+
+#define PREV_STOP(s) ((s + STOPS - 1) % STOPS)
+#define NEXT_STOP(s) ((s + 1) % STOPS)
+
+uniform vec4 u_fill_color;
+uniform vec4 u_stop_colors[STOPS];
+uniform float u_stop_offsets[STOPS];
+uniform vec2 u_linear_gradient[2];
+
+vec4 gradient_color(vec2 pos)
+{
+    // is this actually a gradient?
+#if !defined(STOPS) || STOPS == 0
+    return u_fill_color;
+#elif STOPS == 1
+    return u_stop_colors[0];
+#else
+    vec2 g = u_linear_gradient[1] - u_linear_gradient[0];
+
+    float p = dot(pos - u_linear_gradient[0], g);
+    p /= dot(g, g);
+    p = clamp(p, 0., 1.);
+
+    int stop = 0;
+    for(; stop < STOPS; stop++)
+        if(p < u_stop_offsets[stop])
+            break;
+
+    stop %= STOPS;
+
+    // return vec4(float(PREV_STOP(stop)) / float(STOPS), 0., 0., 1.);
+    // return vec4(float(stop) / 3., 0., 0., 1.);
+
+    float q = (p - u_stop_offsets[PREV_STOP(stop)]) / (u_stop_offsets[stop] - u_stop_offsets[PREV_STOP(stop)]);
+
+    // return vec4(q, 0., 0., 1.);
+
+    vec4 c0 = u_stop_colors[PREV_STOP(stop)];
+    vec4 c1 = u_stop_colors[stop];
+
+    // return c1;
+
+    vec4 c = c0 + q * (c1 - c0);
+
+    // #if COLOR_SPACE == COLOR_SPACE_HSL
+        // c.rgb = hsl2rgb(c.xyz);
+    // #endif
+
+    return c;
+#endif
+}
 
 
 void main()
 {
-    fragColor = col;
+
+    // fragColor = vec4(hsl2rgb(col.xyz), col.w);
+    vec4 c = gradient_color(pos);
+    fragColor = vec4(hsl2rgb(c.xyz), c.w);
+    // fragColor = gradient_color(pos);
 }

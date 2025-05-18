@@ -1,3 +1,8 @@
+// import fetch_text, string_from_wasm, view_from from "utility"
+// import Drink from "drink"
+// import DataArray from "dataarray"
+// import Uniform from "uniform"
+
 
 function App()
 {
@@ -56,8 +61,6 @@ App.prototype.init = async function(mod)
     // helper function for extracting strings
     this.string = s => 
         string_from_wasm(exports, s, exports.string_length(s));
-
-    
 
     this.shaders = new Map();
     const shader_count = exports.shader_count();

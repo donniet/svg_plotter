@@ -287,7 +287,11 @@ public:
 };
 
 template<typename Point, typename Func>
-std::vector<Point> plot_with_curvature_limit(Func && f, double max_curvature = 0.02, double t0 = 0., double t1 = 1., size_t maximum_points = 1UL << 15)
+std::vector<Point> plot_with_curvature_limit(Func && f, 
+                                            double max_curvature = 0.02, 
+                                            double t0 = 0., double t1 = 1., 
+                                            size_t minimum_points = 2,
+                                            size_t maximum_points = 1UL << 15)
 {
     using std::for_each;
     using std::transform;
@@ -298,14 +302,14 @@ std::vector<Point> plot_with_curvature_limit(Func && f, double max_curvature = 0
     std::vector<Point> ret;
     std::vector<double> curv;
 
-    for(size_t N = 2; N < maximum_points; N <<= 1)
+    for(size_t N = minimum_points; N < maximum_points; N <<= 1)
     {
         ret.resize(N);
         for_each(ret.begin(), ret.end(), [&f, &ret, t0, t1, N](Point & p) 
         {
             size_t gid = std::distance(&ret[0], &p);
 
-            p = f(t0 + (double)gid / (double)N * (t1 - t0));
+            p = f(t0 + (double)gid / (double)(N-1) * (t1 - t0));
         });
         
         curv.resize(N);

@@ -1,3 +1,5 @@
+// import float32rray_from_wasm from "utility"
+
 
 function Blend(app, blend_ptr)
 {

@@ -1,3 +1,7 @@
+// import Uniform from "uniform"
+// import AttributeDef from "attribute"
+
+
 
 function Shader(app, shader_ptr)
 {

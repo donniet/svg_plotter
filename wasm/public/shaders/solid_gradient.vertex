@@ -10,6 +10,7 @@ out vec4 col;
 uniform mat3 u_view;
 uniform vec2 u_range;
 
+uniform vec4 u_fill_color;
 uniform vec4 u_stop_colors[STOPS];
 uniform float u_stop_offsets[STOPS];
 uniform vec2 u_linear_gradient[2];
@@ -32,39 +33,22 @@ vec4 gradient_color(vec2 pos)
 
     float p = dot(pos - u_linear_gradient[0], g);
     p /= dot(g, g);
-
-    if(p < 0. || p > 1.)
-        p = mod(p, 1.);
+    p = fract(p);
 
     int stop = 0;
     for(; stop < STOPS - 1; stop++)
-        if(p >= u_stop_offsets[stop] && p < u_stop_offsets[stop+1])
+        if(p >= u_stop_offsets[stop])
             break;
-
-    // switch(stop)
-    // {
-    //     case 0: return vec4(1,0,0,1);
-    //     case 1: return vec4(0,1,0,1);
-    //     case 2: 
-    //     default:
-    //         return vec4(0,0,1,1);
-    // }
-
 
     float q = (p - u_stop_offsets[stop]) / (u_stop_offsets[stop+1] - u_stop_offsets[stop]);
 
-    // vec4 c0 = vec4(hsl2rgb(u_stop_colors[stop].xyz), u_stop_colors[stop].w);
-    // vec4 c1 = vec4(hsl2rgb(u_stop_colors[stop+1].xyz), u_stop_colors[stop+1].w);
     vec4 c0 = u_stop_colors[stop];
     vec4 c1 = u_stop_colors[stop+1];
 
     vec4 c = c0 + q * (c1 - c0);
 
-
-    // c = u_stop_colors[stop];
-
     // #if COLOR_SPACE == COLOR_SPACE_HSL
-        c.rgb = hsl2rgb(c.xyz);
+        // c.rgb = hsl2rgb(c.xyz);
     // #endif
 
     return c;

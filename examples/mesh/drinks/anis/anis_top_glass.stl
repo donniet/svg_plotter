@@ -1,0 +1,81 @@
+solid triangles
+
+facet normal 0 0 1
+	outer loop
+		vertex 344.499 419.93 0
+		vertex 355.535 435.764 0
+		vertex 355.535 435.764 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 355.535 435.764 0
+		vertex 371.832 459.111 0
+		vertex 373.654 461.882 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 373.654 461.882 0
+		vertex 267.339 461.882 0
+		vertex 269.16 459.111 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 274.655 451.374 0
+		vertex 280.054 443.566 0
+		vertex 285.458 435.764 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 292.819 425.21 0
+		vertex 296.494 419.93 0
+		vertex 344.499 419.93 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 344.499 419.93 0
+		vertex 355.535 435.764 0
+		vertex 373.654 461.882 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 373.654 461.882 0
+		vertex 269.16 459.111 0
+		vertex 274.655 451.374 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 274.655 451.374 0
+		vertex 285.458 435.764 0
+		vertex 289.142 430.489 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 289.142 430.489 0
+		vertex 292.819 425.21 0
+		vertex 344.499 419.93 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 344.499 419.93 0
+		vertex 373.654 461.882 0
+		vertex 274.655 451.374 0
+	endloop
+endfacet
+facet normal 0 0 1
+	outer loop
+		vertex 274.655 451.374 0
+		vertex 289.142 430.489 0
+		vertex 344.499 419.93 0
+	endloop
+endfacet
+endsolid
+

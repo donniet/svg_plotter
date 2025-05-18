@@ -1,3 +1,5 @@
+// import bytes_from_element_type from "utility"
+
 
 function Attribute(name, offset, stride, normalized)
 {

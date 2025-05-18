@@ -1,9 +1,15 @@
 #include "drawing.h"
 
-const float anis_gradient_colors[] = {
-	195. / 360, 77. / 100, 95. / 256, 100. / 100,
-	174. / 360, 22. / 100, 64. / 256, 6. / 100,
-	195. / 360, 77. / 100, 95. / 256, 51. / 100
+const float anis_gradient_colors_hsl[] = {
+	195. / 360., 77. / 100., 95. / 100., 100. / 100.,
+	174. / 360., 22. / 100., 64. / 100., 6.   / 100.,
+	195. / 360., 77. / 100., 95. / 100., 51.  / 100.
+};
+
+const float anis_gradient_colors_rgb[] = {
+    232. / 256, 247. / 256, 252. / 256, 100. / 100,
+    144. / 256, 184. / 256, 180. / 256,   6. / 100,
+    232. / 256, 247. / 256, 252. / 256,  51. / 100,
 };
 
 const float anis_gradient_offsets[] = {
@@ -11,8 +17,18 @@ const float anis_gradient_offsets[] = {
 };
 
 const float anis_gradient_linear[] = {
-	320.49509, 462.6123, // 341, 
-	320.49509, 514.28601, // 400, 
+	0, 462.6123, // 341, 
+	0, 514.28601, // 400, 
+};
+
+const Blend anis_blend = {
+    .color = { 0., 0., 0., 0. },
+    .equation_alpha = GL_FUNC_ADD,
+    .equation_rgb = GL_FUNC_ADD,
+    .destination_alpha = GL_ONE,
+    .destination_rgb = GL_ONE,
+    .source_alpha = GL_ONE,
+    .source_rgb = GL_ONE,
 };
 
 const Shader shaders[MAX_SHADERS] = {
@@ -215,8 +231,8 @@ const Drink drinks[] = {
                         {
                             .name = "u_stop_colors",
                             .type = GL_FLOAT_VEC4,
-                            .data = anis_gradient_colors,
-                            .data_size = sizeof(anis_gradient_colors) / sizeof(float),
+                            .data = anis_gradient_colors_hsl,
+                            .data_size = sizeof(anis_gradient_colors_hsl) / sizeof(float),
                         },
                         {
                             .name = "u_stop_offsets",
@@ -233,8 +249,8 @@ const Drink drinks[] = {
                     },
                 }
             },
-            .blend = NULL,
-            .clear_color = { 0, 0, 0, 0 },
+            .blend = &anis_blend,
+            .clear_color = { 0., 0., 0., 1.},
             .clear_bits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
         },
     }

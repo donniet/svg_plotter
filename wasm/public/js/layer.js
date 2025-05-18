@@ -1,3 +1,7 @@
+// import Attribute from "attribute"
+// import Uniform from "uniform"
+
+
 
 function Layer(app, layer_ptr)
 {

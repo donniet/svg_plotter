@@ -1,3 +1,5 @@
+// import Blend from "blend"
+// import Uniform from "uniform"
 
 
 function Drawing(app, drawing_ptr)
@@ -13,6 +15,8 @@ function Drawing(app, drawing_ptr)
         exports.drawing_dimension_width(drawing_ptr),
         exports.drawing_dimension_height(drawing_ptr)
     ];
+
+    this.viewport_ = [0, 0, this.dimensions[0], this.dimensions[1]];
 
     this.layers = []
     const layer_count = exports.drawing_layers_size(drawing_ptr);
@@ -32,6 +36,11 @@ function Drawing(app, drawing_ptr)
     const cc = exports.drawing_clear_color(drawing_ptr);
     this.clear_color = float32array_from_wasm(exports, cc, 4);
     this.clear_bits = exports.drawing_clear_bits(drawing_ptr);
+}
+
+Drawing.prototype.viewport = function(x0, y0, x1, y1)
+{
+    this.viewport_ = [x0, y0, x1, y1];
 }
 
 Drawing.prototype.uniform = function(name, type, value)
@@ -67,6 +76,9 @@ Drawing.prototype.draw = function(gl, range)
     // perform a clear on our canvas
     this.clear(gl);
     this.blend.apply(gl);
+
+    gl.viewport(this.viewport_[0], this.viewport_[1], 
+        this.viewport_[2], this.viewport_[3]);
 
     this.layers.forEach((layer, index) => {
         // the drawing controls the use of programs to allow for optimization later

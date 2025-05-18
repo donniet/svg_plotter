@@ -1,4 +1,76 @@
 
+
+/**
+ * returns the lowest index which val could be inserted into the sorted array arr
+ * without affecting the sort
+ * @param {Array} arr a sorted array
+ * @param {*} val the value to find in the sorted array
+ * @param {Number} begin the beginning of the range to check
+ * @param {Number} end the end of the (exclusive) of the range to check
+ */
+function lower_bound(arr, val, less = (a,b) => a < b, begin = 0, end = -1) {
+    if (end < 0)
+        end = arr.length;
+
+    while (begin < end) 
+    {
+        let mid = Math.floor((begin + end) / 2);
+
+        // check for <=
+        if(less(val, arr[mid]) || !less(arr[mid], val))
+        {
+            end = mid;
+            continue;
+        }
+        // ASSERT(val > arr[mid])
+        // if begin + 1 == end then mid will equal begin
+        // in this case we return end
+        if (begin == mid)
+            break;
+
+        // ASSERT(begin != mid)
+        begin = mid;
+    }
+
+    return end;
+}
+
+
+/**
+ * returns the greatest index which val could be inserted into the sorted array arr
+ * without affecting the sort
+ * @param {Array} arr a sorted array
+ * @param {*} val the value to find in the sorted array
+ * @param {Number} begin the beginning of the range to check
+ * @param {Number} end the end of the (exclusive) of the range to check
+ */
+function upper_bound(arr, val, less = (a,b) => a < b, begin = 0, end = -1) {
+    if (end < 0)
+        end = arr.length;
+
+    while (begin < end) 
+    {
+        let mid = Math.floor((begin + end) / 2);
+
+        if (less(val, arr[mid])) 
+        {
+            end = mid;
+            continue;
+        }
+        // ASSERT(val > arr[mid])
+        // if begin + 1 == end then mid will equal begin
+        // in this case we return end
+        if (begin == mid)
+            break;
+
+        // ASSERT(begin != mid)
+        begin = mid;
+    }
+
+    return end;
+}
+
+
 function bytes_from_element_type(gl, element_type)
 {
     switch(element_type)
@@ -141,8 +213,8 @@ function view_from(drawing_size, position)
     
     return new Float32Array([
         2. / drawing_size[0],  0., -position[0] / drawing_size[0] - 1.,
-        0., 2./ drawing_size[1],   -position[1] / drawing_size[1] - 1,
-        0.,                   0.,  1.  
+        0., -2./ drawing_size[1],   position[1] / drawing_size[1] + 1,
+        0.,                   0.,   1.  
     ]);
 }
 

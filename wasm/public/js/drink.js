@@ -1,3 +1,5 @@
+// import Drawing from "drawing"
+
 
 function Drink(app, drink_ptr)
 {
@@ -17,6 +19,7 @@ Drink.prototype.load = function(gl)
 Drink.prototype.viewport = function(x0, y0, x1, y1)
 {
     console.log(`drink.viewport(${x0},${y0},${x1},${y1})`);
+    this.drawing.viewport(x0, y0, x1, y1);
 };
 Drink.prototype.draw = function(gl, range)
 {

@@ -1,3 +1,4 @@
+// import gl_uniform_method_for, gl_uniform_is_matrix from "utility"
 
 
 function Uniform(name, type, data = null, location = null)

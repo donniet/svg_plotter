@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   x="0px"
+   y="0px"
+   width="640"
+   height="816"
+   viewBox="0 0 640 816"
+   enable-background="new 0 0 640 816"
+   xml:space="preserve"
+   id="svg1228599"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs1228603" />
+
+<g
+   id="drinkAnis">
+	<g
+   display="inline"
+   id="g1228596">
+		<linearGradient
+   id="SVGID_157_"
+   gradientUnits="userSpaceOnUse"
+   x1="320.49561"
+   y1="409.78131"
+   x2="320.49561"
+   y2="591.54462">
+			<stop
+   offset="0.3212"
+   style="stop-color:#FFFFFF;stop-opacity:0.4"
+   id="stop1228554" />
+			<stop
+   offset="0.7697"
+   style="stop-color:#FFFFFF;stop-opacity:0"
+   id="stop1228556" />
+		</linearGradient>
+		
+		
+		
+		<linearGradient
+   id="SVGID_158_"
+   gradientUnits="userSpaceOnUse"
+   x1="320.49661"
+   y1="461.88181"
+   x2="320.49661"
+   y2="420.68188">
+			<stop
+   offset="0.2788"
+   style="stop-color:#D1D1D1;stop-opacity:0.1"
+   id="stop1228573" />
+			<stop
+   offset="1"
+   style="stop-color:#D1D1D1"
+   id="stop1228575" />
+		</linearGradient>
+		<path
+   opacity="0.49"
+   fill="url(#SVGID_158_)"
+   d="m 355.535,435.764 c -3.689,-5.272 -7.359,-10.555 -11.036,-15.834 h -48.005 c -3.676,5.279 -7.346,10.562 -11.036,15.834 -5.44,7.772 -10.721,15.672 -16.298,23.347 -0.644,0.888 -1.246,1.819 -1.821,2.771 h 106.315 c -0.576,-0.952 -1.178,-1.884 -1.822,-2.771 -5.577,-7.675 -10.856,-15.575 -16.297,-23.347 z"
+   id="path1228578"
+   style="fill:url(#SVGID_158_)" />
+		<linearGradient
+   id="SVGID_159_"
+   gradientUnits="userSpaceOnUse"
+   x1="320.49509"
+   y1="462.6123"
+   x2="320.49509"
+   y2="514.28601">
+			<stop
+   offset="0.0061"
+   style="stop-color:#E8F7FC"
+   id="stop1228580" />
+			<stop
+   offset="0.4606"
+   style="stop-color:#90B8B4;stop-opacity:0.06"
+   id="stop1228582" />
+			<stop
+   offset="1"
+   style="stop-color:#E8F7FC;stop-opacity:0.51"
+   id="stop1228584" />
+		</linearGradient>
+		
+		<linearGradient
+   id="SVGID_160_"
+   gradientUnits="userSpaceOnUse"
+   x1="291.0513"
+   y1="430.96091"
+   x2="291.0513"
+   y2="497.62689">
+			<stop
+   offset="0"
+   style="stop-color:#FFFFFF;stop-opacity:0.79"
+   id="stop1228589" />
+			<stop
+   offset="1"
+   style="stop-color:#FFFFFF;stop-opacity:0.4"
+   id="stop1228591" />
+		</linearGradient>
+		
+	</g>
+</g>
+
+</svg>
