@@ -104,17 +104,23 @@ Shader.prototype.replace_includes = async function(source)
     {
         const include_regex = /#include\s+"([^\"]+)"/g;
         const matches = source.matchAll(include_regex);
+        const includes = [];
 
         let match_count = 0;
         matches.forEach(m => {
             if(files_included.has(m[1]))
                 throw new Error(`circular #include detected in path "${m[1]}"`);
 
+            /* removing this check for now because rel urls don't seem to parse
+
             const u = new URL(m[1]); // throws exception if url is invalid
             if(u.hostname != window.location.hostname)
                 throw new Error(`invalid url requested in #include "${m[1]}"`);
+            */
+
 
             files_included.add(m[1]);
+            includes.push(m[1]);
             match_count++;
         });
 
@@ -122,7 +128,7 @@ Shader.prototype.replace_includes = async function(source)
             break;
 
         // TODO: handle self-includes for inline shaders in wasm
-        const promises = matches.map(m => this.load_shader(m[1]));
+        const promises = includes.map(inc => this.load_shader(inc));
         const files = await Promise.all(promises);
 
         let i = 0;
