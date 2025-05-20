@@ -289,8 +289,8 @@ public:
 
 template<typename Point, typename Func>
 std::vector<Point> plot_with_curvature_limit(Func && f, 
-                                            double min_curvature = 0.1,
-                                            double max_curvature = 0.8, 
+                                            double min_curvature = 0.06,
+                                            double max_curvature = 1.5, 
                                             double t0 = 0., double t1 = 1., 
                                             size_t minimum_points = 16,
                                             size_t maximum_points = 1UL << 15)
@@ -336,8 +336,11 @@ std::vector<Point> plot_with_curvature_limit(Func && f,
             double l0 = sqrt(v0[0]*v0[0] + v0[1]*v0[1]);
             double l1 = sqrt(v1[0]*v1[0] + v1[1]*v1[1]);
 
-            // cross product;
-            *j = abs(v0[0] * v1[1] - v0[1] * v1[0]) / l0 / l1;
+            if(l0 == 0 || l1 == 0)
+                *j = 0.;
+            else
+                // cross product;
+                *j = abs(v0[0] * v1[1] - v0[1] * v1[0]) / l0 / l1;
         }
         *j = 0.;
     
@@ -354,10 +357,13 @@ std::vector<Point> plot_with_curvature_limit(Func && f,
               // and skip the last point
     for(size_t k = 1; k < ret.size() - 1; k++)
     {
+        auto p = i;
+        p--;
+
         auto ii = i++;
         auto jj = j++;
 
-        if(*jj < min_curvature) 
+        if(*p == *i || *jj < min_curvature) 
         {
             ret.erase(ii);
             curv.erase(jj);
@@ -373,6 +379,10 @@ class Plot
 private:
     std::vector<std::vector<Point>> _paths;
     std::vector<std::vector<double>> _lengths;
+    double _eps;
+public:
+    Plot() : _paths(0), _lengths(0), _eps(0.001) { }
+private:
 
     static double norm2(Point const & a)
     {
@@ -444,7 +454,7 @@ public:
 
             // if we are at the same point as the end of this path, don't add it
             // this ensures we never have duplicate sequential points
-            if(l == 0.)
+            if(l < _eps)
                 return;
 
             // add the total length so to the length from the last point

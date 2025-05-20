@@ -12,7 +12,7 @@ function App()
     // setup our canvas object
     this.canvas = document.getElementsByTagName('canvas')[0];
     this.gl = this.canvas.getContext(CONTEXT_NAME, {
-        antialias: false,
+        antialias: true,
     });
 
     this.module_imports = {
@@ -87,17 +87,17 @@ App.prototype.init = async function(mod)
     {
         const a = exports.array_by_index(i);
         const name = this.string(exports.array_name(a));
-        const t = exports.array_type(a);
-        const array_type = this.string(exports.array_type_name(t));
-        const size = exports.array_type(a);
+
         const ptr = exports.array_data(a);
         const target = exports.array_target(a);
+        const array_type = this.string(exports.array_js_typed_array_name(a));
+        const size = exports.array_js_typed_array_size(a);
 
         // find the constructor for this type of data array
         const con = window[array_type];
 
         const arr = new DataArray(
-            name, new con(exports.memory.buffer, ptr, size), t, target);
+            name, new con(exports.memory.buffer, ptr, size), target);
 
         this.arrays.set(name, arr);
     }
@@ -136,11 +136,11 @@ App.prototype.uniform_at = function(u)
 {
     const exports = this.exports;
     const name = this.string(exports.uniform_name(u));
-    const type = this.string(exports.uniform_type(u));
+    const type = this.string(exports.uniform_glsl_type(u));
     const data = exports.uniform_data(u);
     const data_size = exports.uniform_data_size(u);
 
-    const array_type = this.string(exports.array_type_name(exports.uniform_gl_type(u)));
+    const array_type = this.string(exports.uniform_js_typed_array_name(u));
 
     const v = new window[array_type](exports.memory.buffer,
         data, data_size);

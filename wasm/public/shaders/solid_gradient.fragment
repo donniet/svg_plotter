@@ -39,7 +39,11 @@ vec4 gradient_color(vec2 pos)
         if(p < u_stop_offsets[stop])
             break;
 
-    stop %= STOPS;
+    if(stop == 0)
+        return u_stop_colors[0];
+
+    if(stop == STOPS)
+        return u_stop_colors[STOPS-1];
 
     // return vec4(float(PREV_STOP(stop)) / float(STOPS), 0., 0., 1.);
     // return vec4(float(stop) / 3., 0., 0., 1.);

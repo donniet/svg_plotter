@@ -39,10 +39,13 @@ typedef unsigned short uint16;
 extern uint             string_length(const char *);
 extern int              string_compare(const char *, const char *);
 
-extern const char *     variable_type_name(GLenum);
-extern GLenum           variable_type_from(const char *);
+extern const char *     glsl_variable_type_name(GLenum);
+extern GLenum           glsl_variable_type_from(const char *);
 
-extern const char *     array_type_name(GLenum);
+uint                    gl_type_size(GLenum t);
+uint                    js_array_element_size(GLenum t);
+const char *            js_typed_array_name(GLenum array_type);
+
 
 /**
  * Box structure
@@ -95,9 +98,10 @@ typedef struct {
 } Uniform;
 
 extern const char *     uniform_name(const Uniform *);
-extern const char *     uniform_type(const Uniform *);
+extern const char *     uniform_glsl_type(const Uniform *);
 extern GLenum           uniform_gl_type(const Uniform *);
 extern const char *     uniform_gl_setter(const Uniform *);
+const char *            uniform_js_typed_array_name(const Uniform * u);
 extern const void *     uniform_data(const Uniform *);
 extern uint             uniform_data_size(const Uniform *);
 extern const char *     uniform_setter_from_type(GLenum);
@@ -235,6 +239,8 @@ extern const void *     array_data(const Array *);
 extern uint             array_size(const Array *);
 extern GLenum           array_type(const Array *);
 extern GLenum           array_target(const Array *);
+const char *            array_js_typed_array_name(const Array * a);
+uint                    array_js_typed_array_size(const Array * a);
 
 /**
  * Drawing structure

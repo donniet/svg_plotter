@@ -16,7 +16,7 @@ add_library(adapters adapters.cpp)
 target_link_libraries(adapters drawable)
 
 add_library(mesh mesh.cpp)
-target_link_libraries(mesh point)
+target_link_libraries(mesh point cover)
 
 # add_library(path path.cpp)
 # target_link_libraries(path drawable)

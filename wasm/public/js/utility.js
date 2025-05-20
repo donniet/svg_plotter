@@ -206,14 +206,14 @@ async function create_program_from_files(gl, vertex_file, fragment_file, defines
     return create_program(gl, [vertex_shader, fragment_shader]);
 }
 
-function view_from(drawing_size, position)
+function view_from(drawing_size, position, scale = 2.)
 {
     if(typeof position == "undefined")
         position = [0,0];
     
     return new Float32Array([
-        2. / drawing_size[0],  0., -position[0] / drawing_size[0] - 1.,
-        0., -2./ drawing_size[1],   position[1] / drawing_size[1] + 1,
+        scale * 2. / drawing_size[0],  0., -scale * (position[0] / drawing_size[0] + 1.),
+        0., -scale * 2./ drawing_size[1],   scale * (position[1] / drawing_size[1] + 1.),
         0.,                   0.,   1.  
     ]);
 }

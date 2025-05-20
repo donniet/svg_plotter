@@ -474,7 +474,7 @@ vector<double> path_length_to_vertex(vector<Point> const & path)
         length.begin(), length.end(),
         length_to.begin());
 
-    return move(length_to);
+    return std::move(length_to);
 }
 
 void MeshPlot::stroke(string name,     
@@ -489,10 +489,10 @@ void MeshPlot::stroke(string name,
         .brush_style = brush_style,
         .brush_size = brush_size,
         .brush_color = brush_color,
-        .time_range = time_range,
-        .draw_mode = DrawMode::triangles,
         .arclength = 0,
         .strokelength = 0,
+        .time_range = time_range,
+        .draw_mode = DrawMode::triangles,
         .vertex_range = {0,0},
         .section_range = {0,0}
     };
@@ -559,10 +559,10 @@ void MeshPlot::stroke2(string name,
         .brush_style = brush_style,
         .brush_size = brush_size,
         .brush_color = brush_color,
-        .time_range = time_range,
-        .draw_mode = DrawMode::triangle_strip,
         .arclength = 0,
         .strokelength = 0,
+        .time_range = time_range,
+        .draw_mode = DrawMode::triangle_strip,
         .vertex_range = {0,0},
         .section_range = {0,0}
     };
@@ -708,6 +708,11 @@ void MeshPlot::stroke2(string name,
 string ts(size_t level)
 {
     return string(level * 3, ' ');
+}
+
+vector<Triangle> MeshPlot::triangles() const
+{
+    return vector<Triangle>(_mesh.triangles_begin(), _mesh.triangles_end());
 }
 
 void MeshPlot::to_stl(ostream & os) const

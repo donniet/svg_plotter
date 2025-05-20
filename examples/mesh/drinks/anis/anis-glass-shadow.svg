@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   version="1.1"
+   x="0px"
+   y="0px"
+   width="640"
+   height="816"
+   viewBox="0 0 640 816"
+   enable-background="new 0 0 640 816"
+   xml:space="preserve"
+   id="svg1228599"
+   sodipodi:docname="anis.svg"
+   inkscape:export-filename="../../../svg_plotter/examples/mesh/drinks/anis/anis-glass-highlight.svg"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs1228603" /><sodipodi:namedview
+   id="namedview1228601"
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1.0"
+   inkscape:showpageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="true"
+   inkscape:deskcolor="#d1d1d1"
+   showgrid="false"
+   inkscape:zoom="5.0343137"
+   inkscape:cx="296.76339"
+   inkscape:cy="481.09835"
+   inkscape:window-width="1720"
+   inkscape:window-height="1371"
+   inkscape:window-x="0"
+   inkscape:window-y="32"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="g1228596" />
+
+<g
+   id="drinkAnis">
+	<g
+   display="inline"
+   id="g1228596">
+		<linearGradient
+   id="SVGID_157_"
+   gradientUnits="userSpaceOnUse"
+   x1="320.49561"
+   y1="409.78131"
+   x2="320.49561"
+   y2="591.54462">
+			<stop
+   offset="0.3212"
+   style="stop-color:#FFFFFF;stop-opacity:0.4"
+   id="stop1228554" />
+			<stop
+   offset="0.7697"
+   style="stop-color:#FFFFFF;stop-opacity:0"
+   id="stop1228556" />
+		</linearGradient>
+		<path
+   fill="url(#SVGID_157_)"
+   d="m 387.268,463.343 c -5.308,-8.722 -12.157,-16.587 -18.226,-24.781 -6.963,-9.404 -13.789,-18.908 -20.732,-28.326 h -27.813 -27.813 c -6.943,9.418 -13.77,18.922 -20.733,28.326 -6.068,8.194 -12.918,16.06 -18.224,24.781 -7.221,11.864 -4.963,25.995 4.237,36.102 6.501,7.138 15.252,12.067 24.261,15.299 5.82,2.086 11.529,3.535 17.563,4.837 4.559,0.988 8.694,2.889 11.086,7.114 2.971,5.246 1.834,11.681 1.377,17.394 -0.441,5.464 -1.045,10.985 -2.195,16.354 -0.246,1.142 -0.519,2.383 -0.926,3.558 -26.092,1.285 -45.878,7.459 -45.878,14.88 0,8.355 25.065,15.129 55.981,15.129 30.913,0 55.979,-6.773 55.979,-15.129 0,-7.178 -18.491,-13.181 -43.294,-14.737 -0.438,-1.215 -0.727,-2.513 -0.98,-3.7 -1.15,-5.368 -1.755,-10.89 -2.193,-16.354 -0.46,-5.713 -1.597,-12.147 1.376,-17.394 2.391,-4.226 6.526,-6.126 11.086,-7.114 6.033,-1.302 11.743,-2.751 17.563,-4.837 9.009,-3.231 17.76,-8.161 24.261,-15.299 9.197,-10.108 11.456,-24.239 4.237,-36.103 z"
+   id="path1228559"
+   style="fill:url(#SVGID_157_)" />
+		
+		
+		<linearGradient
+   id="SVGID_158_"
+   gradientUnits="userSpaceOnUse"
+   x1="320.49661"
+   y1="461.88181"
+   x2="320.49661"
+   y2="420.68188">
+			<stop
+   offset="0.2788"
+   style="stop-color:#D1D1D1;stop-opacity:0.1"
+   id="stop1228573" />
+			<stop
+   offset="1"
+   style="stop-color:#D1D1D1"
+   id="stop1228575" />
+		</linearGradient>
+		
+		<linearGradient
+   id="SVGID_159_"
+   gradientUnits="userSpaceOnUse"
+   x1="320.49509"
+   y1="462.6123"
+   x2="320.49509"
+   y2="514.28601">
+			<stop
+   offset="0.0061"
+   style="stop-color:#E8F7FC"
+   id="stop1228580" />
+			<stop
+   offset="0.4606"
+   style="stop-color:#90B8B4;stop-opacity:0.06"
+   id="stop1228582" />
+			<stop
+   offset="1"
+   style="stop-color:#E8F7FC;stop-opacity:0.51"
+   id="stop1228584" />
+		</linearGradient>
+		
+		<linearGradient
+   id="SVGID_160_"
+   gradientUnits="userSpaceOnUse"
+   x1="291.0513"
+   y1="430.96091"
+   x2="291.0513"
+   y2="497.62689">
+			<stop
+   offset="0"
+   style="stop-color:#FFFFFF;stop-opacity:0.79"
+   id="stop1228589" />
+			<stop
+   offset="1"
+   style="stop-color:#FFFFFF;stop-opacity:0.4"
+   id="stop1228591" />
+		</linearGradient>
+		
+	</g>
+</g>
+
+</svg>

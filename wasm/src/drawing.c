@@ -43,7 +43,90 @@ int string_compare(const char * a, const char * b)
     return 0;
 }
 
-const char * variable_type_name(GLenum t)
+
+uint gl_type_size(GLenum t)
+{
+    switch(t) 
+    {
+    case GL_INT:                return 1;
+    case GL_UNSIGNED_INT:       return 1;
+    case GL_FLOAT:              return 1;
+    case GL_DOUBLE:             return 1;
+    
+    case GL_INT_VEC2:     return 2;
+    case GL_INT_VEC3:     return 3;
+    case GL_INT_VEC4:     return 4;
+    
+    case GL_UNSIGNED_INT_VEC2:     return 2;
+    case GL_UNSIGNED_INT_VEC3:     return 3;
+    case GL_UNSIGNED_INT_VEC4:     return 4;
+    
+    case GL_FLOAT_VEC2:      return 2;
+    case GL_FLOAT_VEC3:      return 3;
+    case GL_FLOAT_VEC4:      return 4;
+    
+    case GL_DOUBLE_VEC2:     return 2;
+    case GL_DOUBLE_VEC3:     return 3;
+    case GL_DOUBLE_VEC4:     return 4;
+    
+    case GL_FLOAT_MAT2:      return 4;
+    case GL_FLOAT_MAT2x3:    return 6;
+    case GL_FLOAT_MAT2x4:    return 8;
+    
+    case GL_FLOAT_MAT3:      return 9;
+    case GL_FLOAT_MAT3x2:    return 6;
+    case GL_FLOAT_MAT3x4:    return 12;
+    
+    case GL_FLOAT_MAT4:      return 16;
+    case GL_FLOAT_MAT4x2:    return 8;
+    case GL_FLOAT_MAT4x3:    return 12;
+    }
+
+    return 0;
+}
+
+uint js_array_element_size(GLenum t)
+{
+    switch(t) 
+    {
+    case GL_INT:                return sizeof(GLint);
+    case GL_UNSIGNED_INT:       return sizeof(GLuint);
+    case GL_FLOAT:              return sizeof(GLfloat);
+    case GL_DOUBLE:             return sizeof(GLdouble);
+    
+    case GL_INT_VEC2:     return sizeof(GLint);
+    case GL_INT_VEC3:     return sizeof(GLint);
+    case GL_INT_VEC4:     return sizeof(GLint);
+    
+    case GL_UNSIGNED_INT_VEC2:     return sizeof(GLuint);
+    case GL_UNSIGNED_INT_VEC3:     return sizeof(GLuint);
+    case GL_UNSIGNED_INT_VEC4:     return sizeof(GLuint);
+    
+    case GL_FLOAT_VEC2:      return sizeof(GLfloat);
+    case GL_FLOAT_VEC3:      return sizeof(GLfloat);
+    case GL_FLOAT_VEC4:      return sizeof(GLfloat);
+    
+    case GL_DOUBLE_VEC2:     return sizeof(GLdouble);
+    case GL_DOUBLE_VEC3:     return sizeof(GLdouble);
+    case GL_DOUBLE_VEC4:     return sizeof(GLdouble);
+    
+    case GL_FLOAT_MAT2:      return sizeof(GLfloat);
+    case GL_FLOAT_MAT2x3:    return sizeof(GLfloat);
+    case GL_FLOAT_MAT2x4:    return sizeof(GLfloat);
+    
+    case GL_FLOAT_MAT3:      return sizeof(GLfloat);
+    case GL_FLOAT_MAT3x2:    return sizeof(GLfloat);
+    case GL_FLOAT_MAT3x4:    return sizeof(GLfloat);
+    
+    case GL_FLOAT_MAT4:      return sizeof(GLfloat);
+    case GL_FLOAT_MAT4x2:    return sizeof(GLfloat);
+    case GL_FLOAT_MAT4x3:    return sizeof(GLfloat);
+    }
+
+    return 0;
+}
+
+const char * glsl_variable_type_name(GLenum t)
 {
     switch(t) 
     {
@@ -84,7 +167,7 @@ const char * variable_type_name(GLenum t)
     return NULL;
 }
 
-GLenum variable_type_from(const char * s)
+GLenum glsl_variable_type_from(const char * s)
 {
     uint l = string_length(s);
     
@@ -251,7 +334,7 @@ const char * uniform_setter_from_type(GLenum v)
     return "uniform1fv";
 }
 
-const char * array_type_name(GLenum array_type)
+const char * js_typed_array_name(GLenum array_type)
 {
     switch(array_type)
     {
@@ -375,9 +458,13 @@ const char * uniform_name(const Uniform * u)
 {
     return u->name;
 }
-const char * uniform_type(const Uniform * u)
+const char * uniform_glsl_type(const Uniform * u)
 {
-    return variable_type_name(u->type);
+    return glsl_variable_type_name(u->type);
+}
+const char * uniform_js_typed_array_name(const Uniform * u)
+{
+    return js_typed_array_name(u->type);
 }
 GLenum uniform_gl_type(const Uniform * u)
 {
@@ -645,6 +732,14 @@ uint array_size(const Array * a)
 GLenum array_type(const Array * a)
 {
     return a->type;
+}
+const char * array_js_typed_array_name(const Array * a)
+{
+    return js_typed_array_name(a->type);
+}
+uint array_js_typed_array_size(const Array * a)
+{
+    return a->size / js_array_element_size(a->type);
 }
 GLenum array_target(const Array * a)
 {

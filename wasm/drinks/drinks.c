@@ -35,14 +35,48 @@ const float anis_top_gradient_linear[] = {
 	0, 420.68188, 
 };
 
+
+const float anis_highlight_gradient_colors_hsl[] = {
+    0. / 360,   0. / 100,  100. / 100,  79. / 100,
+    0. / 360,   0. / 100,  100. / 100,  40. / 100,
+};
+
+const float anis_highlight_gradient_offsets[] = {
+  0., 1.,
+};
+
+const float anis_highlight_gradient_linear[] = {
+  0, 430.96091, 
+  0, 497.62689, 
+};
+
+
+const float anis_shadow_colors_hsl[] = {
+    0. / 360,   0. / 100,  100. / 100,  40. / 100,
+    0. / 360,   0. / 100,  100. / 100,   0. / 100,
+};
+
+const float anis_shadow_offsets[] = {
+  0.3212, 0.7697,
+};
+
+const float anis_shadow_linear[] = {
+  0, 409.78131, 
+  0, 591.54462, 
+};
+
+const float anis_edge_fill_color[] = {
+    1., 1., 1., 1.,
+};
+
 const Blend anis_blend = {
     .color = { 0., 0., 0., 0. },
-    .equation_alpha = GL_FUNC_ADD,
     .equation_rgb = GL_FUNC_ADD,
-    .destination_alpha = GL_ONE,
+    .equation_alpha = GL_FUNC_ADD,
+    .source_rgb = GL_SRC_ALPHA,
+    .source_alpha = GL_ONE_MINUS_SRC_ALPHA,
     .destination_rgb = GL_ONE,
-    .source_alpha = GL_ONE,
-    .source_rgb = GL_ONE,
+    .destination_alpha = GL_ONE_MINUS_SRC_ALPHA,
 };
 
 const Shader shaders[MAX_SHADERS] = {
@@ -97,179 +131,31 @@ const Shader shaders[MAX_SHADERS] = {
                 .type = GL_FLOAT,
             }
         },
+    },
+    {
+        .name = "solid",
+        .shader_files = {
+            {
+                .path = "solid.vertex",
+                .shader_type = GL_VERTEX_SHADER,
+            },
+            {
+                .path = "solid.fragment",
+                .shader_type = GL_FRAGMENT_SHADER,
+            },
+        },
+        .attributes = {
+            {
+                .name = "a_position",
+                .size = 2,
+                .type = GL_FLOAT,
+            },
+        }
     }
 };
 
 const float anis_vertex_data[] = {
-    // <drink_bottom>
-    262.416, 476.271,
-    262.683, 474.106,
-    263.115, 471.963,
-    263.115, 471.963,
-    263.699, 469.852,
-    265.281, 465.755,
-    265.281, 465.755,
-    267.339, 461.882,
-    373.654, 461.882,
-    373.654, 461.882,
-    375.711, 465.755,
-    377.293, 469.852,
-    377.293, 469.852,
-    377.876, 471.963,
-    378.308, 474.106,
-    378.308, 474.106,
-    378.575, 476.271,
-    378.666, 478.45,
-    378.666, 478.45,
-    378.372, 482.004,
-    377.51, 485.455,
-    377.51, 485.455,
-    376.108, 488.786,
-    374.194, 491.98,
-    374.194, 491.98,
-    371.798, 495.018,
-    368.948, 497.884,
-    368.948, 497.884,
-    365.672, 500.56,
-    361.999, 503.028,
-    361.999, 503.028,
-    357.958, 505.271,
-    353.577, 507.272,
-    353.577, 507.272,
-    348.885, 509.012,
-    343.911, 510.476,
-    343.911, 510.476,
-    338.682, 511.645,
-    333.228, 512.501,
-    333.228, 512.501,
-    327.578, 513.028,
-    321.759, 513.207,
-    321.759, 513.207,
-    319.233, 513.207,
-    313.415, 513.028,
-    313.415, 513.028,
-    307.764, 512.501,
-    302.31, 511.645,
-    302.31, 511.645,
-    297.082, 510.476,
-    292.107, 509.012,
-    292.107, 509.012,
-    287.415, 507.272,
-    283.034, 505.271,
-    283.034, 505.271,
-    278.993, 503.028,
-    275.32, 500.56,
-    275.32, 500.56,
-    272.044, 497.884,
-    269.194, 495.018,
-    269.194, 495.018,
-    266.797, 491.98,
-    264.884, 488.786,
-    264.884, 488.786,
-    263.481, 485.455,
-    262.619, 482.004,
-    262.416, 476.271,
-    263.115, 471.963,
-    265.281, 465.755,
-    265.281, 465.755,
-    373.654, 461.882,
-    377.293, 469.852,
-    377.293, 469.852,
-    378.308, 474.106,
-    378.666, 478.45,
-    378.666, 478.45,
-    377.51, 485.455,
-    374.194, 491.98,
-    374.194, 491.98,
-    368.948, 497.884,
-    361.999, 503.028,
-    361.999, 503.028,
-    353.577, 507.272,
-    343.911, 510.476,
-    343.911, 510.476,
-    333.228, 512.501,
-    321.759, 513.207,
-    321.759, 513.207,
-    313.415, 513.028,
-    302.31, 511.645,
-    302.31, 511.645,
-    292.107, 509.012,
-    283.034, 505.271,
-    283.034, 505.271,
-    275.32, 500.56,
-    269.194, 495.018,
-    269.194, 495.018,
-    264.884, 488.786,
-    262.619, 482.004,
-    262.416, 476.271,
-    265.281, 465.755,
-    377.293, 469.852,
-    377.293, 469.852,
-    378.666, 478.45,
-    374.194, 491.98,
-    374.194, 491.98,
-    361.999, 503.028,
-    343.911, 510.476,
-    343.911, 510.476,
-    321.759, 513.207,
-    302.31, 511.645,
-    302.31, 511.645,
-    283.034, 505.271,
-    269.194, 495.018,
-    269.194, 495.018,
-    262.619, 482.004,
-    262.325, 478.45,
-    262.416, 476.271,
-    377.293, 469.852,
-    374.194, 491.98,
-    374.194, 491.98,
-    343.911, 510.476,
-    302.31, 511.645,
-    302.31, 511.645,
-    269.194, 495.018,
-    262.325, 478.45,
-    262.416, 476.271,
-    374.194, 491.98,
-    302.31, 511.645,
-    262.416, 476.271,
-    302.31, 511.645,
-    262.325, 478.45,
-    // </drink_bottom>
-    // <drink_top>
-    344.499, 419.93,
-    355.535, 435.764,
-    355.535, 435.764,
-    355.535, 435.764,
-    371.832, 459.111,
-    373.654, 461.882,
-    373.654, 461.882,
-    267.339, 461.882,
-    269.16, 459.111,
-    274.655, 451.374,
-    280.054, 443.566,
-    285.458, 435.764,
-    292.819, 425.21,
-    296.494, 419.93,
-    344.499, 419.93,
-    344.499, 419.93,
-    355.535, 435.764,
-    373.654, 461.882,
-    373.654, 461.882,
-    269.16, 459.111,
-    274.655, 451.374,
-    274.655, 451.374,
-    285.458, 435.764,
-    289.142, 430.489,
-    289.142, 430.489,
-    292.819, 425.21,
-    344.499, 419.93,
-    344.499, 419.93,
-    373.654, 461.882,
-    274.655, 451.374,
-    274.655, 451.374,
-    289.142, 430.489,
-    344.499, 419.93, 
-    // </drink_top>
+#include "anis_vertex_data.data"
 };
 
 const Array arrays[MAX_ARRAYS] = {
@@ -290,17 +176,51 @@ const Drink drinks[] = {
             .dimensions = { 640, 816 },
             .layers = {
                 {
-                    // glass
-                    .shader_name = "solid_gradient_3",
+                    .shader_name = "solid_gradient_2",
                     .vertex_array_name = "anis_drink_background_vertex",
                     .element_array_name = NULL,
                     .draw_mode = GL_TRIANGLES,
-                    .range = { 0, 132 },
+                    .range = {0, 741}, // 741
                     .attributes = {
                         {
                             .name = "a_position",
                             .normalized = GL_FALSE,
-                            .stride = 2 * 4,
+                            .stride = 2 * sizeof(float),
+                            .offset = 0,
+                        }
+                    },
+                    .uniforms = {
+                        {
+                            .name = "u_stop_colors",
+                            .type = GL_FLOAT_VEC4,
+                            .data = anis_shadow_colors_hsl,
+                            .data_size = sizeof(anis_shadow_colors_hsl) / sizeof(float),
+                        },
+                        {
+                            .name = "u_stop_offsets",
+                            .type = GL_FLOAT,
+                            .data = anis_shadow_offsets,
+                            .data_size = sizeof(anis_shadow_offsets) / sizeof(float),
+                        },
+                        {
+                            .name = "u_linear_gradient",
+                            .type = GL_FLOAT_VEC2,
+                            .data = anis_shadow_linear,
+                            .data_size = sizeof(anis_shadow_linear) / sizeof(float),
+                        },
+                    },
+                },
+                {
+                    .shader_name = "solid_gradient_3",
+                    .vertex_array_name = "anis_drink_background_vertex",
+                    .element_array_name = NULL,
+                    .draw_mode = GL_TRIANGLES,
+                    .range = { 741, 873 },  // 132
+                    .attributes = {
+                        {
+                            .name = "a_position",
+                            .normalized = GL_FALSE,
+                            .stride = 2 * sizeof(float),
                             .offset = 0,
                         }
                     },
@@ -330,12 +250,12 @@ const Drink drinks[] = {
                     .vertex_array_name = "anis_drink_background_vertex",
                     .element_array_name = NULL,
                     .draw_mode = GL_TRIANGLES,
-                    .range = { 132, 165 },
+                    .range = { 873, 906 }, // 33
                     .attributes = {
                         {
                             .name = "a_position",
                             .normalized = GL_FALSE,
-                            .stride = 2 * 4,
+                            .stride = 2 * sizeof(float),
                             .offset = 0,
                         }
                     },
@@ -359,10 +279,91 @@ const Drink drinks[] = {
                             .data_size = sizeof(anis_top_gradient_linear) / sizeof(float),
                         },
                     }
+                },
+                {
+                    .shader_name = "solid_gradient_2",
+                    .vertex_array_name = "anis_drink_background_vertex",
+                    .element_array_name = NULL,
+                    .draw_mode = GL_TRIANGLES,
+                    .range = { 906, 1155 }, // 249
+                    .attributes = {
+                        {
+                            .name = "a_position",
+                            .normalized = GL_FALSE,
+                            .stride = 2 * sizeof(float),
+                            .offset = 0,
+                        }
+                    },
+                    .uniforms = {
+                        {
+                            .name = "u_stop_colors",
+                            .type = GL_FLOAT_VEC4,
+                            .data = anis_highlight_gradient_colors_hsl,
+                            .data_size = sizeof(anis_highlight_gradient_colors_hsl) / sizeof(float),
+                        },
+                        {
+                            .name = "u_stop_offsets",
+                            .type = GL_FLOAT,
+                            .data = anis_highlight_gradient_offsets,
+                            .data_size = sizeof(anis_highlight_gradient_offsets) / sizeof(float),
+                        },
+                        {
+                            .name = "u_linear_gradient",
+                            .type = GL_FLOAT_VEC2,
+                            .data = anis_highlight_gradient_linear,
+                            .data_size = sizeof(anis_highlight_gradient_linear) / sizeof(float),
+                        },
+                    }
+                },
+                {
+                    .shader_name = "solid",
+                    .vertex_array_name = "anis_drink_background_vertex",
+                    .element_array_name = NULL,
+                    .draw_mode = GL_TRIANGLES,
+                    .range = { 2184, 3168 }, // 984
+                    .attributes = {
+                        {
+                            .name = "a_position",
+                            .normalized = GL_FALSE,
+                            .stride = 2 * sizeof(float),
+                            .offset = 0,
+                        },
+                    },
+                    .uniforms = {
+                        {
+                            .name = "u_fill_color",
+                            .type = GL_FLOAT_VEC4,
+                            .data = anis_edge_fill_color,
+                            .data_size = sizeof(anis_edge_fill_color) / sizeof(float),
+                        },
+                    },
+                },
+                {
+                    .shader_name = "solid",
+                    .vertex_array_name = "anis_drink_background_vertex",
+                    .element_array_name = NULL,
+                    .draw_mode = GL_TRIANGLES,
+                    .range = { 1155, 2184 }, // 629
+                    .attributes = {
+                        {
+                            .name = "a_position",
+                            .normalized = GL_FALSE,
+                            .stride = 2 * sizeof(float),
+                            .offset = 0,
+                        }
+                    },
+                    .uniforms = {
+                        {
+                            .name = "u_fill_color",
+                            .type = GL_FLOAT_VEC4,
+                            .data = anis_edge_fill_color,
+                            .data_size = sizeof(anis_edge_fill_color) / sizeof(float),
+                        }
+                    }
                 }
             },
             .blend = &anis_blend,
-            .clear_color = { 0., 0., 0., 1.},
+            .clear_color = { 0., 0., 0., 1. },
             .clear_bits = GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT,
         },
     }

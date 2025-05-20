@@ -138,6 +138,24 @@ vector<Triangle> MeshCover::ear_clip(vector<vector<Point>> const & poly)
 
     for(size_t i = 0; i < indices.size(); i += 3)
     {
+        // check for duplicate vertices
+        if(   indices[i + 0] == indices[i + 1]
+           || indices[i + 1] == indices[i + 2] 
+           || indices[i + 2] == indices[i + 0] )
+        {
+            throw new std::logic_error("detected duplicate vertices");
+        }
+
+        Point p0 = from_poly_index(poly, indices[i + 0]);
+        Point p1 = from_poly_index(poly, indices[i + 1]);
+        Point p2 = from_poly_index(poly, indices[i + 2]);
+
+        if(p0 == p1 || p1 == p2 || p2 == p0)
+            throw new std::logic_error("detected duplicate vertex values");
+
+        if((p1 - p0).norm2() < 0.00001 || (p2 - p1).norm2() < 0.0001 || (p0 - p2).norm2() < 0.0001)
+            continue;
+
         ret.emplace_back(
             from_poly_index(poly, indices[i + 0]),
             from_poly_index(poly, indices[i + 1]),

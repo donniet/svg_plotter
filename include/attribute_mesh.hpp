@@ -72,8 +72,15 @@ public:
     template<size_t I>
     static double const & get(Point const & p)
     {
-        return std::get<I>(p);
+        switch(I) 
+        {
+        case 0: return p.x;
+        case 1: return p.y;
+        default:
+            return p.y;
+        }
     }
+
 
     static double const & get(Point const & p, size_t i)
     {
@@ -86,6 +93,7 @@ public:
     static row_type row(attribute_type const & a) { return row_type{a.x, a.y}; }
 
 };
+
 
 
 

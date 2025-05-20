@@ -1,9 +1,8 @@
 
-function DataArray(name, data, type, target)
+function DataArray(name, data, target)
 {
     this.name = name;
     this.data = data;
-    this.type = type;
     this.target = target;
     this.buffer = null;
 }
